@@ -9,12 +9,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.sktech.wastetrack.ui.navigation.BottomNavBar
 import com.sktech.wastetrack.ui.navigation.NavGraph
 import com.sktech.wastetrack.ui.navigation.Screen
 import com.sktech.wastetrack.ui.navigation.bottomNavItems
 import com.sktech.wastetrack.ui.theme.WastetrackTheme
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -24,9 +24,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WastetrackTheme {
-                val navController = rememberNavController()
+                val navController = androidx.navigation.compose.rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+                
+                val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+                    Screen.Dashboard.route
+                } else {
+                    Screen.Login.route
+                }
 
                 val showBottomNav = currentRoute in bottomNavItems.map { it.route }
 
@@ -51,7 +57,8 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavGraph(
                         navController = navController,
-                        innerPadding = innerPadding
+                        innerPadding = innerPadding,
+                        startDestination = startDestination
                     )
                 }
             }

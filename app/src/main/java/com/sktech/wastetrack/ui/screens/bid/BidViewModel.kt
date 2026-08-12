@@ -2,13 +2,11 @@ package com.sktech.wastetrack.ui.screens.bid
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sktech.wastetrack.data.local.db.dao.BidDao
+import com.sktech.wastetrack.domain.model.BidRequest
+import com.sktech.wastetrack.domain.repository.IBidRepository
 import com.sktech.wastetrack.data.local.db.dao.ScrapEntryDao
 import com.sktech.wastetrack.data.local.db.dao.SyncQueueDao
-import com.sktech.wastetrack.data.local.db.entity.BidEntity
-import com.sktech.wastetrack.data.local.db.entity.BidRequestEntity
 import com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity
-import com.sktech.wastetrack.data.local.db.entity.SyncQueueEntity
 import com.sktech.wastetrack.util.Constants
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +16,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 data class BidMarketState(
-    val bidRequests: List<BidRequestEntity> = emptyList(),
+    val bidRequests: List<BidRequest> = emptyList(),
     val scrapEntries: List<ScrapEntryEntity> = emptyList(),
     val showCreateDialog: Boolean = false,
     val selectedScrapEntryId: String? = null,
@@ -29,14 +27,14 @@ data class BidMarketState(
 )
 
 data class BidDetailState(
-    val bidRequest: BidRequestEntity? = null,
-    val bids: List<BidEntity> = emptyList(),
+    val bidRequest: BidRequest? = null,
+    val bids: List<com.sktech.wastetrack.domain.model.Bid> = emptyList(),
     val isLoading: Boolean = true
 )
 
 @HiltViewModel
 class BidViewModel @Inject constructor(
-    private val bidDao: BidDao,
+    private val bidRepository: IBidRepository,
     private val scrapEntryDao: ScrapEntryDao,
     private val syncQueueDao: SyncQueueDao
 ) : ViewModel() {
@@ -51,7 +49,7 @@ class BidViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            bidDao.getRequestsByFactory(factoryId).collect { requests ->
+            bidRepository.getActiveBidRequests().collect { requests ->
                 _state.update { it.copy(bidRequests = requests) }
             }
         }
@@ -96,7 +94,7 @@ class BidViewModel @Inject constructor(
             try {
                 val requestId = UUID.randomUUID().toString()
                 val now = System.currentTimeMillis()
-                val request = BidRequestEntity(
+                val request = BidRequest(
                     id = requestId,
                     factoryId = factoryId,
                     scrapEntryId = scrapEntry.id,
@@ -105,21 +103,9 @@ class BidViewModel @Inject constructor(
                     reservePricePerKg = reserve,
                     auctionStartTime = now,
                     auctionEndTime = now + Constants.AUCTION_DURATION_HOURS * 60 * 60 * 1000,
-                    status = "OPEN"
+                    status = com.sktech.wastetrack.domain.model.BidStatus.OPEN
                 )
-                bidDao.insertRequest(request)
-
-                // Simulate 2-4 recycler bids arriving
-                generateSimulatedBids(requestId, scrapEntry.weightKg, reserve)
-
-                syncQueueDao.enqueue(
-                    SyncQueueEntity(
-                        entityType = "BID_REQUEST",
-                        entityId = requestId,
-                        action = "CREATE",
-                        payload = Gson().toJson(request)
-                    )
-                )
+                bidRepository.createBidRequest(request)
 
                 _state.update {
                     it.copy(
@@ -136,58 +122,37 @@ class BidViewModel @Inject constructor(
         }
     }
 
-    private suspend fun generateSimulatedBids(requestId: String, weightKg: Float, reservePrice: Float) {
-        val recyclers = listOf(
-            "Green Metals Nashik" to "rec-001",
-            "EcoPlast Recyclers" to "rec-002",
-            "Ambad Scrap Traders" to "rec-003",
-            "Sinnar Recycle Hub" to "rec-004"
-        )
-        val bidCount = (2..4).random()
-        recyclers.shuffled().take(bidCount).forEach { (name, id) ->
-            val priceVariance = (0.8f + Math.random().toFloat() * 0.6f) // 80%-140% of reserve
-            val price = reservePrice * priceVariance
-            bidDao.insertBid(
-                BidEntity(
-                    id = UUID.randomUUID().toString(),
-                    bidRequestId = requestId,
-                    recyclerId = id,
-                    recyclerName = name,
-                    pricePerKg = price,
-                    totalBidAmount = price * weightKg,
-                    isWinning = false,
-                    submittedAt = System.currentTimeMillis() + (1..60).random() * 60 * 1000L
-                )
-            )
-        }
-        // Mark highest bid as winning
-        val bidsFlow = bidDao.getBidsByRequest(requestId)
-        bidsFlow.first().maxByOrNull { it.pricePerKg }?.let {
-            bidDao.markWinning(it.id)
-        }
-    }
-
     fun loadBidDetail(requestId: String) {
         viewModelScope.launch {
             _detailState.update { it.copy(isLoading = true) }
-            val request = bidDao.getRequestById(requestId)
+            // Fetch the specific request from state for now
+            val request = _state.value.bidRequests.find { it.id == requestId }
             _detailState.update { it.copy(bidRequest = request, isLoading = false) }
         }
         viewModelScope.launch {
-            bidDao.getBidsByRequest(requestId).collect { bids ->
+            bidRepository.getBidsForRequest(requestId).collect { bids ->
                 _detailState.update { it.copy(bids = bids) }
             }
         }
     }
 
-    fun awardBid(bidId: String, requestId: String) {
+    fun submitBid(pricePerKg: Float) {
+        val request = _detailState.value.bidRequest ?: return
         viewModelScope.launch {
-            bidDao.markWinning(bidId)
-            val request = bidDao.getRequestById(requestId)
-            if (request != null) {
-                bidDao.updateRequest(request.copy(status = "AWARDED"))
-            }
+            val bid = com.sktech.wastetrack.domain.model.Bid(
+                id = UUID.randomUUID().toString(),
+                bidRequestId = request.id,
+                recyclerId = "current-recycler", // TODO: Replace with real user ID
+                recyclerName = "My Recycler",
+                pricePerKg = pricePerKg,
+                totalBidAmount = pricePerKg * request.estimatedWeightKg
+            )
+            bidRepository.submitBid(bid)
         }
+    }
+
+    fun awardBid(bidId: String, requestId: String) {
+        // Implement logic to award a bid in Firestore if factory owner
     }
 
     fun clearSuccess() {

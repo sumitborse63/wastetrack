@@ -15,7 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.sktech.wastetrack.data.local.db.entity.BidEntity
+import com.sktech.wastetrack.domain.model.Bid
+import com.sktech.wastetrack.domain.model.BidRequest
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
@@ -104,7 +105,7 @@ fun BidDetailScreen(
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                                     InfoColumn("Weight", "${request.estimatedWeightKg} kg")
                                     InfoColumn("Reserve", "₹${request.reservePricePerKg}/kg")
-                                    InfoColumn("Status", request.status)
+                                    InfoColumn("Status", request.status.name)
                                     InfoColumn("Bids", "${detailState.bids.size}")
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -197,7 +198,7 @@ private fun InfoColumn(label: String, value: String) {
 }
 
 @Composable
-private fun BidCard(bid: BidEntity, isTop: Boolean, onAward: () -> Unit) {
+private fun BidCard(bid: Bid, isTop: Boolean, onAward: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (bid.isWinning)

@@ -14,6 +14,9 @@ import com.sktech.wastetrack.ui.screens.dashboard.DashboardScreen
 import com.sktech.wastetrack.ui.screens.scrap.ScrapLogScreen
 import com.sktech.wastetrack.ui.screens.settings.SettingsScreen
 import com.sktech.wastetrack.ui.screens.transfer.TransferScreen
+import com.sktech.wastetrack.ui.screens.scrap.ScrapClassifyScreen
+import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.ui.screens.auth.LoginScreen
 
 @Composable
 fun NavGraph(
@@ -26,6 +29,16 @@ fun NavGraph(
         startDestination = startDestination,
         modifier = Modifier.padding(innerPadding)
     ) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
@@ -39,10 +52,37 @@ fun NavGraph(
             )
         }
 
-        composable(Screen.ScrapLog.route) {
+        composable(Screen.ScrapLog.route) { backStackEntry ->
+            val savedStateHandle = backStackEntry.savedStateHandle
+            val classifiedCategory = savedStateHandle.get<String>("classifiedCategory")
+            
+            val viewModel: com.sktech.wastetrack.ui.screens.scrap.ScrapLogViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+            
+            // Apply classified category if returned
+            androidx.compose.runtime.LaunchedEffect(classifiedCategory) {
+                if (classifiedCategory != null) {
+                    try {
+                        val cat = ScrapCategory.valueOf(classifiedCategory)
+                        viewModel.onCategorySelected(cat)
+                        savedStateHandle.remove<String>("classifiedCategory")
+                    } catch (e: Exception) {}
+                }
+            }
+
             ScrapLogScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToClassify = { /* TODO: ML classify screen */ }
+                onNavigateToClassify = { navController.navigate(Screen.ScrapClassify.route) },
+                viewModel = viewModel
+            )
+        }
+
+        composable(Screen.ScrapClassify.route) {
+            ScrapClassifyScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onClassificationComplete = { category ->
+                    navController.previousBackStackEntry?.savedStateHandle?.set("classifiedCategory", category.name)
+                    navController.popBackStack()
+                }
             )
         }
 

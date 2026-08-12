@@ -13,6 +13,7 @@ import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.sktech.wastetrack.domain.usecase.scrap.DetectAnomalyUseCase
 import java.util.UUID
 import javax.inject.Inject
 
@@ -23,6 +24,7 @@ data class ScrapLogState(
     val subCategory: String = "",
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
+    val anomalyWarning: String? = null,
     val error: String? = null,
     val recentEntries: List<ScrapEntryEntity> = emptyList()
 )
@@ -30,7 +32,8 @@ data class ScrapLogState(
 @HiltViewModel
 class ScrapLogViewModel @Inject constructor(
     private val scrapEntryDao: ScrapEntryDao,
-    private val syncQueueDao: SyncQueueDao
+    private val syncQueueDao: SyncQueueDao,
+    private val detectAnomalyUseCase: DetectAnomalyUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScrapLogState())
@@ -56,11 +59,11 @@ class ScrapLogViewModel @Inject constructor(
     }
 
     fun onNotesChanged(notes: String) {
-        _state.update { it.copy(notes = notes) }
+        _state.update { it.copy(notes = notes, anomalyWarning = null) }
     }
 
     fun onSubCategoryChanged(sub: String) {
-        _state.update { it.copy(subCategory = sub) }
+        _state.update { it.copy(subCategory = sub, anomalyWarning = null) }
     }
 
     fun submitEntry() {
@@ -74,6 +77,10 @@ class ScrapLogViewModel @Inject constructor(
             _state.update { it.copy(error = "Please enter a valid weight") }
             return
         }
+        
+        // If an anomaly warning was shown and they click submit again, we bypass it
+        // Or we can just flag it in the DB. Let's just flag it in the DB for now.
+        val anomalyResult = detectAnomalyUseCase(current.selectedCategory, weight)
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
@@ -95,6 +102,9 @@ class ScrapLogViewModel @Inject constructor(
                     category = current.selectedCategory.name,
                     subCategory = current.subCategory,
                     weightKg = weight,
+                    estimatedVolumeL = 1000f, // Default 1m3 for MVP
+                    anomalyScore = anomalyResult.score,
+                    anomalyFlagged = anomalyResult.flagged,
                     notes = current.notes,
                     syncStatus = "PENDING",
                     contentHash = contentHash,

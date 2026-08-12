@@ -19,7 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.sktech.wastetrack.data.local.db.entity.BidRequestEntity
+import com.sktech.wastetrack.domain.model.BidRequest
+import com.sktech.wastetrack.domain.model.BidStatus
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
@@ -126,10 +127,10 @@ fun BidMarketScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    val openCount = state.bidRequests.count { it.status == "OPEN" }
-                    val awardedCount = state.bidRequests.count { it.status == "AWARDED" }
+                    val openCount = state.bidRequests.count { it.status == BidStatus.OPEN }
+                    val awardedCount = state.bidRequests.count { it.status == BidStatus.AWARDED }
                     val totalRevenue = state.bidRequests
-                        .filter { it.status == "AWARDED" }
+                        .filter { it.status == BidStatus.AWARDED }
                         .sumOf { it.estimatedWeightKg.toDouble() * it.reservePricePerKg.toDouble() }
 
                     BidStatChip(label = "Open", value = "$openCount", color = Gold)
@@ -209,12 +210,12 @@ private fun BidStatChip(label: String, value: String, color: Color) {
 }
 
 @Composable
-private fun BidRequestCard(request: BidRequestEntity, onClick: () -> Unit) {
+private fun BidRequestCard(request: BidRequest, onClick: () -> Unit) {
     val category = try { ScrapCategory.valueOf(request.scrapCategory) } catch (_: Exception) { ScrapCategory.OTHER }
     val statusColor = when (request.status) {
-        "OPEN" -> Gold
-        "AWARDED" -> IndustrialGreenLight
-        "CLOSED" -> SteelGray
+        BidStatus.OPEN -> Gold
+        BidStatus.AWARDED -> IndustrialGreenLight
+        BidStatus.CLOSED -> SteelGray
         else -> SafetyOrange
     }
     val remaining = DateUtils.getRemainingTimeString(request.auctionEndTime)
@@ -258,7 +259,7 @@ private fun BidRequestCard(request: BidRequestEntity, onClick: () -> Unit) {
                     color = statusColor.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        request.status,
+                        request.status.name,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
