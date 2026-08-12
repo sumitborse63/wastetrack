@@ -13,3 +13,29 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Log Files
+*.log
+
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Windows files
+Thumbs.db
