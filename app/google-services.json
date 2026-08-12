@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1026830386071",
+    "project_id": "wastetrack-sktech",
+    "storage_bucket": "wastetrack-sktech.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1026830386071:android:c3fc6f2053d05f58b9fad2",
+        "android_client_info": {
+          "package_name": "com.sktech.wastetrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1jIk2sNs0KnBlx_T-DzYJeGoYCI2NGD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
