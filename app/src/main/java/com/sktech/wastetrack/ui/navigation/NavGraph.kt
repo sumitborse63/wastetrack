@@ -1,30 +1,41 @@
 package com.sktech.wastetrack.ui.navigation
-
+ 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.sktech.wastetrack.ui.screens.bid.BidMarketScreen
+import com.sktech.wastetrack.ui.screens.bid.BidDetailScreen
 import com.sktech.wastetrack.ui.screens.bin.BinMonitorScreen
 import com.sktech.wastetrack.ui.screens.compliance.ComplianceScreen
 import com.sktech.wastetrack.ui.screens.dashboard.DashboardScreen
+import com.sktech.wastetrack.ui.screens.dashboard.RecyclerDashboardScreen
 import com.sktech.wastetrack.ui.screens.dashboard.LedgerScanScreen
 import com.sktech.wastetrack.ui.screens.scrap.ScrapLogScreen
 import com.sktech.wastetrack.ui.screens.settings.SettingsScreen
 import com.sktech.wastetrack.ui.screens.transfer.TransferScreen
+import com.sktech.wastetrack.ui.screens.transfer.QRScanScreen
 import com.sktech.wastetrack.ui.screens.scrap.ScrapClassifyScreen
 import com.sktech.wastetrack.ui.screens.analytics.AnalyticsScreen
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.domain.model.UserRole
+import com.sktech.wastetrack.domain.repository.IAuthRepository
 import com.sktech.wastetrack.ui.screens.auth.LoginScreen
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
     innerPadding: PaddingValues,
-    startDestination: String = Screen.Dashboard.route
+    startDestination: String = Screen.Dashboard.route,
+    authRepository: IAuthRepository
 ) {
     NavHost(
         navController = navController,
@@ -40,34 +51,66 @@ fun NavGraph(
                 }
             )
         }
-
+ 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(
-                onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
-                onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
-                onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
-                onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
-                onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
-                onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
-                onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
-                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-            )
+            // Fetch user role fresh each time this destination is composed
+            val dashboardUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null) {
+                value = authRepository.getCurrentUser()
+            }
+            
+            when {
+                dashboardUser == null -> {
+                    // Loading state while fetching user
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                    }
+                }
+                dashboardUser?.role == UserRole.RECYCLER -> {
+                    RecyclerDashboardScreen(
+                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                        onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
+                    )
+                }
+                else -> {
+                    DashboardScreen(
+                        onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
+                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                        onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
+                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                        onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
+                        onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
+                        onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
+            }
         }
 
         composable(Screen.ScrapLog.route) { backStackEntry ->
             val savedStateHandle = backStackEntry.savedStateHandle
             val classifiedCategory = savedStateHandle.get<String>("classifiedCategory")
+            val classifiedSubCategory = savedStateHandle.get<String>("classifiedSubCategory")
             
             val viewModel: com.sktech.wastetrack.ui.screens.scrap.ScrapLogViewModel = androidx.hilt.navigation.compose.hiltViewModel()
             
-            // Apply classified category if returned
-            androidx.compose.runtime.LaunchedEffect(classifiedCategory) {
+            // Apply classified category and sub-category if returned from AI classifier
+            androidx.compose.runtime.LaunchedEffect(classifiedCategory, classifiedSubCategory) {
                 if (classifiedCategory != null) {
                     try {
                         val cat = ScrapCategory.valueOf(classifiedCategory)
                         viewModel.onCategorySelected(cat)
+                        if (!classifiedSubCategory.isNullOrBlank()) {
+                            viewModel.onSubCategoryChanged(classifiedSubCategory)
+                        }
                         savedStateHandle.remove<String>("classifiedCategory")
+                        savedStateHandle.remove<String>("classifiedSubCategory")
                     } catch (e: Exception) {}
                 }
             }
@@ -82,8 +125,9 @@ fun NavGraph(
         composable(Screen.ScrapClassify.route) {
             ScrapClassifyScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onClassificationComplete = { category ->
+                onClassificationComplete = { category, subCategory ->
                     navController.previousBackStackEntry?.savedStateHandle?.set("classifiedCategory", category.name)
+                    navController.previousBackStackEntry?.savedStateHandle?.set("classifiedSubCategory", subCategory)
                     navController.popBackStack()
                 }
             )
@@ -97,42 +141,64 @@ fun NavGraph(
 
         composable(Screen.BidMarket.route) {
             BidMarketScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToBidDetail = { bidRequestId ->
+                    navController.navigate(Screen.BidDetail.createRoute(bidRequestId))
+                }
             )
         }
 
+        composable(Screen.BidDetail.route) { backStackEntry ->
+            val bidRequestId = backStackEntry.arguments?.getString("bidRequestId") ?: ""
+            BidDetailScreen(
+                bidRequestId = bidRequestId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+ 
         composable(Screen.Compliance.route) {
             ComplianceScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
+ 
         composable(Screen.BinMonitor.route) {
             BinMonitorScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
+ 
         composable(Screen.LedgerScan.route) {
             LedgerScanScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
-        composable(Screen.Settings.route) {
-            SettingsScreen(
+ 
+        composable(Screen.FleetTracker.route) {
+            com.sktech.wastetrack.ui.screens.transfer.FleetTrackerScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
+ 
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+ 
         composable(Screen.Analytics.route) {
             AnalyticsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
+ 
         composable(Screen.QRScan.route) {
-            TransferScreen(
+            QRScanScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

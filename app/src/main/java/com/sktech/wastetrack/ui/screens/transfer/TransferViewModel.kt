@@ -32,7 +32,8 @@ class TransferViewModel @Inject constructor(
     private val transferDao: TransferDao,
     private val scrapEntryDao: ScrapEntryDao,
     private val qrHandshakeDao: QRHandshakeDao,
-    private val syncQueueDao: SyncQueueDao
+    private val syncQueueDao: SyncQueueDao,
+    private val authRepository: com.sktech.wastetrack.domain.repository.IAuthRepository
 ) : ViewModel() {
 
     private val factoryId = Constants.DEFAULT_FACTORY_ID
@@ -43,8 +44,17 @@ class TransferViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            transferDao.getByFactory(factoryId).collect { transfers ->
-                _state.update { it.copy(transfers = transfers) }
+            val user = authRepository.getCurrentUser()
+            val isRecycler = user?.role == com.sktech.wastetrack.domain.model.UserRole.RECYCLER
+            
+            if (isRecycler && user != null) {
+                transferDao.getByRecycler(user.id).collect { transfers ->
+                    _state.update { it.copy(transfers = transfers) }
+                }
+            } else {
+                transferDao.getByFactory(factoryId).collect { transfers ->
+                    _state.update { it.copy(transfers = transfers) }
+                }
             }
         }
     }

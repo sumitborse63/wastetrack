@@ -1,29 +1,65 @@
 package com.sktech.wastetrack.ui.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.domain.model.UserRole
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.SecurityHelper
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.fragment.app.FragmentActivity
-import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onLogout: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val user = state.currentUser
+    val context = LocalContext.current
+    var biometricsEnabled by remember { mutableStateOf(false) }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
+
+    // Logout confirmation dialog
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            icon = { Icon(Icons.Filled.Logout, null, tint = AlertRed) },
+            title = { Text("Logout", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to logout? You will need to login again on next launch.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutConfirm = false
+                        viewModel.logout { onLogout() }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed)
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,9 +81,6 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        val context = LocalContext.current
-        var biometricsEnabled by remember { mutableStateOf(false) }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -55,31 +88,82 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Profile Section
+            // Profile Section — dynamic based on role
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "Pilot User",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "Floor Supervisor · Ambad MIDC",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (user?.role == UserRole.RECYCLER) IndustrialGreenLight.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(52.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                if (user?.role == UserRole.RECYCLER) Icons.Outlined.Recycling else Icons.Outlined.Engineering,
+                                null,
+                                tint = if (user?.role == UserRole.RECYCLER) IndustrialGreenLight else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                    Column {
+                        Text(
+                            user?.name ?: "Loading...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                user?.role?.displayName ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (user?.role == UserRole.RECYCLER) {
+                                Surface(
+                                    shape = MaterialTheme.shapes.extraSmall,
+                                    color = IndustrialGreenLight.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        "CERTIFIED",
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = IndustrialGreenLight,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            user?.phone ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             SettingsItem(icon = Icons.Outlined.Language, title = "Language", subtitle = "English")
-            SettingsItem(icon = Icons.Outlined.Factory, title = "Factory", subtitle = "Ambad MIDC Pilot")
+            
+            // Show Factory for Supervisors, Recycler ID for Recyclers
+            if (user?.role == UserRole.RECYCLER) {
+                SettingsItem(icon = Icons.Outlined.Recycling, title = "Recycler ID", subtitle = user.factoryId)
+            } else {
+                SettingsItem(icon = Icons.Outlined.Factory, title = "Factory", subtitle = "Ambad MIDC Pilot")
+            }
+            
             SettingsItem(icon = Icons.Outlined.CloudSync, title = "Sync Settings", subtitle = "Auto-sync every 15 min")
             
             // Biometric Toggle
@@ -90,7 +174,7 @@ fun SettingsScreen(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(Icons.Outlined.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
@@ -132,13 +216,32 @@ fun SettingsScreen(
             }
 
             SettingsItem(icon = Icons.Outlined.Info, title = "About", subtitle = "WasteTrack v1.0.0")
+            
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Logout Button
+            Button(
+                onClick = { showLogoutConfirm = true },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AlertRed.copy(alpha = 0.1f),
+                    contentColor = AlertRed
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(Icons.Filled.Logout, null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Logout", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
 private fun SettingsItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     subtitle: String
 ) {
@@ -152,7 +255,7 @@ private fun SettingsItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(

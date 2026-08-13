@@ -10,4 +10,5 @@ interface IBidRepository {
     fun getBidsForRequest(requestId: String): Flow<List<Bid>>
     suspend fun submitBid(bid: Bid): String
     suspend fun awardBid(bidId: String, requestId: String)
+    suspend fun getBidRequestById(requestId: String): BidRequest?
 }

@@ -23,4 +23,7 @@ interface CertificateDao {
 
     @Query("SELECT COUNT(*) FROM certificates WHERE factoryId = :factoryId")
     fun getCount(factoryId: String): Flow<Int>
+
+    @Query("SELECT * FROM certificates ORDER BY generatedAt DESC")
+    fun getAllCertificates(): Flow<List<CertificateEntity>>
 }

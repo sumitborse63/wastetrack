@@ -18,8 +18,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +43,7 @@ import java.util.concurrent.Executors
 @Composable
 fun ScrapClassifyScreen(
     onNavigateBack: () -> Unit,
-    onClassificationComplete: (ScrapCategory) -> Unit,
+    onClassificationComplete: (ScrapCategory, String) -> Unit,
     viewModel: ScrapClassifyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -51,6 +53,10 @@ fun ScrapClassifyScreen(
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
+
+    var isFlashEnabled by remember { mutableStateOf(false) }
+    var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         hasCameraPermission = granted
@@ -62,12 +68,29 @@ fun ScrapClassifyScreen(
         }
     }
 
+    // Bind Flash / Torch setting when state or camera changes
+    LaunchedEffect(isFlashEnabled, camera, imageCapture) {
+        imageCapture?.flashMode = if (isFlashEnabled) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF
+        camera?.cameraControl?.enableTorch(isFlashEnabled)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("AI Scrap Classifier", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                },
+                actions = {
+                    if (state.capturedImage == null && hasCameraPermission) {
+                        IconButton(onClick = { isFlashEnabled = !isFlashEnabled }) {
+                            Icon(
+                                imageVector = if (isFlashEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
+                                contentDescription = if (isFlashEnabled) "Flash On" else "Flash Off",
+                                tint = if (isFlashEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
@@ -86,8 +109,6 @@ fun ScrapClassifyScreen(
                 }
             } else if (state.capturedImage == null) {
                 // Camera Preview
-                var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
-
                 AndroidView(
                     factory = { ctx ->
                         val previewView = PreviewView(ctx)
@@ -99,18 +120,23 @@ fun ScrapClassifyScreen(
                                 it.surfaceProvider = previewView.surfaceProvider
                             }
 
-                            imageCapture = ImageCapture.Builder()
+                            val capture = ImageCapture.Builder()
                                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                                .setFlashMode(if (isFlashEnabled) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
                                 .build()
+
+                            imageCapture = capture
 
                             try {
                                 cameraProvider.unbindAll()
-                                cameraProvider.bindToLifecycle(
+                                val boundCamera = cameraProvider.bindToLifecycle(
                                     lifecycleOwner,
                                     CameraSelector.DEFAULT_BACK_CAMERA,
                                     preview,
-                                    imageCapture
+                                    capture
                                 )
+                                camera = boundCamera
+                                boundCamera.cameraControl.enableTorch(isFlashEnabled)
                             } catch (e: Exception) {
                                 // Error handling
                             }
@@ -131,13 +157,11 @@ fun ScrapClassifyScreen(
                             val executor = Executors.newSingleThreadExecutor()
                             imageCapture?.takePicture(executor, object : ImageCapture.OnImageCapturedCallback() {
                                 override fun onCaptureSuccess(image: ImageProxy) {
-                                    // Convert ImageProxy to Bitmap
                                     val buffer = image.planes[0].buffer
                                     val bytes = ByteArray(buffer.remaining())
                                     buffer.get(bytes)
                                     var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
 
-                                    // Rotate if needed
                                     val rotation = image.imageInfo.rotationDegrees
                                     if (rotation != 0) {
                                         val matrix = Matrix()
@@ -145,8 +169,7 @@ fun ScrapClassifyScreen(
                                         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
                                     }
 
-                                    // Let viewModel handle analysis
-                                    viewModel.analyzeImage(bitmap, 0) // rotation already applied to bitmap
+                                    viewModel.analyzeImage(bitmap, 0)
                                     image.close()
                                 }
 
@@ -183,7 +206,7 @@ fun ScrapClassifyScreen(
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("Analyzing with Edge AI...", color = Color.White)
+                                    Text("Analyzing with AI...", color = Color.White)
                                 }
                             }
                         }
@@ -203,19 +226,37 @@ fun ScrapClassifyScreen(
                                     "Identified Material",
                                     style = MaterialTheme.typography.labelMedium
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     "${state.result!!.category.icon} ${state.result!!.category.displayName}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = state.result!!.category.color()
                                 )
+                                
+                                if (state.result!!.subCategory.isNotBlank()) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                        modifier = Modifier.padding(top = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "Sub-Type: ${state.result!!.subCategory}",
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     "Confidence: ${(state.result!!.confidence * 100).toInt()}%",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
                                 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -228,7 +269,7 @@ fun ScrapClassifyScreen(
                                         Text("Retake")
                                     }
                                     Button(
-                                        onClick = { onClassificationComplete(state.result!!.category) },
+                                        onClick = { onClassificationComplete(state.result!!.category, state.result!!.subCategory) },
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         Text("Use Result")

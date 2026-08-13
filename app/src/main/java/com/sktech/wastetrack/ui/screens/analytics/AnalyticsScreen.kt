@@ -54,6 +54,10 @@ fun AnalyticsScreen(
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 item {
+                    EPRTargetCard(compliancePercentage = state.eprCompliancePercentage)
+                }
+
+                item {
                     EfficiencyScoreCard(score = state.efficiencyScore)
                 }
                 
@@ -64,6 +68,60 @@ fun AnalyticsScreen(
                 item {
                     CategoryBreakdownCard(breakdown = state.categoryBreakdown)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun EPRTargetCard(compliancePercentage: Float) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text("EPR Compliance Ledger", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                "Government Mandate: 75% Recycling Target", 
+                style = MaterialTheme.typography.bodySmall, 
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            val isCompliant = compliancePercentage >= 75f
+            val progressColor = if (isCompliant) IndustrialGreen else SafetyOrange
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LinearProgressIndicator(
+                    progress = { compliancePercentage / 100f },
+                    modifier = Modifier.weight(1f).height(12.dp),
+                    color = progressColor,
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    "${compliancePercentage.toInt()}%",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = progressColor
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            if (isCompliant) {
+                Text(
+                    "✓ Compliant with current fiscal year EPR targets.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = IndustrialGreen
+                )
+            } else {
+                Text(
+                    "⚠ At risk of EPR non-compliance penalties.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AlertRed
+                )
             }
         }
     }

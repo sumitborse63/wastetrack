@@ -22,6 +22,9 @@ import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BidDetailScreen(
@@ -30,6 +33,9 @@ fun BidDetailScreen(
     viewModel: BidViewModel = hiltViewModel()
 ) {
     val detailState by viewModel.detailState.collectAsStateWithLifecycle()
+    val userRole by viewModel.userRole.collectAsStateWithLifecycle()
+    val request = detailState.bidRequest
+    val showAwardButton = userRole != com.sktech.wastetrack.domain.model.UserRole.RECYCLER
 
     LaunchedEffect(bidRequestId) {
         viewModel.loadBidDetail(bidRequestId)
@@ -48,6 +54,55 @@ fun BidDetailScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
+        },
+        bottomBar = {
+            if (userRole == com.sktech.wastetrack.domain.model.UserRole.RECYCLER && request?.status == com.sktech.wastetrack.domain.model.BidStatus.OPEN) {
+                var bidPriceText by remember { mutableStateOf("") }
+                var errorMsg by remember { mutableStateOf<String?>(null) }
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth().navigationBarsPadding()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = bidPriceText,
+                            onValueChange = {
+                                bidPriceText = it
+                                errorMsg = null
+                            },
+                            label = { Text("Your Bid") },
+                            placeholder = { Text("₹/kg") },
+                            prefix = { Text("₹") },
+                            suffix = { Text("/kg") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        Button(
+                            onClick = {
+                                val price = bidPriceText.toFloatOrNull()
+                                if (price == null || price <= 0f) {
+                                    errorMsg = "Enter valid price"
+                                } else {
+                                    viewModel.submitBid(price)
+                                    bidPriceText = ""
+                                }
+                            },
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Icon(Icons.Filled.Gavel, null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Place Bid")
+                        }
+                    }
+                }
+            }
         }
     ) { padding ->
         if (detailState.isLoading) {
@@ -55,7 +110,6 @@ fun BidDetailScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
-            val request = detailState.bidRequest
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -172,10 +226,12 @@ fun BidDetailScreen(
                 }
 
                 // All bids
+                val isRequestOpen = request?.status == com.sktech.wastetrack.domain.model.BidStatus.OPEN
                 items(detailState.bids.sortedByDescending { it.pricePerKg }, key = { it.id }) { bid ->
                     BidCard(
                         bid = bid,
                         isTop = bid.id == bestBid?.id,
+                        showAwardButton = showAwardButton && isRequestOpen,
                         onAward = {
                             if (request != null) viewModel.awardBid(bid.id, request.id)
                         }
@@ -197,7 +253,7 @@ private fun InfoColumn(label: String, value: String) {
 }
 
 @Composable
-private fun BidCard(bid: Bid, isTop: Boolean, onAward: () -> Unit) {
+private fun BidCard(bid: Bid, isTop: Boolean, showAwardButton: Boolean, onAward: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (bid.isWinning)
@@ -261,7 +317,7 @@ private fun BidCard(bid: Bid, isTop: Boolean, onAward: () -> Unit) {
                             fontWeight = FontWeight.Bold
                         )
                     }
-                } else if (!bid.isWinning) {
+                } else if (!bid.isWinning && showAwardButton) {
                     TextButton(onClick = onAward, contentPadding = PaddingValues(0.dp)) {
                         Text("Award", style = MaterialTheme.typography.labelSmall)
                     }

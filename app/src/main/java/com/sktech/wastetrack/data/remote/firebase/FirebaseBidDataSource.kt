@@ -92,8 +92,8 @@ class FirebaseBidDataSource @Inject constructor() {
             "isWinning" to bid.isWinning,
             "submittedAt" to bid.submittedAt
         )
-        val docRef = bidsCollection.add(data).await()
-        return docRef.id
+        bidsCollection.document(bid.id).set(data).await()
+        return bid.id
     }
 
     suspend fun awardBid(bidId: String, requestId: String) {
@@ -105,6 +105,27 @@ class FirebaseBidDataSource @Inject constructor() {
         if (!querySnapshot.isEmpty) {
             val docId = querySnapshot.documents[0].id
             bidRequestsCollection.document(docId).update("status", BidStatus.AWARDED.name).await()
+        }
+    }
+
+    suspend fun getBidRequestById(requestId: String): BidRequest? {
+        return try {
+            val doc = bidRequestsCollection.document(requestId).get().await()
+            if (doc.exists()) {
+                BidRequest(
+                    id = doc.id,
+                    factoryId = doc.getString("factoryId") ?: "",
+                    scrapEntryId = doc.getString("scrapEntryId") ?: "",
+                    scrapCategory = ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name),
+                    estimatedWeightKg = doc.getDouble("estimatedWeightKg")?.toFloat() ?: 0f,
+                    reservePricePerKg = doc.getDouble("reservePricePerKg")?.toFloat() ?: 0f,
+                    auctionStartTime = doc.getLong("auctionStartTime") ?: 0L,
+                    auctionEndTime = doc.getLong("auctionEndTime") ?: 0L,
+                    status = BidStatus.valueOf(doc.getString("status") ?: BidStatus.OPEN.name)
+                )
+            } else null
+        } catch (e: Exception) {
+            null
         }
     }
 }

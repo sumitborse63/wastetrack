@@ -41,13 +41,14 @@ val bottomNavItems = listOf(
 @Composable
 fun BottomNavBar(
     currentRoute: String?,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    items: List<BottomNavItem> = bottomNavItems
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
-        bottomNavItems.forEach { item ->
+        items.forEach { item ->
             val isSelected = currentRoute == item.route
             NavigationBarItem(
                 selected = isSelected,

@@ -10,6 +10,12 @@ import java.io.IOException
 class MockApiInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        
+        // Pass through real external network requests (e.g. Gemini AI Vision)
+        if (!request.url.host.contains("wastetrack.mock")) {
+            return chain.proceed(request)
+        }
+
         val path = request.url.encodedPath
 
         val (responseCode, responseJson) = when {

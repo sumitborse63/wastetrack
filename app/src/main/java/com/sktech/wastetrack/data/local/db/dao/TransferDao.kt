@@ -33,6 +33,15 @@ interface TransferDao {
     @Query("SELECT COUNT(*) FROM transfers WHERE fromFactoryId = :factoryId AND initiatedAt >= :since")
     fun getCountSince(factoryId: String, since: Long): Flow<Int>
 
+    @Query("SELECT * FROM transfers WHERE toRecyclerId = :recyclerId ORDER BY initiatedAt DESC")
+    fun getByRecycler(recyclerId: String): Flow<List<TransferEntity>>
+
+    @Query("SELECT SUM(COALESCE(weightAtDestination, weightAtSource)) FROM transfers WHERE toRecyclerId = :recyclerId AND status = 'VERIFIED'")
+    fun getRecycledWeightSum(recyclerId: String): Flow<Float?>
+
+    @Query("SELECT COUNT(*) FROM transfers WHERE toRecyclerId = :recyclerId AND status = :status")
+    fun getCountByRecyclerAndStatus(recyclerId: String, status: String): Flow<Int>
+
     @Delete
     suspend fun delete(transfer: TransferEntity)
 }

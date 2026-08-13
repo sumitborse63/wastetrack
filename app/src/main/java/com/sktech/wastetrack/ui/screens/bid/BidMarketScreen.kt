@@ -34,6 +34,7 @@ fun BidMarketScreen(
     viewModel: BidViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val userRole by viewModel.userRole.collectAsStateWithLifecycle()
 
     // Create Bid Dialog
     if (state.showCreateDialog) {
@@ -41,6 +42,7 @@ fun BidMarketScreen(
             scrapEntries = state.scrapEntries,
             selectedEntryId = state.selectedScrapEntryId,
             reservePrice = state.reservePrice,
+            suggestedPrice = state.suggestedPrice,
             isCreating = state.isCreating,
             error = state.error,
             onSelectEntry = viewModel::onScrapEntrySelected,
@@ -71,14 +73,16 @@ fun BidMarketScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { viewModel.showCreateDialog() },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("New Bid", style = MaterialTheme.typography.labelLarge)
+            if (userRole != com.sktech.wastetrack.domain.model.UserRole.RECYCLER) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.showCreateDialog() },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("New Bid", style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     ) { padding ->
@@ -293,6 +297,7 @@ private fun CreateBidDialog(
     scrapEntries: List<com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity>,
     selectedEntryId: String?,
     reservePrice: String,
+    suggestedPrice: Float?,
     isCreating: Boolean,
     error: String?,
     onSelectEntry: (String) -> Unit,
@@ -363,6 +368,26 @@ private fun CreateBidDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 )
+
+                if (suggestedPrice != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoGraph,
+                            contentDescription = "AI Suggestion",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            "AI Suggested Market Price: ₹$suggestedPrice/kg",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
 
                 if (selectedEntry != null) {
                     val reserve = reservePrice.toFloatOrNull() ?: 0f

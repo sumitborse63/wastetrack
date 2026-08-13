@@ -21,6 +21,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
+import com.sktech.wastetrack.domain.model.UserRole
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -88,8 +93,44 @@ fun LoginScreen(
                     }
 
                     if (!state.isOtpSent) {
+                        Text("Select User Role", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            listOf(UserRole.SUPERVISOR, UserRole.RECYCLER).forEach { role ->
+                                val isSelected = state.selectedRole == role
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(50.dp)
+                                        .clickable { viewModel.onRoleSelected(role) },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                                        contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)) else null,
+                                    shape = MaterialTheme.shapes.medium
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = role.displayName,
+                                            fontWeight = FontWeight.SemiBold,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
                         Text("Enter your phone number", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         
                         OutlinedTextField(
                             value = state.phoneNumber,

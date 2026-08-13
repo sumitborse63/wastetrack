@@ -22,6 +22,7 @@ data class BidMarketState(
     val showCreateDialog: Boolean = false,
     val selectedScrapEntryId: String? = null,
     val reservePrice: String = "",
+    val suggestedPrice: Float? = null,
     val isCreating: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
@@ -43,13 +44,31 @@ class BidViewModel @Inject constructor(
 
     private val factoryId = Constants.DEFAULT_FACTORY_ID
 
+    private val marketRates = mapOf(
+        com.sktech.wastetrack.domain.model.ScrapCategory.METAL to 45f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.PLASTIC to 25f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.PAPER to 15f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.EWASTE to 120f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.GLASS to 10f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.RUBBER to 12f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.CHEMICAL to 80f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.WOOD to 8f,
+        com.sktech.wastetrack.domain.model.ScrapCategory.OTHER to 20f
+    )
+
     private val _state = MutableStateFlow(BidMarketState())
     val state: StateFlow<BidMarketState> = _state.asStateFlow()
 
     private val _detailState = MutableStateFlow(BidDetailState())
     val detailState: StateFlow<BidDetailState> = _detailState.asStateFlow()
 
+    private val _userRole = MutableStateFlow<com.sktech.wastetrack.domain.model.UserRole?>(null)
+    val userRole = _userRole.asStateFlow()
+
     init {
+        viewModelScope.launch {
+            _userRole.value = authRepository.getCurrentUser()?.role
+        }
         viewModelScope.launch {
             bidRepository.getActiveBidRequests().collect { requests ->
                 _state.update { it.copy(bidRequests = requests) }
@@ -67,11 +86,17 @@ class BidViewModel @Inject constructor(
     }
 
     fun dismissCreateDialog() {
-        _state.update { it.copy(showCreateDialog = false, selectedScrapEntryId = null, reservePrice = "") }
+        _state.update { it.copy(showCreateDialog = false, selectedScrapEntryId = null, reservePrice = "", suggestedPrice = null) }
     }
 
     fun onScrapEntrySelected(id: String) {
-        _state.update { it.copy(selectedScrapEntryId = id) }
+        val entry = _state.value.scrapEntries.find { it.id == id }
+        val suggested = if (entry != null) {
+            val cat = try { com.sktech.wastetrack.domain.model.ScrapCategory.valueOf(entry.category) } catch (e: Exception) { com.sktech.wastetrack.domain.model.ScrapCategory.OTHER }
+            marketRates[cat]
+        } else null
+        
+        _state.update { it.copy(selectedScrapEntryId = id, suggestedPrice = suggested) }
     }
 
     fun onReservePriceChanged(price: String) {
@@ -127,8 +152,9 @@ class BidViewModel @Inject constructor(
     fun loadBidDetail(requestId: String) {
         viewModelScope.launch {
             _detailState.update { it.copy(isLoading = true) }
-            // Fetch the specific request from state for now
+            // Try in-memory first, then fall back to repository
             val request = _state.value.bidRequests.find { it.id == requestId }
+                ?: bidRepository.getBidRequestById(requestId)
             _detailState.update { it.copy(bidRequest = request, isLoading = false) }
         }
         viewModelScope.launch {
@@ -148,14 +174,28 @@ class BidViewModel @Inject constructor(
                     return@launch
                 }
 
+                // Check if user already has a bid, update it instead of creating new if so
+                val existingBid = _detailState.value.bids.find { it.recyclerId == user.id }
+                
                 val bid = com.sktech.wastetrack.domain.model.Bid(
-                    id = UUID.randomUUID().toString(),
+                    id = existingBid?.id ?: UUID.randomUUID().toString(),
                     bidRequestId = request.id,
                     recyclerId = user.id,
                     recyclerName = user.name.takeIf { it.isNotBlank() } ?: "Recycler",
                     pricePerKg = pricePerKg,
                     totalBidAmount = pricePerKg * request.estimatedWeightKg
                 )
+
+                // Optimistic UI Update
+                val currentBids = _detailState.value.bids.toMutableList()
+                val index = currentBids.indexOfFirst { it.recyclerId == user.id }
+                if (index != -1) {
+                    currentBids[index] = bid
+                } else {
+                    currentBids.add(0, bid)
+                }
+                _detailState.update { it.copy(bids = currentBids) }
+
                 bidRepository.submitBid(bid)
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message) }
@@ -166,6 +206,15 @@ class BidViewModel @Inject constructor(
     fun awardBid(bidId: String, requestId: String) {
         viewModelScope.launch {
             try {
+                // Optimistic update
+                _detailState.update { current ->
+                    val updatedBids = current.bids.map { bid ->
+                        if (bid.id == bidId) bid.copy(isWinning = true) else bid
+                    }
+                    val updatedRequest = current.bidRequest?.copy(status = com.sktech.wastetrack.domain.model.BidStatus.AWARDED)
+                    current.copy(bids = updatedBids, bidRequest = updatedRequest)
+                }
+                
                 bidRepository.awardBid(bidId, requestId)
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message) }

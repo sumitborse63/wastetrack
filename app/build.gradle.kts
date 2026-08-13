@@ -9,21 +9,16 @@ plugins {
 
 android {
     namespace = "com.sktech.wastetrack"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.sktech.wastetrack"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // Room schema export
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
     }
 
     buildTypes {
@@ -51,6 +46,11 @@ android {
     androidResources {
         noCompress += "tflite"
     }
+}
+
+// Room schema export
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -100,8 +100,13 @@ dependencies {
     // ML Kit
     implementation(libs.mlkit.image.labeling)
     implementation(libs.mlkit.image.labeling.custom)
+    implementation(libs.mlkit.objectdetection)
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.mlkit.text.recognition)
+
+    // TensorFlow Lite Engine (Pure Offline Model Execution)
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
 
     // QR Code Generation
     implementation(libs.zxing.core)

@@ -205,7 +205,75 @@ fun DashboardScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Recent Activity
+        if (state.recentEntries.isNotEmpty()) {
+            Text(
+                text = "Recent Activity",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                state.recentEntries.forEach { entry ->
+                    RecentActivityCard(entry = entry)
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun RecentActivityCard(entry: com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            val category = try {
+                com.sktech.wastetrack.domain.model.ScrapCategory.valueOf(entry.category)
+            } catch (e: Exception) {
+                com.sktech.wastetrack.domain.model.ScrapCategory.OTHER
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = IndustrialGreen.copy(alpha = 0.15f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(category.icon, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                Column {
+                    Text(category.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        com.sktech.wastetrack.util.DateUtils.formatTime(entry.createdAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Text(
+                "${entry.weightKg} kg",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 

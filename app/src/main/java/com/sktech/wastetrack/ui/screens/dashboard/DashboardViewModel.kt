@@ -52,6 +52,7 @@ class DashboardViewModel @Inject constructor(
         binDao.getAlertCount(factoryId),
         certificateDao.getCount(factoryId),
         syncQueueDao.getCount(),
+        scrapEntryDao.getByFactory(factoryId)
     ) { values ->
         DashboardState(
             todayScrapCount = values[0] as Int,
@@ -60,7 +61,8 @@ class DashboardViewModel @Inject constructor(
             binAlerts = values[3] as Int,
             certificateCount = values[4] as Int,
             pendingSyncCount = values[5] as Int,
-            isOnline = networkMonitor.isOnline.value
+            isOnline = networkMonitor.isOnline.value,
+            recentEntries = (values[6] as List<ScrapEntryEntity>).take(5)
         )
     }.stateIn(
         viewModelScope,

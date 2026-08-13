@@ -207,17 +207,40 @@ fun ScrapLogScreen(
             // Sub-category
             item {
                 Text(
-                    "Sub-Category (Optional)",
+                    "Sub-Category",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                state.selectedCategory?.let { category ->
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        items(category.subCategories) { sub ->
+                            val isSelected = state.subCategory == sub
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.onSubCategoryChanged(sub) },
+                                label = {
+                                    Text(sub, style = MaterialTheme.typography.labelMedium)
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = category.color().copy(alpha = 0.25f),
+                                    selectedLabelColor = category.color()
+                                )
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = state.subCategory,
                     onValueChange = { viewModel.onSubCategoryChanged(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., brass turnings, HDPE defective") },
+                    placeholder = { Text("e.g., Copper Wire, Heavy Steel, Brass Scrap") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Category, contentDescription = null)
                     },
@@ -369,7 +392,7 @@ fun ScrapLogScreen(
                                 }
                                 Column {
                                     Text(
-                                        cat.displayName,
+                                        if (entry.subCategory.isNotBlank()) "${cat.displayName} • ${entry.subCategory}" else cat.displayName,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.SemiBold
                                     )

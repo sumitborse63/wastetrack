@@ -27,7 +27,8 @@ data class ComplianceState(
 @HiltViewModel
 class ComplianceViewModel @Inject constructor(
     private val certificateDao: CertificateDao,
-    private val transferDao: TransferDao
+    private val transferDao: TransferDao,
+    private val authRepository: com.sktech.wastetrack.domain.repository.IAuthRepository
 ) : ViewModel() {
 
     private val factoryId = Constants.DEFAULT_FACTORY_ID
@@ -37,13 +38,33 @@ class ComplianceViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            certificateDao.getByFactory(factoryId).collect { certs ->
-                _state.update { it.copy(certificates = certs) }
-            }
-        }
-        viewModelScope.launch {
-            transferDao.getByFactory(factoryId).collect { transfers ->
-                _state.update { it.copy(completedTransfers = transfers.filter { t -> t.status == "VERIFIED" || t.status == "DELIVERED" }) }
+            val user = authRepository.getCurrentUser()
+            val isRecycler = user?.role == com.sktech.wastetrack.domain.model.UserRole.RECYCLER
+
+            if (isRecycler && user != null) {
+                // Recycler: show all certificates (they generated via weight verification)
+                launch {
+                    certificateDao.getAllCertificates().collect { certs ->
+                        _state.update { it.copy(certificates = certs) }
+                    }
+                }
+                launch {
+                    transferDao.getByRecycler(user.id).collect { transfers ->
+                        _state.update { it.copy(completedTransfers = transfers.filter { t -> t.status == "VERIFIED" || t.status == "DELIVERED" }) }
+                    }
+                }
+            } else {
+                // Supervisor: show factory certificates
+                launch {
+                    certificateDao.getByFactory(factoryId).collect { certs ->
+                        _state.update { it.copy(certificates = certs) }
+                    }
+                }
+                launch {
+                    transferDao.getByFactory(factoryId).collect { transfers ->
+                        _state.update { it.copy(completedTransfers = transfers.filter { t -> t.status == "VERIFIED" || t.status == "DELIVERED" }) }
+                    }
+                }
             }
         }
     }

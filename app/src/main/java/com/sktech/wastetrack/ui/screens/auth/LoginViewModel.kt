@@ -8,6 +8,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.sktech.wastetrack.domain.model.UserRole
+import com.sktech.wastetrack.domain.repository.IAuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +25,14 @@ data class LoginState(
     val isLoading: Boolean = false,
     val isOtpSent: Boolean = false,
     val isSuccess: Boolean = false,
+    val selectedRole: UserRole = UserRole.SUPERVISOR,
     val error: String? = null
 )
 
 @HiltViewModel
-class LoginViewModel @Inject constructor() : ViewModel() {
+class LoginViewModel @Inject constructor(
+    private val authRepository: IAuthRepository
+) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
 
@@ -43,6 +48,10 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
     fun onOtpCodeChanged(code: String) {
         _state.update { it.copy(otpCode = code, error = null) }
+    }
+
+    fun onRoleSelected(role: UserRole) {
+        _state.update { it.copy(selectedRole = role) }
     }
 
     fun sendOtp(activity: Activity) {
@@ -65,8 +74,16 @@ class LoginViewModel @Inject constructor() : ViewModel() {
             return
         }
 
-        // Bypass Firebase OTP for now
-        _state.update { it.copy(isLoading = false, isSuccess = true, error = null) }
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                authRepository.setMockRole(state.value.selectedRole)
+                authRepository.setLoggedIn(true)
+                _state.update { it.copy(isLoading = false, isSuccess = true, error = null) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
     }
 
     private fun signInWithCredential(credential: PhoneAuthCredential) {
