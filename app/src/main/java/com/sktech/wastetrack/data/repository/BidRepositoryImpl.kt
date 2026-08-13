@@ -33,4 +33,8 @@ class BidRepositoryImpl @Inject constructor(
     override suspend fun submitBid(bid: Bid): String {
         return firebaseBidDataSource.submitBid(bid)
     }
+
+    override suspend fun awardBid(bidId: String, requestId: String) {
+        firebaseBidDataSource.awardBid(bidId, requestId)
+    }
 }

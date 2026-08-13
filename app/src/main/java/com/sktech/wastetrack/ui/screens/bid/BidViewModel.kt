@@ -3,6 +3,7 @@ package com.sktech.wastetrack.ui.screens.bid
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sktech.wastetrack.domain.model.BidRequest
+import com.sktech.wastetrack.domain.repository.IAuthRepository
 import com.sktech.wastetrack.domain.repository.IBidRepository
 import com.sktech.wastetrack.data.local.db.dao.ScrapEntryDao
 import com.sktech.wastetrack.data.local.db.dao.SyncQueueDao
@@ -35,6 +36,7 @@ data class BidDetailState(
 @HiltViewModel
 class BidViewModel @Inject constructor(
     private val bidRepository: IBidRepository,
+    private val authRepository: IAuthRepository,
     private val scrapEntryDao: ScrapEntryDao,
     private val syncQueueDao: SyncQueueDao
 ) : ViewModel() {
@@ -98,7 +100,7 @@ class BidViewModel @Inject constructor(
                     id = requestId,
                     factoryId = factoryId,
                     scrapEntryId = scrapEntry.id,
-                    scrapCategory = scrapEntry.category,
+                    scrapCategory = try { com.sktech.wastetrack.domain.model.ScrapCategory.valueOf(scrapEntry.category) } catch (e: Exception) { com.sktech.wastetrack.domain.model.ScrapCategory.OTHER },
                     estimatedWeightKg = scrapEntry.weightKg,
                     reservePricePerKg = reserve,
                     auctionStartTime = now,
@@ -139,20 +141,36 @@ class BidViewModel @Inject constructor(
     fun submitBid(pricePerKg: Float) {
         val request = _detailState.value.bidRequest ?: return
         viewModelScope.launch {
-            val bid = com.sktech.wastetrack.domain.model.Bid(
-                id = UUID.randomUUID().toString(),
-                bidRequestId = request.id,
-                recyclerId = "current-recycler", // TODO: Replace with real user ID
-                recyclerName = "My Recycler",
-                pricePerKg = pricePerKg,
-                totalBidAmount = pricePerKg * request.estimatedWeightKg
-            )
-            bidRepository.submitBid(bid)
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user == null) {
+                    _state.update { it.copy(error = "User not logged in") }
+                    return@launch
+                }
+
+                val bid = com.sktech.wastetrack.domain.model.Bid(
+                    id = UUID.randomUUID().toString(),
+                    bidRequestId = request.id,
+                    recyclerId = user.id,
+                    recyclerName = user.name.takeIf { it.isNotBlank() } ?: "Recycler",
+                    pricePerKg = pricePerKg,
+                    totalBidAmount = pricePerKg * request.estimatedWeightKg
+                )
+                bidRepository.submitBid(bid)
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message) }
+            }
         }
     }
 
     fun awardBid(bidId: String, requestId: String) {
-        // Implement logic to award a bid in Firestore if factory owner
+        viewModelScope.launch {
+            try {
+                bidRepository.awardBid(bidId, requestId)
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message) }
+            }
+        }
     }
 
     fun clearSuccess() {

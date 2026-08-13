@@ -211,7 +211,7 @@ private fun BidStatChip(label: String, value: String, color: Color) {
 
 @Composable
 private fun BidRequestCard(request: BidRequest, onClick: () -> Unit) {
-    val category = try { ScrapCategory.valueOf(request.scrapCategory) } catch (_: Exception) { ScrapCategory.OTHER }
+    val category = request.scrapCategory
     val statusColor = when (request.status) {
         BidStatus.OPEN -> Gold
         BidStatus.AWARDED -> IndustrialGreenLight

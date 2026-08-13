@@ -11,10 +11,12 @@ import com.sktech.wastetrack.ui.screens.bid.BidMarketScreen
 import com.sktech.wastetrack.ui.screens.bin.BinMonitorScreen
 import com.sktech.wastetrack.ui.screens.compliance.ComplianceScreen
 import com.sktech.wastetrack.ui.screens.dashboard.DashboardScreen
+import com.sktech.wastetrack.ui.screens.dashboard.LedgerScanScreen
 import com.sktech.wastetrack.ui.screens.scrap.ScrapLogScreen
 import com.sktech.wastetrack.ui.screens.settings.SettingsScreen
 import com.sktech.wastetrack.ui.screens.transfer.TransferScreen
 import com.sktech.wastetrack.ui.screens.scrap.ScrapClassifyScreen
+import com.sktech.wastetrack.ui.screens.analytics.AnalyticsScreen
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.screens.auth.LoginScreen
 
@@ -47,7 +49,8 @@ fun NavGraph(
                 onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
                 onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
                 onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
-                onNavigateToLedgerScan = { /* TODO: Ledger scan */ },
+                onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
+                onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
             )
         }
@@ -110,8 +113,20 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.LedgerScan.route) {
+            LedgerScanScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Settings.route) {
             SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Analytics.route) {
+            AnalyticsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

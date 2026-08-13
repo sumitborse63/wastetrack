@@ -18,8 +18,8 @@ interface BinDao {
     @Query("SELECT * FROM bins WHERE id = :id")
     suspend fun getById(id: String): BinEntity?
 
-    @Query("UPDATE bins SET currentFillKg = :fillKg, fillPercentage = :fillPct, lastUpdated = :timestamp WHERE id = :id")
-    suspend fun updateFillLevel(id: String, fillKg: Float, fillPct: Float, timestamp: Long = System.currentTimeMillis())
+    @Query("UPDATE bins SET currentFillKg = :fillKg, fillPercentage = :fillPct, predictedFullTimestamp = :predictedFullTimestamp, lastUpdated = :timestamp WHERE id = :id")
+    suspend fun updateFillLevel(id: String, fillKg: Float, fillPct: Float, predictedFullTimestamp: Long?, timestamp: Long = System.currentTimeMillis())
 
     @Query("SELECT * FROM bins WHERE factoryId = :factoryId AND fillPercentage >= :threshold ORDER BY fillPercentage DESC")
     fun getOverflowRisk(factoryId: String, threshold: Float = 85f): Flow<List<BinEntity>>

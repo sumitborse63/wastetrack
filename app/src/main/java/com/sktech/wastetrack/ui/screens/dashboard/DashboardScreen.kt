@@ -36,6 +36,7 @@ fun DashboardScreen(
     onNavigateToCompliance: () -> Unit,
     onNavigateToBinMonitor: () -> Unit,
     onNavigateToLedgerScan: () -> Unit,
+    onNavigateToAnalytics: () -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -187,6 +188,20 @@ fun DashboardScreen(
                     onClick = onNavigateToCompliance,
                     modifier = Modifier.weight(1f)
                 )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                QuickActionCard(
+                    title = "Analytics",
+                    subtitle = "Enterprise charts",
+                    icon = Icons.Outlined.Analytics,
+                    color = SyncBlue,
+                    onClick = onNavigateToAnalytics,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
 

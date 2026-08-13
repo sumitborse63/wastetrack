@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.ui.components.VoiceInputButton
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
 
@@ -190,7 +191,12 @@ fun ScrapLogScreen(
                     leadingIcon = {
                         Icon(Icons.Outlined.Scale, contentDescription = null)
                     },
-                    suffix = { Text("kg", fontWeight = FontWeight.Bold) },
+                    trailingIcon = {
+                        VoiceInputButton(
+                            onResult = { viewModel.onWeightChanged(it) },
+                            modifier = Modifier.padding(end = 8.dp).size(36.dp)
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge,
@@ -239,6 +245,12 @@ fun ScrapLogScreen(
                     placeholder = { Text("Additional notes about this scrap batch...") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Notes, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        VoiceInputButton(
+                            onResult = { viewModel.onNotesChanged(it) },
+                            modifier = Modifier.padding(end = 8.dp).size(36.dp)
+                        )
                     },
                     maxLines = 3,
                     textStyle = MaterialTheme.typography.bodyMedium,

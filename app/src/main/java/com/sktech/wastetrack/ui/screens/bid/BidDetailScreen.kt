@@ -67,7 +67,6 @@ fun BidDetailScreen(
                 // Request summary card
                 if (request != null) {
                     item {
-                        val category = try { ScrapCategory.valueOf(request.scrapCategory) } catch (_: Exception) { ScrapCategory.OTHER }
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             shape = MaterialTheme.shapes.medium
@@ -79,16 +78,16 @@ fun BidDetailScreen(
                                 ) {
                                     Surface(
                                         shape = MaterialTheme.shapes.small,
-                                        color = category.color().copy(alpha = 0.15f),
+                                        color = request.scrapCategory.color().copy(alpha = 0.15f),
                                         modifier = Modifier.size(48.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
-                                            Text(category.icon, style = MaterialTheme.typography.headlineSmall)
+                                            Text(request.scrapCategory.icon, style = MaterialTheme.typography.headlineSmall)
                                         }
                                     }
                                     Column {
                                         Text(
-                                            "${category.displayName} Scrap Auction",
+                                            "${request.scrapCategory.displayName} Scrap Auction",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )

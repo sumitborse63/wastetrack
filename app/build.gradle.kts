@@ -47,6 +47,10 @@ android {
         compose = true
         buildConfig = true
     }
+    
+    androidResources {
+        noCompress += "tflite"
+    }
 }
 
 dependencies {
@@ -57,6 +61,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.androidx.biometric)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -94,6 +99,7 @@ dependencies {
 
     // ML Kit
     implementation(libs.mlkit.image.labeling)
+    implementation(libs.mlkit.image.labeling.custom)
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.mlkit.text.recognition)
 

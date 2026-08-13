@@ -1,5 +1,8 @@
 package com.sktech.wastetrack.di
 
+import com.sktech.wastetrack.data.remote.api.HoneywellApi
+import com.sktech.wastetrack.data.remote.api.MockApiInterceptor
+import com.sktech.wastetrack.data.remote.api.MpcbApi
 import com.sktech.wastetrack.util.Constants
 import dagger.Module
 import dagger.Provides
@@ -24,6 +27,7 @@ object NetworkModule {
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
+            .addInterceptor(MockApiInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -38,5 +42,17 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideHoneywellApi(retrofit: Retrofit): HoneywellApi {
+        return retrofit.create(HoneywellApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMpcbApi(retrofit: Retrofit): MpcbApi {
+        return retrofit.create(MpcbApi::class.java)
     }
 }

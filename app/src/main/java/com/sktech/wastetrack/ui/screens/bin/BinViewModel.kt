@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.sktech.wastetrack.data.local.db.dao.BinDao
 import com.sktech.wastetrack.data.local.db.entity.BinEntity
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.domain.model.Bin
+import com.sktech.wastetrack.domain.model.BinStatus
+import com.sktech.wastetrack.domain.usecase.PredictOverflowUseCase
 import com.sktech.wastetrack.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +20,8 @@ import kotlin.random.Random
 
 @HiltViewModel
 class BinViewModel @Inject constructor(
-    private val binDao: BinDao
+    private val binDao: BinDao,
+    private val predictOverflow: PredictOverflowUseCase
 ) : ViewModel() {
 
     private val factoryId = Constants.DEFAULT_FACTORY_ID
@@ -48,10 +52,25 @@ class BinViewModel @Inject constructor(
 
     fun updateBinFill(binId: String) {
         viewModelScope.launch {
-            val bin = binDao.getById(binId) ?: return@launch
-            val newFill = (bin.currentFillKg + Random.nextFloat() * 50f).coerceAtMost(bin.capacityKg)
-            val newPct = (newFill / bin.capacityKg) * 100f
-            binDao.updateFillLevel(binId, newFill, newPct)
+            val entity = binDao.getById(binId) ?: return@launch
+            val newFill = (entity.currentFillKg + Random.nextFloat() * 50f).coerceAtMost(entity.capacityKg)
+            val newPct = (newFill / entity.capacityKg) * 100f
+            
+            // Domain model mapping to calculate prediction
+            val domainBin = Bin(
+                id = entity.id,
+                factoryId = entity.factoryId,
+                scrapCategory = ScrapCategory.valueOf(entity.scrapCategory),
+                capacityKg = entity.capacityKg,
+                currentFillKg = newFill,
+                fillPercentage = newPct,
+                predictedFullTimestamp = entity.predictedFullTimestamp,
+                status = BinStatus.valueOf(entity.status)
+            )
+            
+            val prediction = predictOverflow(domainBin)
+            
+            binDao.updateFillLevel(binId, newFill, newPct, prediction)
         }
     }
 }

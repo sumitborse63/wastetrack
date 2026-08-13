@@ -52,49 +52,21 @@ class LoginViewModel @Inject constructor() : ViewModel() {
             return
         }
 
-        _state.update { it.copy(isLoading = true, error = null) }
-
-        val formattedNumber = if (number.startsWith("+")) number else "+91$number"
-
-        val options = PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(formattedNumber)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setActivity(activity)
-            .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                    signInWithCredential(credential)
-                }
-
-                override fun onVerificationFailed(e: FirebaseException) {
-                    _state.update { it.copy(isLoading = false, error = e.message) }
-                }
-
-                override fun onCodeSent(
-                    verificationId: String,
-                    token: PhoneAuthProvider.ForceResendingToken
-                ) {
-                    storedVerificationId = verificationId
-                    resendToken = token
-                    _state.update { it.copy(isLoading = false, isOtpSent = true, error = null) }
-                }
-            })
-            .build()
-
-        PhoneAuthProvider.verifyPhoneNumber(options)
+        // Bypass Firebase OTP for now
+        storedVerificationId = "mock"
+        _state.update { it.copy(isLoading = false, isOtpSent = true, error = null) }
     }
 
     fun verifyOtp() {
         val code = state.value.otpCode
-        val verificationId = storedVerificationId
 
-        if (code.length < 6 || verificationId == null) {
+        if (code.length < 6) {
             _state.update { it.copy(error = "Invalid OTP") }
             return
         }
 
-        _state.update { it.copy(isLoading = true, error = null) }
-        val credential = PhoneAuthProvider.getCredential(verificationId, code)
-        signInWithCredential(credential)
+        // Bypass Firebase OTP for now
+        _state.update { it.copy(isLoading = false, isSuccess = true, error = null) }
     }
 
     private fun signInWithCredential(credential: PhoneAuthCredential) {

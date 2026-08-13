@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -20,6 +21,7 @@ import com.sktech.wastetrack.data.local.db.entity.CertificateEntity
 import com.sktech.wastetrack.domain.model.CertificateType
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
+import com.sktech.wastetrack.util.PdfExporter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -303,7 +305,8 @@ private fun CertificateDetailDialog(certificate: CertificateEntity, onDismiss: (
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { /* TODO: Export PDF */ }) {
+                val context = LocalContext.current
+                OutlinedButton(onClick = { PdfExporter.exportCertificate(context, certificate) }) {
                     Icon(Icons.Outlined.PictureAsPdf, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Export PDF")

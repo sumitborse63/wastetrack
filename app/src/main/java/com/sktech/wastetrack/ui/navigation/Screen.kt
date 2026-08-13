@@ -21,5 +21,6 @@ sealed class Screen(val route: String) {
     }
     data object BinMonitor : Screen("bin_monitor")
     data object LedgerScan : Screen("ledger_scan")
+    data object Analytics : Screen("analytics")
     data object Settings : Screen("settings")
 }
