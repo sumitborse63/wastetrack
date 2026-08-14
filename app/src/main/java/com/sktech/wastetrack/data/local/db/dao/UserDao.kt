@@ -17,6 +17,12 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE phone = :phone")
     suspend fun getByPhone(phone: String): UserEntity?
 
+    @Query("SELECT * FROM users WHERE phone = :phone AND role = :role LIMIT 1")
+    suspend fun getByPhoneAndRole(phone: String, role: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE role = :role LIMIT 1")
+    suspend fun getByRole(role: String): UserEntity?
+
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getAnyUser(): UserEntity?
 

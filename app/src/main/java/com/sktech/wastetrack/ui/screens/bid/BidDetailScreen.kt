@@ -38,6 +38,8 @@ import com.sktech.wastetrack.util.DateUtils
 fun BidDetailScreen(
     bidRequestId: String,
     onNavigateBack: () -> Unit,
+    onNavigateToTransfer: () -> Unit = {},
+    onNavigateToFleet: () -> Unit = {},
     viewModel: BidViewModel = hiltViewModel()
 ) {
     val detailState by viewModel.detailState.collectAsStateWithLifecycle()
@@ -51,6 +53,68 @@ fun BidDetailScreen(
 
     var bidPriceText by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf<String?>(null) }
+    var pendingAwardBid by remember { mutableStateOf<Bid?>(null) }
+
+    val marketState by viewModel.state.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    marketState.successMessage?.let { msg ->
+        LaunchedEffect(msg) {
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.clearSuccess()
+        }
+    }
+
+    // Award confirmation dialog
+    if (pendingAwardBid != null) {
+        val selectedBid = pendingAwardBid!!
+        val totalValueStr = String.format("%.0f", selectedBid.pricePerKg * (request?.estimatedWeightKg ?: 0f))
+        AlertDialog(
+            onDismissRequest = { pendingAwardBid = null },
+            icon = { Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = Gold, modifier = Modifier.size(32.dp)) },
+            title = {
+                Text(
+                    stringResource(R.string.confirm_award_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.confirm_award_desc,
+                        selectedBid.recyclerName.ifBlank { "Certified Recycler" },
+                        selectedBid.pricePerKg.toString(),
+                        totalValueStr
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val bidToAward = selectedBid
+                        pendingAwardBid = null
+                        viewModel.awardBid(bidToAward.id, bidRequestId)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldPrimary,
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(stringResource(R.string.confirm_award_btn), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingAwardBid = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -231,7 +295,7 @@ fun BidDetailScreen(
 
                                 Surface(
                                     shape = MaterialTheme.shapes.small,
-                                    color = SafetyOrangeContainer,
+                                    color = if (request.status == BidStatus.OPEN) SafetyOrangeContainer else EmeraldContainer,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Row(
@@ -239,13 +303,85 @@ fun BidDetailScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Icon(Icons.Outlined.Timer, null, tint = SafetyOrange, modifier = Modifier.size(16.dp))
+                                        Icon(
+                                            if (request.status == BidStatus.OPEN) Icons.Outlined.Timer else Icons.Filled.CheckCircle,
+                                            null,
+                                            tint = if (request.status == BidStatus.OPEN) SafetyOrange else EmeraldPrimary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
                                         Text(
-                                            text = stringResource(R.string.closing_in_format, DateUtils.getRemainingTimeString(request.auctionEndTime)),
+                                            text = if (request.status == BidStatus.OPEN) {
+                                                stringResource(R.string.closing_in_format, DateUtils.getRemainingTimeString(request.auctionEndTime))
+                                            } else {
+                                                stringResource(R.string.auction_concluded)
+                                            },
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = SafetyOrange,
+                                            color = if (request.status == BidStatus.OPEN) SafetyOrange else EmeraldPrimary,
                                             fontWeight = FontWeight.SemiBold
                                         )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Awarded Dispatch Banner
+                if (request != null && request.status == BidStatus.AWARDED) {
+                    val winningBid = detailState.bids.find { it.isWinning } ?: detailState.bids.firstOrNull()
+                    item {
+                        Surface(
+                            color = EmeraldContainer,
+                            shape = MaterialTheme.shapes.medium,
+                            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.5f)),
+                            shadowElevation = 2.dp,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = Gold, modifier = Modifier.size(24.dp))
+                                    Column {
+                                        Text(
+                                            text = "AUCTION AWARDED & DISPATCHED",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = EmeraldPrimary
+                                        )
+                                        Text(
+                                            text = "Winner: ${winningBid?.recyclerName ?: "Certified Recycler"} · ₹${winningBid?.pricePerKg ?: request.reservePricePerKg}/kg",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = onNavigateToTransfer,
+                                        modifier = Modifier.weight(1f).height(38.dp),
+                                        shape = MaterialTheme.shapes.small,
+                                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                                    ) {
+                                        Icon(Icons.Filled.LocalShipping, null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Transfers", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                    OutlinedButton(
+                                        onClick = onNavigateToFleet,
+                                        modifier = Modifier.weight(1f).height(38.dp),
+                                        shape = MaterialTheme.shapes.small,
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldPrimary)
+                                    ) {
+                                        Icon(Icons.Filled.Navigation, null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Live Fleet", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -303,7 +439,7 @@ fun BidDetailScreen(
                             totalWeightKg = request?.estimatedWeightKg ?: 0f,
                             showAward = showAwardButton && request?.status == BidStatus.OPEN,
                             isAwarding = detailState.isLoading,
-                            onAward = { viewModel.awardBid(bid.id) }
+                            onAward = { pendingAwardBid = bid }
                         )
                     }
                 }
@@ -330,10 +466,22 @@ private fun ModernBidRow(
     onAward: () -> Unit
 ) {
     val isTopBid = rank == 1
+    val isWinning = bid.isWinning
     Surface(
-        color = if (isTopBid) EmeraldContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface,
+        color = when {
+            isWinning -> EmeraldContainer
+            isTopBid -> EmeraldContainer.copy(alpha = 0.4f)
+            else -> MaterialTheme.colorScheme.surface
+        },
         shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, if (isTopBid) EmeraldPrimary.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outline),
+        border = BorderStroke(
+            1.dp,
+            when {
+                isWinning -> EmeraldPrimary
+                isTopBid -> EmeraldPrimary.copy(alpha = 0.4f)
+                else -> MaterialTheme.colorScheme.outline
+            }
+        ),
         shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -350,25 +498,48 @@ private fun ModernBidRow(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = if (isTopBid) EmeraldPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                    color = when {
+                        isWinning -> Gold
+                        isTopBid -> EmeraldPrimary
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
                     modifier = Modifier.size(30.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = "#$rank",
+                            text = if (isWinning) "★" else "#$rank",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (isTopBid) Color.White else MaterialTheme.colorScheme.onSurface
+                            color = if (isWinning) Color.Black else if (isTopBid) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
                 Column {
-                    Text(
-                        text = bid.recyclerName.ifBlank { stringResource(R.string.recycler_id_format, bid.recyclerId.take(6).uppercase()) },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = bid.recyclerName.ifBlank { stringResource(R.string.recycler_id_format, bid.recyclerId.take(6).uppercase()) },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (isWinning) {
+                            Surface(
+                                shape = MaterialTheme.shapes.extraSmall,
+                                color = EmeraldPrimary
+                            ) {
+                                Text(
+                                    text = "WINNER",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
                     Text(
                         text = stringResource(R.string.total_bid_value_format, String.format("%.0f", bid.pricePerKg * totalWeightKg)),
                         style = MaterialTheme.typography.labelSmall,

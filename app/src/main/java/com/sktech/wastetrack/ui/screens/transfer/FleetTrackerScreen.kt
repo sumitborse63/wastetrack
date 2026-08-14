@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -90,7 +91,7 @@ fun FleetTrackerScreen(
                     enabled = parsedWeight != null && parsedWeight > 0f,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text(stringResource(R.string.verify_complete_transfer_btn))
+                    Text(stringResource(R.string.verify_btn))
                 }
             },
             dismissButton = {
@@ -270,7 +271,7 @@ fun FleetTrackerScreen(
                             onVerifyClick = { verifyTransferDialog = transfer },
                             onCallDriver = {
                                 val intent = Intent(Intent.ACTION_DIAL).apply {
-                                    data = Uri.parse("tel:+919823144521")
+                                data = Uri.parse("tel:+919876543210")
                                 }
                                 runCatching { context.startActivity(intent) }
                             }
@@ -329,7 +330,7 @@ fun InteractiveFleetTruckCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            stringResource(R.string.gatepass_dispatched_format, transfer.id.take(8).uppercase(), DateUtils.formatTime(transfer.initiatedAt)),
+                            stringResource(R.string.gatepass_dispatched_format, transfer.id.take(8).uppercase(), DateUtils.formatDateTime(transfer.initiatedAt)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -375,7 +376,7 @@ fun InteractiveFleetTruckCard(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Filled.Navigation, contentDescription = null, tint = Teal, modifier = Modifier.size(14.dp))
                             Text(
-                                if (isInTransit) stringResource(R.string.live_route_demo) else stringResource(R.string.origin_demo),
+                                if (isInTransit) stringResource(R.string.live_route_demo) else stringResource(R.string.origin_ambad_demo),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -404,7 +405,7 @@ fun InteractiveFleetTruckCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(stringResource(R.string.factory_plant_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(stringResource(R.string.in_transit_badge), style = MaterialTheme.typography.labelSmall, color = Teal, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.status_in_transit), style = MaterialTheme.typography.labelSmall, color = Teal, fontWeight = FontWeight.Bold)
                         Text(stringResource(R.string.recycler_yard_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -425,7 +426,7 @@ fun InteractiveFleetTruckCard(
 
                 if (transfer.weightAtDestination != null && transfer.weightAtDestination > 0f) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(stringResource(R.string.destination_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.dest_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("${transfer.weightAtDestination} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
                     }
                 }
@@ -440,28 +441,43 @@ fun InteractiveFleetTruckCard(
                 Spacer(modifier = Modifier.height(14.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
                         onClick = onCallDriver,
                         modifier = Modifier.weight(1f).height(42.dp),
                         shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
                     ) {
-                        Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.call_driver_btn), style = MaterialTheme.typography.labelMedium)
+                        Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(15.dp), tint = EmeraldPrimary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.call_driver),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
                     Button(
                         onClick = onVerifyClick,
-                        modifier = Modifier.weight(1.5f).height(42.dp),
+                        modifier = Modifier.weight(1.3f).height(42.dp),
                         shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
-                        Icon(Icons.Filled.Scale, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.weighbridge_check_btn), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                        Icon(Icons.Filled.Scale, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.weighbridge_check),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }

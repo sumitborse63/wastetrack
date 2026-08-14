@@ -66,6 +66,13 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.concurrent:concurrent-futures:1.2.0")
+        force("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+    }
+}
+
 dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)

@@ -2,7 +2,7 @@ package com.sktech.wastetrack
 
 import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,7 +26,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     @Inject lateinit var authRepository: IAuthRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +57,8 @@ class MainActivity : ComponentActivity() {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
                         
-                        val currentUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null, keys = arrayOf(currentRoute, currentLanguage)) {
+                        val selectedRole = authRepository.getSelectedRole()
+                        val currentUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null, keys = arrayOf(currentRoute, currentLanguage, selectedRole)) {
                             value = authRepository.getCurrentUser()
                         }
 
@@ -67,8 +68,8 @@ class MainActivity : ComponentActivity() {
                             Screen.Login.route
                         }
 
-                        val filteredNavItems = remember(currentUser) {
-                            com.sktech.wastetrack.ui.navigation.getBottomNavItemsForRole(currentUser?.role)
+                        val filteredNavItems = remember(currentUser, selectedRole) {
+                            com.sktech.wastetrack.ui.navigation.getBottomNavItemsForRole(currentUser?.role ?: selectedRole)
                         }
 
                         val showBottomNav = currentRoute in filteredNavItems.map { it.route }

@@ -312,8 +312,8 @@ private fun ModernTransferCard(transfer: TransferEntity) {
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(stringResource(R.string.time_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(DateUtils.formatTime(transfer.initiatedAt), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stringResource(R.string.date_time_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(DateUtils.formatDateTime(transfer.initiatedAt), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }

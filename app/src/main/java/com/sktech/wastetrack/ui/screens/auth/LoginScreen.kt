@@ -29,6 +29,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.UserRole
+import com.sktech.wastetrack.domain.model.biometric.BiometricAuthResult
+import com.sktech.wastetrack.domain.model.biometric.BiometricPromptConfig
+import com.sktech.wastetrack.ui.biometric.rememberBiometricPromptLauncher
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.LocaleHelper
 
@@ -40,8 +43,13 @@ fun LoginScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current as Activity
+    val biometricLauncher = rememberBiometricPromptLauncher()
     val currentLang by LocaleHelper.currentLanguage.collectAsStateWithLifecycle()
     var showLanguageMenu by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.resetState()
+    }
 
     LaunchedEffect(state.isSuccess, state.needsProfileSetup) {
         if (state.needsProfileSetup) {
@@ -314,7 +322,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = state.phoneNumber,
                             onValueChange = viewModel::onPhoneNumberChanged,
-                            placeholder = { Text("94035 80730", color = TextMuted) },
+                            placeholder = { Text("98765 43210", color = TextMuted) },
                             prefix = { Text("+91 ", color = EmeraldPrimary, fontWeight = FontWeight.Bold) },
                             leadingIcon = { Icon(Icons.Outlined.Phone, contentDescription = null, tint = EmeraldPrimary) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -354,25 +362,43 @@ fun LoginScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Fast 1-Tap Login Button
-                        OutlinedButton(
-                            onClick = { viewModel.quickDemoLogin(state.selectedRole) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            shape = MaterialTheme.shapes.medium,
-                            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldPrimary)
-                        ) {
-                            Icon(Icons.Filled.Bolt, contentDescription = null, modifier = Modifier.size(18.dp), tint = Gold)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                stringResource(R.string.instant_sign_in, stringResource(state.selectedRole.nameRes)),
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                        // Biometric Quick Unlock (if enabled)
+                        AnimatedVisibility(visible = state.isBiometricEnabled && state.isBiometricSupported) {
+                            Column {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        biometricLauncher.authenticate(
+                                            BiometricPromptConfig(
+                                                title = "Biometric Login",
+                                                subtitle = "Verify fingerprint to unlock session",
+                                                allowDeviceCredential = true
+                                            )
+                                        ) { result ->
+                                            if (result is BiometricAuthResult.Success) {
+                                                viewModel.performBiometricLogin(state.selectedRole)
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp),
+                                    shape = MaterialTheme.shapes.medium,
+                                    border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.6f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = EmeraldContainer.copy(alpha = 0.3f),
+                                        contentColor = EmeraldPrimary
+                                    )
+                                ) {
+                                    Icon(Icons.Filled.Fingerprint, contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldPrimary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Unlock with Biometrics",
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
                         }
                     } else {
                         // OTP Verification State

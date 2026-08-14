@@ -452,7 +452,7 @@ private fun ActiveTripCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Dispatched: ${DateUtils.formatTime(transfer.initiatedAt)}",
+                            text = "Dispatched: ${DateUtils.formatDateTime(transfer.initiatedAt)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -598,7 +598,7 @@ private fun CompletedTripItem(trip: TransferEntity) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Delivered: ${DateUtils.formatTime(trip.completedAt ?: trip.initiatedAt)}",
+                        text = "Delivered: ${DateUtils.formatDateTime(trip.completedAt ?: trip.initiatedAt)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

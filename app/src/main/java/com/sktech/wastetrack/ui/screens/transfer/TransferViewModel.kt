@@ -2,6 +2,8 @@ package com.sktech.wastetrack.ui.screens.transfer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sktech.wastetrack.data.biometric.BiometricAuthManager
+import com.sktech.wastetrack.data.biometric.BiometricPreferencesManager
 import com.sktech.wastetrack.data.local.db.dao.CertificateDao
 import com.sktech.wastetrack.data.local.db.dao.ScrapEntryDao
 import com.sktech.wastetrack.data.local.db.dao.TransferDao
@@ -27,6 +29,8 @@ data class TransferState(
     val vehicleNumber: String = "",
     val isCreating: Boolean = false,
     val qrPayload: String? = null,
+    val isBiometricDispatchRequired: Boolean = false,
+    val isBiometricSupported: Boolean = false,
     val successMessage: String? = null,
     val error: String? = null
 )
@@ -39,16 +43,34 @@ class TransferViewModel @Inject constructor(
     private val certificateDao: CertificateDao,
     private val syncQueueDao: SyncQueueDao,
     private val authRepository: com.sktech.wastetrack.domain.repository.IAuthRepository,
-    private val cloudSyncEngine: com.sktech.wastetrack.data.sync.CloudSyncEngine
+    private val cloudSyncEngine: com.sktech.wastetrack.data.sync.CloudSyncEngine,
+    private val biometricPrefs: BiometricPreferencesManager,
+    private val biometricAuthManager: BiometricAuthManager
 ) : ViewModel() {
 
     private var factoryId: String? = null
     private var userId: String? = null
 
-    private val _state = MutableStateFlow(TransferState())
+    private val _state = MutableStateFlow(
+        TransferState(
+            isBiometricDispatchRequired = biometricPrefs.getBiometricDispatchRequired(),
+            isBiometricSupported = biometricAuthManager.isBiometricAvailable()
+        )
+    )
     val state: StateFlow<TransferState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            biometricPrefs.isBiometricDispatchRequired.collect { isRequired ->
+                _state.update {
+                    it.copy(
+                        isBiometricDispatchRequired = isRequired,
+                        isBiometricSupported = biometricAuthManager.isBiometricAvailable()
+                    )
+                }
+            }
+        }
+
         viewModelScope.launch {
             val user = authRepository.getCurrentUser()
             if (user == null) {

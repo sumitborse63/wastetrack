@@ -13,4 +13,6 @@ interface IAuthRepository {
     suspend fun setSelectedRole(role: UserRole)
     fun getSelectedRole(): UserRole
     fun isLoggedIn(): Boolean
+    suspend fun setLastEnteredPhone(phone: String)
+    fun getLastEnteredPhone(): String
 }

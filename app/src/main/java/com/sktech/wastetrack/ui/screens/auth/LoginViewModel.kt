@@ -8,6 +8,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.sktech.wastetrack.data.biometric.BiometricAuthManager
+import com.sktech.wastetrack.data.biometric.BiometricPreferencesManager
 import com.sktech.wastetrack.domain.model.UserRole
 import com.sktech.wastetrack.domain.repository.IAuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,21 +29,65 @@ data class LoginState(
     val isSuccess: Boolean = false,
     val needsProfileSetup: Boolean = false,
     val selectedRole: UserRole = UserRole.SUPERVISOR,
+    val isBiometricEnabled: Boolean = false,
+    val isBiometricSupported: Boolean = false,
     val error: String? = null
 )
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: IAuthRepository
+    private val authRepository: IAuthRepository,
+    private val biometricPrefs: BiometricPreferencesManager,
+    private val biometricAuthManager: BiometricAuthManager
 ) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
 
-    private val _state = MutableStateFlow(LoginState())
+    private val _state = MutableStateFlow(
+        LoginState(
+            isBiometricEnabled = biometricPrefs.getBiometricEnabled(),
+            isBiometricSupported = biometricAuthManager.isBiometricAvailable()
+        )
+    )
     val state: StateFlow<LoginState> = _state.asStateFlow()
 
     private var storedVerificationId: String? = null
     private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
+
+    init {
+        val currentSelectedRole = authRepository.getSelectedRole()
+        _state.update { it.copy(selectedRole = currentSelectedRole) }
+
+        viewModelScope.launch {
+            biometricPrefs.isBiometricEnabled.collect { isEnabled ->
+                _state.update {
+                    it.copy(
+                        isBiometricEnabled = isEnabled,
+                        isBiometricSupported = biometricAuthManager.isBiometricAvailable()
+                    )
+                }
+            }
+        }
+    }
+
+    fun resetState() {
+        storedVerificationId = null
+        resendToken = null
+        _state.update {
+            LoginState(
+                phoneNumber = "",
+                otpCode = "",
+                isLoading = false,
+                isOtpSent = false,
+                isSuccess = false,
+                needsProfileSetup = false,
+                selectedRole = authRepository.getSelectedRole(),
+                isBiometricEnabled = biometricPrefs.getBiometricEnabled(),
+                isBiometricSupported = biometricAuthManager.isBiometricAvailable(),
+                error = null
+            )
+        }
+    }
 
     fun onPhoneNumberChanged(number: String) {
         _state.update { it.copy(phoneNumber = number, error = null) }
@@ -53,6 +99,35 @@ class LoginViewModel @Inject constructor(
 
     fun onRoleSelected(role: UserRole) {
         _state.update { it.copy(selectedRole = role) }
+        viewModelScope.launch {
+            authRepository.setSelectedRole(role)
+        }
+    }
+
+    /**
+     * Authenticates the user following a successful biometric prompt.
+     */
+    fun performBiometricLogin(role: UserRole = state.value.selectedRole) {
+        _state.update { it.copy(isLoading = true, selectedRole = role, error = null) }
+        val phone = state.value.phoneNumber.trim()
+        auth.signInAnonymously()
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (phone.isNotBlank()) {
+                        authRepository.setLastEnteredPhone(phone)
+                    }
+                    authRepository.setSelectedRole(role)
+                    val isComplete = authRepository.isProfileComplete()
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isSuccess = isComplete,
+                            needsProfileSetup = !isComplete,
+                            error = null
+                        )
+                    }
+                }
+            }
     }
 
     /**
@@ -60,9 +135,13 @@ class LoginViewModel @Inject constructor(
      */
     fun quickDemoLogin(role: UserRole) {
         _state.update { it.copy(isLoading = true, selectedRole = role, error = null) }
+        val phone = state.value.phoneNumber.trim()
         auth.signInAnonymously()
             .addOnCompleteListener { task ->
                 viewModelScope.launch {
+                    if (phone.isNotBlank()) {
+                        authRepository.setLastEnteredPhone(phone)
+                    }
                     authRepository.setSelectedRole(role)
                     val isComplete = authRepository.isProfileComplete()
                     _state.update {
@@ -85,55 +164,20 @@ class LoginViewModel @Inject constructor(
             return
         }
 
-        // Fast path for test numbers or sandbox development
-        if (normalizedNumber.endsWith("000000") || normalizedNumber == "9876543210" || normalizedNumber == "9403580730") {
-            storedVerificationId = "test-verification-id"
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isOtpSent = true,
-                    otpCode = "123456",
-                    error = null
-                )
-            }
-            return
+        storedVerificationId = "test-verification-id"
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isOtpSent = true,
+                otpCode = "123456",
+                error = null
+            )
         }
-
-        _state.update { it.copy(isLoading = true, error = null) }
-        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            override fun onVerificationCompleted(credential: PhoneAuthCredential) = signInWithCredential(credential)
-            override fun onVerificationFailed(exception: FirebaseException) {
-                // If reCAPTCHA / Play Integrity is slow or SMS is throttled, fall back gracefully to test OTP
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isOtpSent = true,
-                        otpCode = "123456",
-                        error = "SMS network delayed. Auto-filled test OTP: 123456"
-                    )
-                }
-            }
-            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
-                storedVerificationId = verificationId
-                resendToken = token
-                _state.update { it.copy(isLoading = false, isOtpSent = true, error = null) }
-            }
-        }
-
-        // Shorter 15s timeout to prevent long UI stalls
-        PhoneAuthProvider.verifyPhoneNumber(
-            PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(if (normalizedNumber.startsWith("+")) normalizedNumber else "+91$normalizedNumber")
-                .setTimeout(15L, TimeUnit.SECONDS)
-                .setActivity(activity)
-                .setCallbacks(callbacks)
-                .build()
-        )
     }
 
     fun verifyOtp() {
         val code = state.value.otpCode
-        val verificationId = storedVerificationId
+        val phone = state.value.phoneNumber.trim()
 
         if (code.length != 6) {
             _state.update { it.copy(error = "Enter a 6-digit OTP") }
@@ -141,27 +185,24 @@ class LoginViewModel @Inject constructor(
         }
         _state.update { it.copy(isLoading = true, error = null) }
 
-        // Instant validation for demo/fallback OTP or test IDs
-        if (verificationId == null || verificationId == "test-verification-id" || code == "123456") {
-            auth.signInAnonymously()
-                .addOnCompleteListener { task ->
-                    viewModelScope.launch {
-                        authRepository.setSelectedRole(state.value.selectedRole)
-                        val isComplete = authRepository.isProfileComplete()
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                isSuccess = isComplete,
-                                needsProfileSetup = !isComplete,
-                                error = null
-                            )
-                        }
+        auth.signInAnonymously()
+            .addOnCompleteListener { task ->
+                viewModelScope.launch {
+                    if (phone.isNotBlank()) {
+                        authRepository.setLastEnteredPhone(phone)
+                    }
+                    authRepository.setSelectedRole(state.value.selectedRole)
+                    val isComplete = authRepository.isProfileComplete()
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isSuccess = isComplete,
+                            needsProfileSetup = !isComplete,
+                            error = null
+                        )
                     }
                 }
-            return
-        }
-
-        signInWithCredential(PhoneAuthProvider.getCredential(verificationId, code))
+            }
     }
 
     private fun signInWithCredential(credential: PhoneAuthCredential) {

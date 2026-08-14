@@ -732,7 +732,7 @@ private fun InTransitCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${stringResource(R.string.dispatched_label)}: ${DateUtils.formatTime(transfer.initiatedAt)}",
+                        text = "${stringResource(R.string.dispatched_label)}: ${DateUtils.formatDateTime(transfer.initiatedAt)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

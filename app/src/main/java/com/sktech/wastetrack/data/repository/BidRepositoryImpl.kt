@@ -12,8 +12,10 @@ import com.sktech.wastetrack.domain.repository.IBidRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
@@ -44,30 +46,38 @@ class BidRepositoryImpl @Inject constructor(
         }
 
         val firebaseFlow = firebaseBidDataSource.getActiveBidRequests()
+            .catch { emit(emptyList()) }
+            .onStart { emit(emptyList()) }
 
         return combine(roomFlow, firebaseFlow) { local, remote ->
-            // Background sync remote requests to local Room
+            // Background sync remote requests to local Room without overwriting local AWARDED state
             scope.launch {
                 remote.forEach { r ->
-                    bidDao.insertRequest(
-                        BidRequestEntity(
-                            id = r.id,
-                            factoryId = r.factoryId,
-                            createdByUserId = r.createdByUserId,
-                            scrapEntryId = r.scrapEntryId,
-                            scrapCategory = r.scrapCategory.name,
-                            estimatedWeightKg = r.estimatedWeightKg,
-                            reservePricePerKg = r.reservePricePerKg,
-                            auctionStartTime = r.auctionStartTime,
-                            auctionEndTime = r.auctionEndTime,
-                            status = r.status.name
+                    val localReq = bidDao.getRequestById(r.id)
+                    if (localReq == null || localReq.status != "AWARDED") {
+                        bidDao.insertRequest(
+                            BidRequestEntity(
+                                id = r.id,
+                                factoryId = r.factoryId,
+                                createdByUserId = r.createdByUserId,
+                                scrapEntryId = r.scrapEntryId,
+                                scrapCategory = r.scrapCategory.name,
+                                estimatedWeightKg = r.estimatedWeightKg,
+                                reservePricePerKg = r.reservePricePerKg,
+                                auctionStartTime = r.auctionStartTime,
+                                auctionEndTime = r.auctionEndTime,
+                                status = r.status.name
+                            )
                         )
-                    )
+                    }
                 }
             }
-            // Merge with local priority so user-created requests show immediately
+            val localMap = local.associateBy { it.id }
             val remoteMap = remote.associateBy { it.id }
-            val merged = (local.filter { !remoteMap.containsKey(it.id) } + remote)
+            val merged = (remote.map { r ->
+                val l = localMap[r.id]
+                if (l != null && l.status == BidStatus.AWARDED) r.copy(status = BidStatus.AWARDED) else r
+            } + local.filter { !remoteMap.containsKey(it.id) })
                 .sortedBy { it.auctionEndTime }
             merged
         }
@@ -92,28 +102,37 @@ class BidRepositoryImpl @Inject constructor(
         }
 
         val firebaseFlow = firebaseBidDataSource.getAllBidRequests()
+            .catch { emit(emptyList()) }
+            .onStart { emit(emptyList()) }
 
         return combine(roomFlow, firebaseFlow) { local, remote ->
             scope.launch {
                 remote.forEach { r ->
-                    bidDao.insertRequest(
-                        BidRequestEntity(
-                            id = r.id,
-                            factoryId = r.factoryId,
-                            createdByUserId = r.createdByUserId,
-                            scrapEntryId = r.scrapEntryId,
-                            scrapCategory = r.scrapCategory.name,
-                            estimatedWeightKg = r.estimatedWeightKg,
-                            reservePricePerKg = r.reservePricePerKg,
-                            auctionStartTime = r.auctionStartTime,
-                            auctionEndTime = r.auctionEndTime,
-                            status = r.status.name
+                    val localReq = bidDao.getRequestById(r.id)
+                    if (localReq == null || localReq.status != "AWARDED") {
+                        bidDao.insertRequest(
+                            BidRequestEntity(
+                                id = r.id,
+                                factoryId = r.factoryId,
+                                createdByUserId = r.createdByUserId,
+                                scrapEntryId = r.scrapEntryId,
+                                scrapCategory = r.scrapCategory.name,
+                                estimatedWeightKg = r.estimatedWeightKg,
+                                reservePricePerKg = r.reservePricePerKg,
+                                auctionStartTime = r.auctionStartTime,
+                                auctionEndTime = r.auctionEndTime,
+                                status = r.status.name
+                            )
                         )
-                    )
+                    }
                 }
             }
+            val localMap = local.associateBy { it.id }
             val remoteMap = remote.associateBy { it.id }
-            val merged = (local.filter { !remoteMap.containsKey(it.id) } + remote)
+            val merged = (remote.map { r ->
+                val l = localMap[r.id]
+                if (l != null && l.status == BidStatus.AWARDED) r.copy(status = BidStatus.AWARDED) else r
+            } + local.filter { !remoteMap.containsKey(it.id) })
                 .sortedByDescending { it.auctionStartTime }
             merged
         }
@@ -167,28 +186,37 @@ class BidRepositoryImpl @Inject constructor(
         }
 
         val firebaseFlow = firebaseBidDataSource.getBidsForRequest(requestId)
+            .catch { emit(emptyList()) }
+            .onStart { emit(emptyList()) }
 
         return combine(roomFlow, firebaseFlow) { local, remote ->
-            // Save any newly arrived remote bids to Room
+            // Save any newly arrived remote bids to Room unless locally awarded
             scope.launch {
+                val localReq = bidDao.getRequestById(requestId)
+                val isLocallyAwarded = localReq?.status == "AWARDED"
                 remote.forEach { b ->
-                    bidDao.insertBid(
-                        BidEntity(
-                            id = b.id,
-                            bidRequestId = b.bidRequestId,
-                            recyclerId = b.recyclerId,
-                            recyclerName = b.recyclerName,
-                            pricePerKg = b.pricePerKg,
-                            totalBidAmount = b.totalBidAmount,
-                            isWinning = b.isWinning,
-                            submittedAt = b.submittedAt
+                    if (!isLocallyAwarded || b.isWinning) {
+                        bidDao.insertBid(
+                            BidEntity(
+                                id = b.id,
+                                bidRequestId = b.bidRequestId,
+                                recyclerId = b.recyclerId,
+                                recyclerName = b.recyclerName,
+                                pricePerKg = b.pricePerKg,
+                                totalBidAmount = b.totalBidAmount,
+                                isWinning = b.isWinning,
+                                submittedAt = b.submittedAt
+                            )
                         )
-                    )
+                    }
                 }
             }
-            // Merge local and remote uniquely
+            val localMap = local.associateBy { it.id }
             val remoteMap = remote.associateBy { it.id }
-            val merged = (local.filter { !remoteMap.containsKey(it.id) } + remote)
+            val merged = (remote.map { r ->
+                val l = localMap[r.id]
+                if (l != null && l.isWinning) r.copy(isWinning = true) else r
+            } + local.filter { !remoteMap.containsKey(it.id) })
                 .sortedByDescending { it.pricePerKg }
             merged
         }
@@ -224,6 +252,7 @@ class BidRepositoryImpl @Inject constructor(
     }
 
     override suspend fun awardBid(bidId: String, requestId: String) {
+        bidDao.resetWinningForRequest(requestId)
         bidDao.markWinning(bidId)
         val req = bidDao.getRequestById(requestId)
         if (req != null) {

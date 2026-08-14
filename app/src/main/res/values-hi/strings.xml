@@ -244,6 +244,11 @@
     <string name="verify_identity_bio">सुरक्षा हेतु पहचान सत्यापित करें</string>
     <string name="biometrics_enabled_msg">बायोमेट्रिक सुरक्षा सक्षम की गई</string>
     <string name="biometrics_not_available">इस उपकरण पर बायोमेट्रिक उपलब्ध नहीं है</string>
+    <string name="biometrics_active_msg">बायोमेट्रिक सुरक्षा सक्रिय है</string>
+    <string name="biometric_login">बायोमेट्रिक लॉगिन</string>
+    <string name="biometric_unlock">बायोमेट्रिक से अनलॉक करें</string>
+    <string name="verify_btn">सत्यापित करें</string>
+    <string name="active_status">सक्रिय</string>
     
     <!-- Transfer Statuses -->
     <string name="status_initiated">प्रारंभ किया (Initiated)</string>
@@ -478,7 +483,7 @@
     <string name="efficiency_score_basis">शून्य-ओवरफ्लो एवं समयबद्ध प्रेषण पर आधारित</string>
 
     <!-- Settings & Voice (Hindi) -->
-    <string name="settings_subtitle">एंटरप्राइज विन्यास एवं बायोमेट्रिक सुरक्षा</string>
+    <string name="settings_subtitle">विन्यास एवं बायोमेट्रिक सुरक्षा</string>
     <string name="lang_selected_msg">%1$s चुनी गई</string>
     <string name="edit_profile_title">संस्था प्रोफाइल संपादित करें</string>
     <string name="full_name_label">पूरा नाम</string>
@@ -495,7 +500,7 @@
     <string name="sync_status_desc">सक्रिय निरंतर सिंक (रूम डीबी + फायरस्टोर)</string>
     <string name="biometric_auth_desc">स्क्रैप प्रेषण हेतु बायोमेट्रिक प्रमाणीकरण आवश्यक करें</string>
     <string name="system_info_title">सिस्टम जानकारी</string>
-    <string name="system_info_desc">वेस्टट्रैक एंटरप्राइज v1.2.0 (आईआईटी बॉम्बे सस्टेनेबिलिटी संस्करण)</string>
+    <string name="system_info_desc">WasteTrack v1.2.0 — Team Astranyx</string>
     <string name="mic_permission_required">ध्वनि द्वारा प्रविष्टि हेतु माइक्रोफ़ोन अनुमति आवश्यक है</string>
     <string name="speech_not_supported">इस उपकरण पर ध्वनि पहचान समर्थित नहीं है</string>
     <string name="voice_input_action">आवाज द्वारा इनपुट</string>
@@ -527,4 +532,21 @@
     <string name="supervisor_audit_trail">रीयल-टाइम फ्लोर ऑडिट लॉग</string>
     <string name="export_audit_report">ईएसजी और एमपीसीबी ऑडिट रिपोर्ट डाउनलोड करें</string>
     <string name="analytics">एनालिटिक्स</string>
+
+    <!-- Missing Settings & Fleet Tracker Strings (Hindi) -->
+    <string name="full_name">पूरा नाम</string>
+    <string name="mpcb_auth_no_label">एमपीसीबी प्राधिकरण संख्या</string>
+    <string name="gstin_license_no_label">जीएसटीआईएन / कारखाना लाइसेंस नंबर</string>
+    <string name="sync_status_sub">सक्रिय निरंतर सिंक (रूम डीबी + फायरस्टोर)</string>
+    <string name="system_info_sub">WasteTrack v1.2.0 — Team Astranyx</string>
+    <string name="weighbridge_dialog_title">कांटा (वेब्रिज) आगमन सत्यापन</string>
+    <string name="vehicle_dispatched_format">वाहन: %1$s (भेजा गया: %2$s किग्रा)</string>
+    <string name="measured_dest_weight_label">गंतव्य स्थान पर मापा गया वजन (किग्रा)</string>
+    <string name="mpcb_form10_cert_notice">गंतव्य वजन सत्यापित करने पर स्वचालित रूप से डिजिटल रूप से हस्ताक्षरित एमपीसीबी फॉर्म 10 प्रमाणपत्र जारी किया जाएगा।</string>
+    <string name="trucks_in_transit_sub">पारगमन में ट्रक</string>
+    <string name="completed_deliveries_sub">पूर्ण हुई डिलीवरी</string>
+    <string name="date_time_label">दिनांक एवं समय</string>
+    <string name="confirm_award_title">नीलामी बैच आवंटित करें</string>
+    <string name="confirm_award_desc">क्या आप वाकई यह बैच %1$s को ₹%2$s/किग्रा (कुल ₹%3$s) पर आवंटित करना चाहते हैं?\n\nयह नीलामी समाप्त करेगा और फ्लीट ट्रांजिट के लिए गेट पास जारी करेगा।</string>
+    <string name="confirm_award_btn">पुष्टि करें और आवंटित करें</string>
 </resources>

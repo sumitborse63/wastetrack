@@ -66,19 +66,25 @@ fun NavGraph(
         }
 
         composable(Screen.Dashboard.route) {
-            val dashboardUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null) {
+            val selectedRole = authRepository.getSelectedRole()
+            val dashboardUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null, key1 = selectedRole) {
                 value = authRepository.getCurrentUser()
             }
 
             androidx.compose.runtime.LaunchedEffect(dashboardUser) {
-                if (dashboardUser != null && !dashboardUser!!.isProfileComplete) {
+                if (!authRepository.isLoggedIn()) {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                } else if (dashboardUser != null && !dashboardUser!!.isProfileComplete) {
                     navController.navigate(Screen.SignUp.route) {
                         popUpTo(Screen.Dashboard.route) { inclusive = true }
                     }
                 }
             }
             
-            when (dashboardUser?.role) {
+            val activeRole = dashboardUser?.role ?: selectedRole
+            when (activeRole) {
                 UserRole.RECYCLER -> {
                     RecyclerDashboardScreen(
                         onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
@@ -179,7 +185,9 @@ fun NavGraph(
             val bidRequestId = backStackEntry.arguments?.getString("bidRequestId") ?: ""
             BidDetailScreen(
                 bidRequestId = bidRequestId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
             )
         }
  

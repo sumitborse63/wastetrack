@@ -1,16 +1,18 @@
 package com.sktech.wastetrack.util
 
 import android.content.Context
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.sktech.wastetrack.data.biometric.BiometricAuthManager
+import com.sktech.wastetrack.domain.model.biometric.BiometricAuthResult
+import com.sktech.wastetrack.domain.model.biometric.BiometricPromptConfig
 
+/**
+ * Utility wrapper providing biometric authentication helpers for legacy or static calls.
+ */
 object SecurityHelper {
 
     fun isBiometricAvailable(context: Context): Boolean {
-        val biometricManager = BiometricManager.from(context)
-        return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
+        return BiometricAuthManager(context).isBiometricAvailable()
     }
 
     fun showBiometricPrompt(
@@ -20,31 +22,21 @@ object SecurityHelper {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val executor = ContextCompat.getMainExecutor(activity)
-        val biometricPrompt = BiometricPrompt(activity, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
-                    onError(errString.toString())
-                }
+        val manager = BiometricAuthManager(activity.applicationContext)
+        val config = BiometricPromptConfig(
+            title = title,
+            subtitle = subtitle,
+            allowDeviceCredential = true
+        )
 
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    onSuccess()
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    onError("Authentication failed")
-                }
-            })
-
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(title)
-            .setSubtitle(subtitle)
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
+        manager.authenticate(activity, config) { result ->
+            when (result) {
+                is BiometricAuthResult.Success -> onSuccess()
+                is BiometricAuthResult.Error -> onError(result.errorMessage)
+                is BiometricAuthResult.Failed -> onError("Authentication failed")
+                is BiometricAuthResult.Cancelled -> onError("Authentication cancelled")
+                is BiometricAuthResult.Unavailable -> onError("Biometrics not available")
+            }
+        }
     }
 }

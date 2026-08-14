@@ -1,5 +1,6 @@
 package com.sktech.wastetrack.data.remote.firebase
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
 import com.sktech.wastetrack.domain.model.Bid
@@ -7,6 +8,7 @@ import com.sktech.wastetrack.domain.model.BidRequest
 import com.sktech.wastetrack.domain.model.BidStatus
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.*
@@ -16,6 +18,10 @@ class FirebaseBidDataSource @Inject constructor() {
     private val firestore = FirebaseFirestore.getInstance()
     private val bidRequestsCollection = firestore.collection("bid_requests")
     private val bidsCollection = firestore.collection("bids")
+
+    companion object {
+        private const val TAG = "FirebaseBidDataSource"
+    }
 
     fun getAllBidRequests(): Flow<List<BidRequest>> {
         return bidRequestsCollection
@@ -39,6 +45,10 @@ class FirebaseBidDataSource @Inject constructor() {
                         null
                     }
                 }
+            }
+            .catch { e ->
+                Log.w(TAG, "Error listening to bid requests: ${e.message}")
+                emit(emptyList())
             }
     }
 
@@ -87,6 +97,10 @@ class FirebaseBidDataSource @Inject constructor() {
                     }
                 }.sortedByDescending { it.pricePerKg }
             }
+            .catch { e ->
+                Log.w(TAG, "Error listening to bids for $requestId: ${e.message}")
+                emit(emptyList())
+            }
     }
 
     suspend fun submitBid(bid: Bid): String {
@@ -104,11 +118,20 @@ class FirebaseBidDataSource @Inject constructor() {
     }
 
     suspend fun awardBid(bidId: String, requestId: String) {
-        // Mark the selected bid as winning
-        bidsCollection.document(bidId).update("isWinning", true).await()
-        
-        // Update the BidRequest status to AWARDED
-        bidRequestsCollection.document(requestId).update("status", BidStatus.AWARDED.name).await()
+        try {
+            // Update all bids for this request so only the winning bid is true
+            val query = bidsCollection.whereEqualTo("bidRequestId", requestId).get().await()
+            val batch = firestore.batch()
+            for (doc in query.documents) {
+                val isWinner = doc.id == bidId
+                batch.update(doc.reference, "isWinning", isWinner)
+            }
+            // Update the BidRequest status to AWARDED
+            batch.update(bidRequestsCollection.document(requestId), "status", BidStatus.AWARDED.name)
+            batch.commit().await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to award bid in Firestore: ${e.message}", e)
+        }
     }
 
     suspend fun getBidRequestById(requestId: String): BidRequest? {

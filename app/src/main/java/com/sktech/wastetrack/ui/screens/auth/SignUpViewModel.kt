@@ -109,8 +109,8 @@ class SignUpViewModel @Inject constructor(
             return
         }
 
-        val uid = auth.currentUser?.uid ?: "user-${UUID.randomUUID().toString().take(8)}"
-        val phone = auth.currentUser?.phoneNumber ?: "+91 94035 80730"
+        val phone = authRepository.getLastEnteredPhone()
+        val uid = com.sktech.wastetrack.data.repository.AuthRepositoryImpl.generateStableUserId(phone, s.role)
 
         val user = User(
             id = uid,

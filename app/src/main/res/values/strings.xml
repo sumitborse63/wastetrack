@@ -244,6 +244,11 @@
     <string name="verify_identity_bio">Verify identity to enable biometric security</string>
     <string name="biometrics_enabled_msg">Biometrics Enabled</string>
     <string name="biometrics_not_available">Biometrics not available on this device</string>
+    <string name="biometrics_active_msg">Biometric security is active</string>
+    <string name="biometric_login">Biometric Login</string>
+    <string name="biometric_unlock">Unlock with Biometrics</string>
+    <string name="verify_btn">Verify</string>
+    <string name="active_status">ACTIVE</string>
     
     <!-- Transfer Statuses -->
     <string name="status_initiated">Initiated</string>
@@ -478,7 +483,7 @@
     <string name="efficiency_score_basis">Based on Zero-Overflow &amp; On-Time Dispatches</string>
 
     <!-- Settings & Voice -->
-    <string name="settings_subtitle">Enterprise Configuration &amp; Biometric Security</string>
+    <string name="settings_subtitle">Configuration &amp; Biometric Security</string>
     <string name="lang_selected_msg">%1$s Selected</string>
     <string name="edit_profile_title">Edit Organization Profile</string>
     <string name="full_name_label">Full Name</string>
@@ -495,7 +500,7 @@
     <string name="sync_status_desc">Active Continuous Sync (Room DB + Firestore)</string>
     <string name="biometric_auth_desc">Require biometric authentication for scrap dispatches</string>
     <string name="system_info_title">System Information</string>
-    <string name="system_info_desc">WasteTrack Enterprise v1.2.0 (IIT Bombay Sustainability Edition)</string>
+    <string name="system_info_desc">WasteTrack v1.2.0 — Team Astranyx</string>
     <string name="mic_permission_required">Microphone permission required for voice logging</string>
     <string name="speech_not_supported">Speech recognition not supported on this device</string>
     <string name="voice_input_action">Voice Input</string>
@@ -527,4 +532,21 @@
     <string name="supervisor_audit_trail">Real-Time Floor Audit Log</string>
     <string name="export_audit_report">Export ESG &amp; MPCB Audit Report</string>
     <string name="analytics">Analytics</string>
+
+    <!-- Missing Settings & Fleet Tracker Strings -->
+    <string name="full_name">Full Name</string>
+    <string name="mpcb_auth_no_label">MPCB Authorization No</string>
+    <string name="gstin_license_no_label">GSTIN / Factory License No</string>
+    <string name="sync_status_sub">Active Continuous Sync (Room DB + Firestore)</string>
+    <string name="system_info_sub">WasteTrack v1.2.0 — Team Astranyx</string>
+    <string name="weighbridge_dialog_title">Weighbridge Arrival Verification</string>
+    <string name="vehicle_dispatched_format">Vehicle: %1$s (Dispatched: %2$s kg)</string>
+    <string name="measured_dest_weight_label">Measured Destination Weight (kg)</string>
+    <string name="mpcb_form10_cert_notice">Verifying destination weight automatically issues a cryptographically signed MPCB Form 10 ESG digital disposal certificate.</string>
+    <string name="trucks_in_transit_sub">Trucks in transit</string>
+    <string name="completed_deliveries_sub">Completed deliveries</string>
+    <string name="date_time_label">Date &amp; Time</string>
+    <string name="confirm_award_title">Award Auction Batch</string>
+    <string name="confirm_award_desc">Are you sure you want to award this batch to %1$s at ₹%2$s/kg (Total ₹%3$s)?\n\nThis will conclude the auction and automatically dispatch a gate pass for fleet transit.</string>
+    <string name="confirm_award_btn">Confirm &amp; Award</string>
 </resources>

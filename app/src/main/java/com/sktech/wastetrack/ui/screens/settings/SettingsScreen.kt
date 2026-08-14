@@ -1,6 +1,7 @@
 package com.sktech.wastetrack.ui.screens.settings
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.UserRole
+import com.sktech.wastetrack.domain.model.biometric.BiometricAuthResult
+import com.sktech.wastetrack.domain.model.biometric.BiometricPromptConfig
+import com.sktech.wastetrack.ui.biometric.rememberBiometricPromptLauncher
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.LocaleHelper
 import com.sktech.wastetrack.util.SecurityHelper
@@ -42,7 +46,7 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val user = state.currentUser
     val context = LocalContext.current
-    var biometricsEnabled by remember { mutableStateOf(false) }
+    val biometricLauncher = rememberBiometricPromptLauncher()
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
@@ -52,6 +56,51 @@ fun SettingsScreen(
     state.message?.let { msg ->
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         viewModel.clearMessage()
+    }
+
+    // Logout confirmation dialog
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = AlertRed) },
+            title = {
+                Text(
+                    stringResource(R.string.logout),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.logout_confirm),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutConfirm = false
+                        viewModel.logout {
+                            onLogout()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AlertRed,
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     // Language selection dialog
@@ -187,32 +236,6 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showEditProfileDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = TextSecondary)
-                }
-            }
-        )
-    }
-
-    // Logout confirmation dialog
-    if (showLogoutConfirm) {
-        AlertDialog(
-            onDismissRequest = { showLogoutConfirm = false },
-            icon = { Icon(Icons.AutoMirrored.Filled.Logout, null, tint = AlertRed) },
-            title = { Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text(stringResource(R.string.logout_confirm), color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutConfirm = false
-                        viewModel.logout { onLogout() }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = Color.White)
-                ) {
-                    Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = false }) {
                     Text(stringResource(R.string.cancel), color = TextSecondary)
                 }
             }
@@ -382,7 +405,7 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.sync_status_sub)
             )
 
-            // Biometric Toggle Card
+            // Biometric Security Card
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.medium,
@@ -390,60 +413,130 @@ fun SettingsScreen(
                 shadowElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = EmeraldContainer,
-                        modifier = Modifier.size(38.dp)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Outlined.Security, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = if (state.isBiometricEnabled) EmeraldContainer else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Outlined.Security,
+                                    contentDescription = null,
+                                    tint = if (state.isBiometricEnabled) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.biometric_security), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Text(stringResource(R.string.biometric_desc), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = biometricsEnabled,
-                        onCheckedChange = { isChecked ->
-                            if (isChecked) {
-                                if (SecurityHelper.isBiometricAvailable(context)) {
-                                    val activity = context as? FragmentActivity
-                                    if (activity != null) {
-                                        SecurityHelper.showBiometricPrompt(
-                                            activity = activity,
-                                            title = "Enable Biometrics",
-                                            subtitle = "Verify identity to enable biometric security",
-                                            onSuccess = {
-                                                biometricsEnabled = true
-                                                Toast.makeText(context, "Biometrics Enabled", Toast.LENGTH_SHORT).show()
-                                            },
-                                            onError = { err ->
-                                                Toast.makeText(context, "Failed: $err", Toast.LENGTH_SHORT).show()
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.biometric_security),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                if (!state.isBiometricSupported) {
+                                    stringResource(R.string.biometrics_not_available)
+                                } else {
+                                    stringResource(R.string.biometric_desc)
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = state.isBiometricEnabled,
+                            enabled = state.isBiometricSupported,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    if (biometricLauncher.isAvailable()) {
+                                        biometricLauncher.authenticate(
+                                            BiometricPromptConfig(
+                                                title = "Enable Biometrics",
+                                                subtitle = "Verify identity to enable biometric security",
+                                                allowDeviceCredential = true
+                                            )
+                                        ) { result ->
+                                            when (result) {
+                                                is BiometricAuthResult.Success -> {
+                                                    viewModel.setBiometricEnabled(true)
+                                                    Toast.makeText(context, "Biometric security enabled", Toast.LENGTH_SHORT).show()
+                                                }
+                                                is BiometricAuthResult.Error -> {
+                                                    Toast.makeText(context, result.errorMessage, Toast.LENGTH_SHORT).show()
+                                                }
+                                                is BiometricAuthResult.Failed -> {
+                                                    Toast.makeText(context, "Biometric verification failed", Toast.LENGTH_SHORT).show()
+                                                }
+                                                is BiometricAuthResult.Cancelled -> {}
+                                                is BiometricAuthResult.Unavailable -> {
+                                                    Toast.makeText(context, "Biometrics unavailable", Toast.LENGTH_SHORT).show()
+                                                }
                                             }
-                                        )
+                                        }
                                     } else {
-                                        Toast.makeText(context, "Context is not FragmentActivity", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Biometrics not available on this device", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
-                                    Toast.makeText(context, "Biometrics not available on this device", Toast.LENGTH_SHORT).show()
+                                    viewModel.setBiometricEnabled(false)
+                                    Toast.makeText(context, "Biometric security disabled", Toast.LENGTH_SHORT).show()
                                 }
-                            } else {
-                                biometricsEnabled = false
-                            }
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = EmeraldPrimary,
-                            uncheckedThumbColor = TextMuted,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = EmeraldPrimary,
+                                uncheckedThumbColor = TextMuted,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         )
-                    )
+                    }
+
+                    // Sub-option: Require biometric for scrap dispatches
+                    AnimatedVisibility(visible = state.isBiometricEnabled) {
+                        Column {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                thickness = 1.dp,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        stringResource(R.string.biometric_auth_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Switch(
+                                    checked = state.isBiometricDispatchRequired,
+                                    onCheckedChange = { isChecked ->
+                                        viewModel.setBiometricDispatchRequired(isChecked)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = EmeraldPrimary,
+                                        uncheckedThumbColor = TextMuted,
+                                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
+                            }
+                        }
+                    }
                 }
             }
 

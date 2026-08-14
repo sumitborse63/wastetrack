@@ -156,13 +156,16 @@ class BidViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isCreating = true, error = null) }
             try {
-                val now = System.currentTimeMillis()
                 val user = authRepository.getCurrentUser()
                 val factoryId = user?.factoryId?.ifBlank { Constants.DEFAULT_FACTORY_ID } ?: Constants.DEFAULT_FACTORY_ID
+                val userId = user?.id ?: "supervisor-001"
+                val now = System.currentTimeMillis()
+
                 val request = BidRequest(
                     id = UUID.randomUUID().toString(),
-                    scrapEntryId = entryId,
                     factoryId = factoryId,
+                    createdByUserId = userId,
+                    scrapEntryId = entryId,
                     scrapCategory = category,
                     estimatedWeightKg = entry.weightKg,
                     reservePricePerKg = reserve,
@@ -192,6 +195,7 @@ class BidViewModel @Inject constructor(
 
     fun loadBidDetail(requestId: String) {
         viewModelScope.launch {
+            _userRole.value = authRepository.getCurrentUser()?.role ?: authRepository.getSelectedRole()
             _detailState.update { it.copy(isLoading = true) }
             val request = _state.value.bidRequests.find { it.id == requestId }
                 ?: bidRepository.getBidRequestById(requestId)
@@ -237,29 +241,32 @@ class BidViewModel @Inject constructor(
     }
 
     fun awardBid(bidId: String, requestId: String = _detailState.value.bidRequest?.id ?: "") {
-        val request = _detailState.value.bidRequest ?: return
-        val targetRequestId = if (requestId.isNotBlank()) requestId else request.id
         viewModelScope.launch {
             try {
-                bidRepository.awardBid(bidId, targetRequestId)
-                
-                val winningBid = _detailState.value.bids.find { it.id == bidId }
-                val recyclerId = winningBid?.recyclerId ?: "recycler-001"
-                val user = authRepository.getCurrentUser()
-                val supervisorId = user?.id ?: "supervisor-001"
-                val now = System.currentTimeMillis()
+                val targetRequestId = if (requestId.isNotBlank()) requestId else _detailState.value.bidRequest?.id ?: ""
+                val request = _detailState.value.bidRequest ?: bidRepository.getBidRequestById(targetRequestId)
+                if (request == null) {
+                    _state.update { it.copy(error = "Auction batch not found") }
+                    return@launch
+                }
 
-                // 1. Optimistic Local Detail State Update
                 _detailState.update { current ->
                     current.copy(
-                        bidRequest = current.bidRequest?.copy(status = BidStatus.AWARDED),
+                        bidRequest = request.copy(status = BidStatus.AWARDED),
                         bids = current.bids.map { bid ->
                             if (bid.id == bidId) bid.copy(isWinning = true) else bid.copy(isWinning = false)
                         }
                     )
                 }
 
-                // 2. Automatically spawn Transfer in Room DB for live Logistics/Fleet pipeline
+                bidRepository.awardBid(bidId, targetRequestId)
+                
+                val winningBid = _detailState.value.bids.find { it.id == bidId }
+                val recyclerId = winningBid?.recyclerId?.ifBlank { "REC-AMBAD-01" } ?: "REC-AMBAD-01"
+                val user = authRepository.getCurrentUser()
+                val supervisorId = user?.id ?: "supervisor-001"
+                val now = System.currentTimeMillis()
+
                 val transferId = UUID.randomUUID().toString()
                 val contentHash = HashUtils.hashTransfer(
                     id = transferId,
@@ -284,10 +291,10 @@ class BidViewModel @Inject constructor(
                 transferDao.insert(transfer)
                 cloudSyncEngine.pushTransfer(transfer)
 
-                // 3. Update BidRequestEntity in Room
                 val bidRequestEntity = BidRequestEntity(
                     id = request.id,
                     factoryId = request.factoryId,
+                    createdByUserId = request.createdByUserId,
                     scrapEntryId = request.scrapEntryId,
                     scrapCategory = request.scrapCategory.name,
                     estimatedWeightKg = request.estimatedWeightKg,
@@ -298,7 +305,6 @@ class BidViewModel @Inject constructor(
                 )
                 bidDao.insertRequest(bidRequestEntity)
 
-                // 4. Enqueue sync queue
                 syncQueueDao.enqueue(
                     SyncQueueEntity(
                         entityType = "TRANSFER",

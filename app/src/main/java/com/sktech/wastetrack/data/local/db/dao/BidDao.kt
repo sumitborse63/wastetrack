@@ -34,6 +34,9 @@ interface BidDao {
     @Query("SELECT * FROM bids WHERE bidRequestId = :requestId ORDER BY pricePerKg DESC")
     fun getBidsByRequest(requestId: String): Flow<List<BidEntity>>
 
+    @Query("UPDATE bids SET isWinning = 0 WHERE bidRequestId = :requestId")
+    suspend fun resetWinningForRequest(requestId: String)
+
     @Query("UPDATE bids SET isWinning = 1 WHERE id = :bidId")
     suspend fun markWinning(bidId: String)
 
