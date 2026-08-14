@@ -7,7 +7,8 @@
 [![Room DB](https://img.shields.io/badge/Database-Room%202.7.1-orange?style=for-the-badge&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
 [![Hilt DI](https://img.shields.io/badge/DI-Dagger%20Hilt%202.51.1-green?style=for-the-badge)](https://dagger.dev/hilt/)
 [![On-Device AI](https://img.shields.io/badge/AI%2FML-TFLite%20%2B%20ML%20Kit-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://developers.google.com/ml-kit)
-[![Target](https://img.shields.io/badge/Challenge-IIT%20Bombay%20%26%20Honeywell%20Sustainability-002D62?style=for-the-badge)](https://www.iitb.ac.in)
+[![Hackathon](https://img.shields.io/badge/Hackathon-SKH%20Smart%20Kopargaon%20Hackathon-002D62?style=for-the-badge)](https://github.com/sumitborse63/wastetrack)
+[![Team](https://img.shields.io/badge/Team-Astranyx-FF6F00?style=for-the-badge)](https://github.com/sumitborse63/wastetrack)
 
 > **WasteTrack** is an enterprise-grade, offline-first edge Android operating system designed to digitize, secure, and accelerate industrial scrap management and circular economy supply chains across MSME manufacturing hubs. Built with on-device Computer Vision, cryptographic audit trails, localized 24-hour micro-bidding, automated MPCB/ESG compliance reporting, and multilingual voice workflows.
 
@@ -533,9 +534,9 @@ WasteTrack offers full trilingual UI localization across all screens, headers, b
 
 ## 🏆 License & Acknowledgements
 
-Developed as part of the **IIT Bombay & Honeywell Sustainability Challenge Proposal**.
+Developed as part of **SKH (Smart Kopargaon Hackathon)**.
 
-- **Organization**: SK Tech / WasteTrack Project
+- **Team**: Astranyx
 - **Target Industrial Pilot**: Ambad MIDC Industrial Cluster, Nashik, Maharashtra, India.
 - **Regulatory Frameworks**: Maharashtra Pollution Control Board (MPCB) Hazardous & Solid Waste Management Rules, CPCB Extended Producer Responsibility (EPR) Guidelines.
 
