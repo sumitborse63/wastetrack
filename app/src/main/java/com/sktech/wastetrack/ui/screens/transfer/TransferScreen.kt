@@ -64,7 +64,7 @@ fun TransferScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Chain-of-Custody & Gatepass Ledger",
+                            stringResource(R.string.gatepass_ledger_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -121,7 +121,7 @@ fun TransferScreen(
                         ) {
                             Image(
                                 bitmap = bitmap.asImageBitmap(),
-                                contentDescription = "Transfer QR Code",
+                                contentDescription = stringResource(R.string.gate_pass_title),
                                 modifier = Modifier
                                     .size(240.dp)
                                     .padding(12.dp)
@@ -263,7 +263,7 @@ private fun ModernTransferCard(transfer: TransferEntity) {
                     }
                     Column {
                         Text(
-                            text = "Dispatch #${transfer.id.take(8).uppercase()}",
+                            text = stringResource(R.string.dispatch_number_format, transfer.id.take(8).uppercase()),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -312,7 +312,7 @@ private fun ModernTransferCard(transfer: TransferEntity) {
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.time_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(DateUtils.formatTime(transfer.initiatedAt), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 }
             }

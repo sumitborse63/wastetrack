@@ -331,4 +331,200 @@
     <string name="bin_category_format">%1$s डिब्बा (क्षमता: %2$.0f किग्रा)</string>
     <string name="current_fill_kg">वर्तमान स्तर (किग्रा)</string>
     <string name="update_fill">स्तर अपडेट करें</string>
+
+    <!-- Signup & Organization Setup (Hindi) -->
+    <string name="org_registration_title">संस्था पंजीकरण</string>
+    <string name="profile_setup_subtitle">%1$s हेतु प्रोफाइल सेटअप</string>
+    <string name="role_recycler_setup_desc">बी2बी स्क्रैप नीलामी, लाइव कांटा (वेब्रिज) एवं वाहन उठाव</string>
+    <string name="role_supervisor_setup_desc">कारखाना स्क्रैप प्रविष्टि, आईओटी टेलीमेट्री एवं गेट पास सत्यापन</string>
+    <string name="account_role_type">खाता भूमिका प्रकार</string>
+    <string name="authorized_rep_name">अधिकृत प्रतिनिधि का नाम</string>
+    <string name="rep_name_placeholder">उदा. राजेश शर्मा</string>
+    <string name="recycling_agency_name">रीसाइक्लिंग फर्म / एजेंसी का नाम</string>
+    <string name="manufacturing_plant_name">कारखाना / निर्माण संयंत्र का नाम</string>
+    <string name="agency_name_placeholder">उदा. एपेक्स ग्रीन मेटल रिफाइनर्स प्रा. लि.</string>
+    <string name="plant_name_placeholder">उदा. टाटा मोटर्स फोर्जिंग प्लांट २</string>
+    <string name="industrial_zone_city">औद्योगिक क्षेत्र / शहर</string>
+    <string name="zone_city_placeholder">उदा. अंबड एमआईडीसी, नाशिक</string>
+    <string name="mpcb_auth_number">एमपीसीबी प्राधिकरण / लाइसेंस संख्या</string>
+    <string name="gstin_license_number">जीएसटीआईएन / कारखाना लाइसेंस नंबर (वैकल्पिक)</string>
+    <string name="mpcb_number_placeholder">उदा. MPCB/MH/NAS/RECY/2024/09</string>
+    <string name="gstin_placeholder">उदा. 27AAAAA0000A1Z5</string>
+    <string name="launch_workspace">वेस्टट्रैक वर्कस्पेस शुरू करें</string>
+
+    <!-- Dashboard & Quick Actions (Hindi) -->
+    <string name="enterprise_floor_terminal">एंटरप्राइज फ्लोर टर्मिनल</string>
+    <string name="unit_code_format">%1$s · यूनिट #%2$s</string>
+    <string name="record_scrap_weight_sub">स्क्रैप वजन दर्ज करें</string>
+    <string name="b2b_lot_auctions_sub">बी2बी लॉट नीलामी</string>
+    <string name="bin_telemetry_title">डिब्बा टेलीमेट्री</string>
+    <string name="iot_level_sensors_sub">आईओटी स्तर सेंसर</string>
+    <string name="gate_pass_title">गेट पास</string>
+    <string name="qr_handshake_sub">क्यूआर हैंडशेक</string>
+    <string name="camera_ocr_scanner_sub">कैमरा ओसीआर स्कैनर</string>
+    <string name="esg_reports_title">ईएसजी रिपोर्ट्स</string>
+    <string name="mpcb_manifests_sub">एमपीसीबी फॉर्म १० घोषणापत्र</string>
+    <string name="recent_shop_floor_entries">हालिया फ्लोर प्रविष्टियां</string>
+    <string name="log_entry_btn">प्रविष्टि दर्ज करें</string>
+    <string name="no_scrap_logged_today">आज कोई स्क्रैप दर्ज नहीं हुआ</string>
+    <string name="no_scrap_logged_desc">दर्ज स्क्रैप रिकॉर्ड यहाँ रीयल-टाइम में दिखाई देंगे।</string>
+
+    <!-- Recycler Dashboard & Procurement (Hindi) -->
+    <string name="midc_zone_default">एमआईडीसी क्षेत्र</string>
+    <string name="live_micro_auctions">लाइव स्क्रैप नीलामी लॉट्स</string>
+    <string name="view_market">बाजार देखें</string>
+    <string name="recycling_procurement_metrics">पुनर्चक्रण खरीद मेट्रिक्स</string>
+    <string name="ready_for_pickup">उठाव हेतु तैयार</string>
+    <string name="inbound_fleet">आने वाले वाहन</string>
+    <string name="trucks_in_transit">रास्ते में गाड़ियां</string>
+    <string name="verified_tonnage">सत्यापित टन भार</string>
+    <string name="browse_factory_lots">फैक्ट्री लॉट्स देखें</string>
+    <string name="live_inbound_trucks">आने वाले ट्रकों का लाइव ट्रैक</string>
+    <string name="epr_certs">ईपीआर प्रमाण</string>
+    <string name="form10_ledger">फॉर्म १० खाता</string>
+    <string name="won_auctions_dispatch_title">स्वीकृत बोलियां (वाहन भेजने हेतु तैयार)</string>
+    <string name="inbound_shipments_weighbridge_title">आने वाले वाहन (कांटा / वेब्रिज जांच)</string>
+    <string name="live_auction_badge">सक्रिय नीलामी</string>
+    <string name="reserve_price_label">आरक्षित मूल्य</string>
+    <string name="lot_value_label">लॉट का कुल मूल्य</string>
+    <string name="place_competitive_bid">प्रतिस्पर्धी बोली लगाएं</string>
+    <string name="won_auction_badge">स्वीकृत नीलामी</string>
+    <string name="origin_factory_format">मूल कारखाना: %1$s</string>
+    <string name="dispatch_truck_assign_driver">गाड़ी भेजें व चालक नियुक्त करें</string>
+    <string name="vehicle_format">वाहन: %1$s</string>
+    <string name="verify_arrival_weighbridge">कांटा (वेब्रिज) वजन सत्यापित करें</string>
+    <string name="assign_truck_pickup_title">उठाव हेतु वाहन नियुक्त करें</string>
+    <string name="factory_pickup_format">कारखाना: %1$s (%2$.0f किग्रा %3$s)</string>
+    <string name="vehicle_reg_no">वाहन पंजीकरण संख्या</string>
+    <string name="vehicle_reg_placeholder">उदा. MH-15-EG-4521</string>
+    <string name="confirm_dispatch">प्रेषण की पुष्टि करें</string>
+    <string name="weighbridge_verification_title">कांटा (वेब्रिज) सत्यापन</string>
+    <string name="truck_dispatched_format">वाहन: %1$s (प्रेषित वजन: %2$.1f किग्रा)</string>
+    <string name="measured_dest_weight_kg">गंतव्य पर मापा वजन (किग्रा)</string>
+    <string name="verify_complete_handshake">सत्यापित कर हैंडशेक पूरा करें</string>
+    <string name="weight_metric_ton_format">%1$.0f किग्रा (%2$.1f मीट्रिक टन)</string>
+
+    <!-- Ledger OCR & AI Scrap Log (Hindi) -->
+    <string name="ocr_nlp_subtitle">ऑन-डिवाइस ओसीआर एवं एनएलपी डेटा पहचान</string>
+    <string name="scan_another_page">अन्य पृष्ठ स्कैन करें</string>
+    <string name="structured_records_count_format">पहचाने गए रिकॉर्ड (%1$d)</string>
+    <string name="import_records_btn_format">%1$d रिकॉर्ड्स स्क्रैप लॉग में आयात करें</string>
+    <string name="extracted_ocr_text">ओसीआर द्वारा पहचाना गया पाठ</string>
+    <string name="capture_ledger">बहीखाता फोटो लें</string>
+    <string name="intake_log_subtitle">स्क्रैप प्रविष्टि व एआई सामग्री सत्यापन</string>
+    <string name="scrap_proof_image">स्क्रैप लॉट फोटो व प्रमाण</string>
+    <string name="custom_photo_attached">फोटो संलग्न की गई</string>
+    <string name="tap_replace_photo">फोटो बदलने हेतु टैप करें</string>
+    <string name="upload_capture_photo">स्क्रैप फोटो अपलोड या कैप्चर करें</string>
+    <string name="attached_auction_lot_desc">रिसायकलरों हेतु बी2बी नीलामी लॉट के साथ संलग्न</string>
+    <string name="verified_audit_ledger_sub">सत्यापित आवक ऑडिट बहीखाता</string>
+    <string name="ai_classifier_subtitle">एआई स्क्रैप वर्गीकरण एवं घनत्व परीक्षक</string>
+    <string name="flash_on">फ्लैश चालू</string>
+    <string name="flash_off">फ्लैश बंद</string>
+    <string name="confidence_format">सटीकता: %1$d%%</string>
+
+    <!-- Transfers, QR & Fleet Tracker (Hindi) -->
+    <string name="gatepass_ledger_subtitle">कस्टडी श्रृंखला एवं गेट पास बहीखाता</string>
+    <string name="dispatch_number_format">प्रेषण #%1$s</string>
+    <string name="time_label">समय</string>
+    <string name="handshake_subtitle">क्रिप्टोग्राफिक ड्राइवर व वेब्रिज हैंडशेक</string>
+    <string name="point_camera_qr_title">चालक के गेट पास क्यूआर पर कैमरा रखें</string>
+    <string name="align_qr_desc">हस्तांतरण सत्यापन हेतु क्यूआर कोड को फ्रेम में लाएं</string>
+    <string name="dest_weighbridge_check">गंतव्य कांटा (वेब्रिज) जांच</string>
+    <string name="auto_cert_issued_note">सत्यापन पूर्ण होने पर स्वतः एमपीसीबी फॉर्म १० ईएसजी प्रमाणपत्र जारी होगा।</string>
+    <string name="verify_complete_transfer">सत्यापित करें व स्थानांतरण पूर्ण करें</string>
+    <string name="fleet_transport_hub">फ्लीट परिवहन हब</string>
+    <string name="live_gps_telemetry_sub">लाइव जीपीएस टेलीमेट्री एवं कस्टडी ट्रैकिंग</string>
+    <string name="in_transit_tab_format">रास्ते में (%1$d)</string>
+    <string name="completed_tab_format">पूर्ण (%1$d)</string>
+    <string name="no_trucks_in_transit">वर्तमान में कोई वाहन रास्ते में नहीं है</string>
+    <string name="no_completed_deliveries">अभी तक कोई डिलीवरी पूर्ण नहीं हुई</string>
+    <string name="no_trucks_in_transit_desc">भेजे गए वाहन और जीती गई नीलामी का लाइव जीपीएस ट्रैकिंग यहाँ दिखेगा।</string>
+    <string name="no_completed_deliveries_desc">सत्यापित वेब्रिज खेप पूर्ण बहीखाते में दिखाई देगी।</string>
+    <string name="unassigned_truck">अनिर्दिष्ट वाहन</string>
+    <string name="gatepass_dispatched_format">गेट पास #%1$s · रवानगी %2$s</string>
+    <string name="live_route_demo">लाइव मार्ग: राष्ट्रीय राजमार्ग ८४ (४२ किमी/घंटा)</string>
+    <string name="origin_ambad_demo">उत्पत्ति: अंबड एमआईडीसी गेट #१</string>
+    <string name="eta_demo">पहुंच समय: ~१४ मिनट (५.८ किमी)</string>
+    <string name="delivered_label">पहुंच गया</string>
+    <string name="factory_plant_label">कारखाना संयंत्र</string>
+    <string name="recycler_yard_label">रिसाइकिलर यार्ड</string>
+    <string name="source_weight_label">स्रोत पर वजन</string>
+    <string name="dest_weight_label">गंतव्य पर वजन</string>
+    <string name="driver_contact_label">चालक संपर्क</string>
+    <string name="call_driver">चालक को कॉल करें</string>
+    <string name="weighbridge_check">कांटा (वेब्रिज) जांच</string>
+
+    <!-- Bids & Auctions (Hindi) -->
+    <string name="micro_auctions_subtitle">२४-घंटे माइक्रो-नीलामी एवं मूल्य निर्धारण</string>
+    <string name="auction_batch_format">नीलामी बैच #%1$s</string>
+    <string name="enter_valid_bid_rate">कृपया मान्य बोली दर दर्ज करें</string>
+    <string name="closing_in_format">समाप्ति समय: %1$s</string>
+    <string name="highest_bid_format">सर्वोच्च: ₹%1$s/किग्रा</string>
+    <string name="recycler_id_format">रिसाइकिलर #%1$s</string>
+    <string name="total_bid_value_format">कुल: ₹%1$s</string>
+
+    <!-- Bin, Compliance & Analytics (Hindi) -->
+    <string name="bin_telemetry_subtitle">पूर्वानुमानित शून्य-ओवरफ्लो आईओटी टेलीमेट्री</string>
+    <string name="compliance_manifests_sub">वैधानिक एमपीसीबी फॉर्म १० एवं ईएसजी मैनिफेस्ट</string>
+    <string name="transfer_number_format">स्थानांतरण #%1$s</string>
+    <string name="cert_details_format">%1$s विवरण</string>
+    <string name="cert_id_prefix">प्रमाणपत्र संख्या: %1$s</string>
+    <string name="transfer_id_prefix">स्थानांतरण आईडी: %1$s</string>
+    <string name="factory_id_prefix">कारखाना आईडी: %1$s</string>
+    <string name="generated_at_prefix">जारी करने की तिथि: %1$s</string>
+    <string name="digital_hash_prefix">डिजिटल हैश: %1$s</string>
+    <string name="analytics_ledger_sub">सर्कुलर इकोनॉमी एवं ७५% ईपीआर वैधानिक बहीखाता</string>
+    <string name="efficiency_score_basis">शून्य-ओवरफ्लो एवं समयबद्ध प्रेषण पर आधारित</string>
+
+    <!-- Settings & Voice (Hindi) -->
+    <string name="settings_subtitle">एंटरप्राइज विन्यास एवं बायोमेट्रिक सुरक्षा</string>
+    <string name="lang_selected_msg">%1$s चुनी गई</string>
+    <string name="edit_profile_title">संस्था प्रोफाइल संपादित करें</string>
+    <string name="full_name_label">पूरा नाम</string>
+    <string name="save_changes">परिवर्तन सहेजें</string>
+    <string name="unassigned_operator">अनिर्दिष्ट ऑपरेटर</string>
+    <string name="org_profile_incomplete">संस्था प्रोफाइल अधूरी है</string>
+    <string name="role_operator">ऑपरेटर</string>
+    <string name="recycling_enterprise_label">रीसाइक्लिंग उद्यम</string>
+    <string name="manufacturing_plant_label">विनिर्माण संयंत्र</string>
+    <string name="not_configured">कॉन्फ़िगर नहीं है</string>
+    <string name="recycler_identifier_label">रिसाइकिलर पहचानकर्ता</string>
+    <string name="plant_unit_code_label">संयंत्र यूनिट कोड</string>
+    <string name="unassigned_label">अनिर्दिष्ट</string>
+    <string name="sync_status_desc">सक्रिय निरंतर सिंक (रूम डीबी + फायरस्टोर)</string>
+    <string name="biometric_auth_desc">स्क्रैप प्रेषण हेतु बायोमेट्रिक प्रमाणीकरण आवश्यक करें</string>
+    <string name="system_info_title">सिस्टम जानकारी</string>
+    <string name="system_info_desc">वेस्टट्रैक एंटरप्राइज v1.2.0 (आईआईटी बॉम्बे सस्टेनेबिलिटी संस्करण)</string>
+    <string name="mic_permission_required">ध्वनि द्वारा प्रविष्टि हेतु माइक्रोफ़ोन अनुमति आवश्यक है</string>
+    <string name="speech_not_supported">इस उपकरण पर ध्वनि पहचान समर्थित नहीं है</string>
+    <string name="voice_input_action">आवाज द्वारा इनपुट</string>
+    <string name="stop_listening">सुनना बंद करें</string>
+
+    <!-- Driver & Admin Specific (Hindi) -->
+    <string name="driver_dashboard_title">फ्लीट ड्राइवर लॉजिस्टिक्स कॉकपिट</string>
+    <string name="active_trip">सक्रिय असाइन यात्रा</string>
+    <string name="no_active_trips">कोई सक्रिय ट्रिप नहीं है</string>
+    <string name="no_active_trips_desc">जब कोई कारखाना पर्यवेक्षक या रिसाइकिलर आपके वाहन को खेप सौंपेगा, तो वह यहाँ दिखाई देगी।</string>
+    <string name="scan_gate_qr">गेट पास क्यूआर स्कैन करें</string>
+    <string name="start_gps_nav">जीपीएस नेविगेशन शुरू करें</string>
+    <string name="confirm_arrival">कांटा (वेब्रिज) आगमन की पुष्टि करें</string>
+    <string name="report_incident">देरी / घटना दर्ज करें</string>
+    <string name="driver_trips_completed">पूर्ण यात्राएं</string>
+    <string name="driver_tonnage">परिवहित वजन (टन)</string>
+    <string name="driver_on_time">समयबद्धता दर</string>
+    <string name="vehicle_no_label">असाइन वाहन संख्या</string>
+    <string name="origin_factory">मूल कारखाना</string>
+    <string name="destination_hub">गंतव्य रिसाइकिलर</string>
+
+    <string name="admin_dashboard_title">औद्योगिक संयंत्र कार्यकारी कमान</string>
+    <string name="admin_kpi_total_scrap">कुल स्क्रैप दर्ज</string>
+    <string name="admin_kpi_revenue">नीलामी राजस्व</string>
+    <string name="admin_kpi_diversion">लैंडफिल डायवर्जन दर</string>
+    <string name="admin_kpi_carbon">सीओ२ ऑफसेट</string>
+    <string name="smart_bin_fleet_matrix">संयंत्र-व्यापी स्मार्ट डिब्बे टेलीमेट्री</string>
+    <string name="regulatory_audit_score">एमपीसीबी विनियामक ऑडिट स्कोर</string>
+    <string name="supervisor_audit_trail">रीयल-टाइम फ्लोर ऑडिट लॉग</string>
+    <string name="export_audit_report">ईएसजी और एमपीसीबी ऑडिट रिपोर्ट डाउनलोड करें</string>
+    <string name="analytics">एनालिटिक्स</string>
 </resources>

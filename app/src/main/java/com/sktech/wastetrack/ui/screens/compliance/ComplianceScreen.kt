@@ -56,7 +56,7 @@ fun ComplianceScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Statutory MPCB Form 10 & ESG Manifests",
+                            stringResource(R.string.compliance_manifests_sub),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -177,7 +177,7 @@ fun ComplianceScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("Transfer #${transfer.id.take(8).uppercase()}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text(stringResource(R.string.transfer_number_format, transfer.id.take(8).uppercase()), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                 Text("${transfer.weightAtSource} kg · Vehicle: ${transfer.vehicleNumber}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Button(
@@ -349,7 +349,7 @@ private fun CertificateDetailDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("${stringResource(typeEnum.nameRes)} Details", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.cert_details_format, stringResource(typeEnum.nameRes)), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

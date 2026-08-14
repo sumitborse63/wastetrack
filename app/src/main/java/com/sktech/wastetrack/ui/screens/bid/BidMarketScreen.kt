@@ -72,7 +72,7 @@ fun BidMarketScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            if (userRole == UserRole.RECYCLER) stringResource(R.string.browse_and_bid) else "24-Hour Micro-Auctions & Price Discovery",
+                            if (userRole == UserRole.RECYCLER) stringResource(R.string.browse_and_bid) else stringResource(R.string.micro_auctions_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

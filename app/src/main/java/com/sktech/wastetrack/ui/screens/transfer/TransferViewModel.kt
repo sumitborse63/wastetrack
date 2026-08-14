@@ -248,9 +248,11 @@ class TransferViewModel @Inject constructor(
                     )
                 )
                 transferDao.updateStatus(transferId, "IN_TRANSIT")
+                val updatedTransfer = transfer.copy(status = "IN_TRANSIT")
+                cloudSyncEngine.pushTransfer(updatedTransfer)
                 _state.update { current ->
                     current.copy(
-                        transfers = current.transfers.map { if (it.id == transferId) it.copy(status = "IN_TRANSIT") else it },
+                        transfers = current.transfers.map { if (it.id == transferId) updatedTransfer else it },
                         successMessage = "Gate pass validated! Truck dispatch recorded as IN_TRANSIT."
                     )
                 }

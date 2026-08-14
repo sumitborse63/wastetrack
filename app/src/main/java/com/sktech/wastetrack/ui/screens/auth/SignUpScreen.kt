@@ -46,13 +46,13 @@ fun SignUpScreen(
                 title = {
                     Column {
                         Text(
-                            "Organization Registration",
+                            stringResource(R.string.org_registration_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Profile Setup for ${state.role.fullName}",
+                            stringResource(R.string.profile_setup_subtitle, stringResource(state.role.nameRes)),
                             style = MaterialTheme.typography.labelSmall,
                             color = EmeraldPrimary,
                             fontWeight = FontWeight.SemiBold
@@ -104,16 +104,16 @@ fun SignUpScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = state.role.fullName,
+                            text = stringResource(state.role.nameRes),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldPrimary
                         )
                         Text(
                             text = if (state.role == UserRole.RECYCLER)
-                                "B2B Scrap Auctions, Live Weighbridge, and Fleet Truck Pickup"
+                                stringResource(R.string.role_recycler_setup_desc)
                             else
-                                "Shop Floor Scrap Logging, IoT Telemetry, and Gate Pass Handshake",
+                                stringResource(R.string.role_supervisor_setup_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -156,7 +156,7 @@ fun SignUpScreen(
                     // Role Switcher Toggle
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "Account Role Type",
+                            text = stringResource(R.string.account_role_type),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -166,10 +166,9 @@ fun SignUpScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             listOf(
-                                UserRole.SUPERVISOR to ("Plant Supervisor" to Icons.Filled.Factory),
-                                UserRole.RECYCLER to ("Authorized Recycler" to Icons.Filled.Recycling)
-                            ).forEach { (role, data) ->
-                                val (label, icon) = data
+                                UserRole.SUPERVISOR to Icons.Filled.Factory,
+                                UserRole.RECYCLER to Icons.Filled.Recycling
+                            ).forEach { (role, icon) ->
                                 val isSelected = state.role == role
                                 Surface(
                                     modifier = Modifier
@@ -197,7 +196,7 @@ fun SignUpScreen(
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = label,
+                                            text = stringResource(role.nameRes),
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                             style = MaterialTheme.typography.labelSmall,
                                             color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -211,11 +210,11 @@ fun SignUpScreen(
 
                     // Full Name Field
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Authorized Representative Name", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.authorized_rep_name), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedTextField(
                             value = state.name,
                             onValueChange = viewModel::onNameChanged,
-                            placeholder = { Text("e.g. Rajesh Sharma") },
+                            placeholder = { Text(stringResource(R.string.rep_name_placeholder)) },
                             leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null, tint = EmeraldPrimary) },
                             singleLine = true,
                             shape = MaterialTheme.shapes.medium,
@@ -226,7 +225,7 @@ fun SignUpScreen(
                     // Organization / Factory Name
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            if (state.role == UserRole.RECYCLER) "Recycling Enterprise / Agency Name" else "Manufacturing Plant / Factory Name",
+                            if (state.role == UserRole.RECYCLER) stringResource(R.string.recycling_agency_name) else stringResource(R.string.manufacturing_plant_name),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -236,7 +235,7 @@ fun SignUpScreen(
                             onValueChange = viewModel::onOrganizationNameChanged,
                             placeholder = {
                                 Text(
-                                    if (state.role == UserRole.RECYCLER) "e.g. Apex Green Metal Refiners Pvt Ltd" else "e.g. Tata Motors Forgings Plant 2"
+                                    if (state.role == UserRole.RECYCLER) stringResource(R.string.agency_name_placeholder) else stringResource(R.string.plant_name_placeholder)
                                 )
                             },
                             leadingIcon = {
@@ -254,11 +253,11 @@ fun SignUpScreen(
 
                     // Industrial Zone / Area / Location
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Industrial Zone / City", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.industrial_zone_city), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedTextField(
                             value = state.industrialArea,
                             onValueChange = viewModel::onIndustrialAreaChanged,
-                            placeholder = { Text("e.g. Ambad MIDC, Nashik") },
+                            placeholder = { Text(stringResource(R.string.zone_city_placeholder)) },
                             leadingIcon = { Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = EmeraldPrimary) },
                             singleLine = true,
                             shape = MaterialTheme.shapes.medium,
@@ -269,7 +268,7 @@ fun SignUpScreen(
                     // Registration / MPCB License Number
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            if (state.role == UserRole.RECYCLER) "MPCB Authorization / Consent Number" else "GSTIN / Factory License Number (Optional)",
+                            if (state.role == UserRole.RECYCLER) stringResource(R.string.mpcb_auth_number) else stringResource(R.string.gstin_license_number),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -279,7 +278,7 @@ fun SignUpScreen(
                             onValueChange = viewModel::onRegistrationNumberChanged,
                             placeholder = {
                                 Text(
-                                    if (state.role == UserRole.RECYCLER) "e.g. MPCB/MH/NAS/RECY/2024/09" else "e.g. 27AAAAA0000A1Z5"
+                                    if (state.role == UserRole.RECYCLER) stringResource(R.string.mpcb_number_placeholder) else stringResource(R.string.gstin_placeholder)
                                 )
                             },
                             leadingIcon = { Icon(Icons.Outlined.Badge, contentDescription = null, tint = EmeraldPrimary) },
@@ -312,7 +311,7 @@ fun SignUpScreen(
                         } else {
                             Icon(Icons.Filled.RocketLaunch, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Launch WasteTrack Workspace", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.launch_workspace), fontWeight = FontWeight.Bold)
                         }
                     }
                 }

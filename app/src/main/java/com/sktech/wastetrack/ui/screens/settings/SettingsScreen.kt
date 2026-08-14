@@ -70,6 +70,7 @@ fun SettingsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     languages.forEach { (code, name, flag) ->
                         val isSelected = currentLangCode == code
+                        val selectedToast = stringResource(R.string.lang_selected_msg, name)
                         Surface(
                             shape = MaterialTheme.shapes.medium,
                             color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surfaceVariant,
@@ -79,7 +80,7 @@ fun SettingsScreen(
                                 .clickable {
                                     LocaleHelper.setLanguage(context, code)
                                     showLanguageDialog = false
-                                    Toast.makeText(context, "$name Selected", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, selectedToast, Toast.LENGTH_SHORT).show()
                                 }
                         ) {
                             Row(
@@ -116,7 +117,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Close", color = TextSecondary)
+                    Text(stringResource(R.string.cancel), color = TextSecondary)
                 }
             }
         )
@@ -132,7 +133,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showEditProfileDialog = false },
             title = {
-                Text("Edit Organization Profile", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.edit_profile_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             },
             text = {
                 Column(
@@ -142,7 +143,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = editName,
                         onValueChange = { editName = it },
-                        label = { Text("Full Name") },
+                        label = { Text(stringResource(R.string.full_name)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -150,7 +151,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = editOrg,
                         onValueChange = { editOrg = it },
-                        label = { Text(if (user.role == UserRole.RECYCLER) "Recycling Agency Name" else "Factory / Plant Name") },
+                        label = { Text(if (user.role == UserRole.RECYCLER) stringResource(R.string.recycling_enterprise_label) else stringResource(R.string.manufacturing_plant_label)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -158,7 +159,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = editArea,
                         onValueChange = { editArea = it },
-                        label = { Text("Industrial Zone / City") },
+                        label = { Text(stringResource(R.string.industrial_zone_city)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -166,7 +167,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = editRegNo,
                         onValueChange = { editRegNo = it },
-                        label = { Text(if (user.role == UserRole.RECYCLER) "MPCB Authorization No" else "GSTIN / Plant License No") },
+                        label = { Text(if (user.role == UserRole.RECYCLER) stringResource(R.string.mpcb_auth_no_label) else stringResource(R.string.gstin_license_no_label)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -181,12 +182,12 @@ fun SettingsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = Color.White)
                 ) {
-                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.save_changes), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditProfileDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.cancel), color = TextSecondary)
                 }
             }
         )
@@ -212,7 +213,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirm = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(stringResource(R.string.cancel), color = TextSecondary)
                 }
             }
         )
@@ -230,7 +231,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Enterprise Configuration & Biometric Security",
+                            stringResource(R.string.settings_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -240,7 +241,7 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -291,13 +292,13 @@ fun SettingsScreen(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                user?.name?.ifBlank { "Unassigned Operator" } ?: "Loading...",
+                                user?.name?.ifBlank { stringResource(R.string.unassigned_operator) } ?: "Loading...",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                user?.organizationName?.ifBlank { "Organization Profile Incomplete" } ?: "",
+                                user?.organizationName?.ifBlank { stringResource(R.string.org_profile_incomplete) } ?: "",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = EmeraldPrimary,
                                 fontWeight = FontWeight.SemiBold
@@ -312,7 +313,7 @@ fun SettingsScreen(
                                     color = EmeraldContainer
                                 ) {
                                     Text(
-                                        user?.role?.displayName?.uppercase() ?: "OPERATOR",
+                                        user?.role?.nameRes?.let { stringResource(it).uppercase() } ?: "OPERATOR",
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = EmeraldPrimary,
@@ -339,7 +340,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Outlined.Edit, null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Edit Organization Profile", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.edit_profile_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -349,20 +350,20 @@ fun SettingsScreen(
             // Organization & Location Data Tiles
             ModernSettingsItem(
                 icon = Icons.Outlined.Business,
-                title = if (user?.role == UserRole.RECYCLER) "Recycling Enterprise" else "Manufacturing Plant",
-                subtitle = if (!user?.organizationName.isNullOrBlank()) "${user?.organizationName} (${user?.industrialArea.orEmpty().ifBlank { "Ambad MIDC" }})" else "Not Configured"
+                title = if (user?.role == UserRole.RECYCLER) stringResource(R.string.recycling_enterprise_label) else stringResource(R.string.manufacturing_plant_label),
+                subtitle = if (!user?.organizationName.isNullOrBlank()) "${user?.organizationName} (${user?.industrialArea.orEmpty().ifBlank { "Ambad MIDC" }})" else stringResource(R.string.not_configured)
             )
 
             ModernSettingsItem(
                 icon = Icons.Outlined.Pin,
-                title = if (user?.role == UserRole.RECYCLER) "Recycler Identifier" else "Plant Unit Code",
-                subtitle = user?.factoryId?.ifBlank { "Unassigned" } ?: "Unassigned"
+                title = if (user?.role == UserRole.RECYCLER) stringResource(R.string.recycler_identifier_label) else stringResource(R.string.plant_unit_code_label),
+                subtitle = user?.factoryId?.ifBlank { stringResource(R.string.unassigned_label) } ?: stringResource(R.string.unassigned_label)
             )
 
             if (!user?.registrationNumber.isNullOrBlank()) {
                 ModernSettingsItem(
                     icon = Icons.Outlined.Badge,
-                    title = if (user?.role == UserRole.RECYCLER) "MPCB Authorization No" else "GSTIN / License No",
+                    title = if (user?.role == UserRole.RECYCLER) stringResource(R.string.mpcb_auth_no_label) else stringResource(R.string.gstin_license_no_label),
                     subtitle = user.registrationNumber
                 )
             }
@@ -378,7 +379,7 @@ fun SettingsScreen(
             ModernSettingsItem(
                 icon = Icons.Outlined.CloudSync,
                 title = stringResource(R.string.sync_status),
-                subtitle = "Active Continuous Sync (Room DB + Firestore)"
+                subtitle = stringResource(R.string.sync_status_sub)
             )
 
             // Biometric Toggle Card
@@ -405,7 +406,7 @@ fun SettingsScreen(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.biometric_security), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Require biometric authentication for scrap dispatches", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.biometric_desc), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = biometricsEnabled,
@@ -448,8 +449,8 @@ fun SettingsScreen(
 
             ModernSettingsItem(
                 icon = Icons.Outlined.Info,
-                title = "System Information",
-                subtitle = "WasteTrack Enterprise v1.2.0 (IIT Bombay Sustainability Edition)"
+                title = stringResource(R.string.system_info_title),
+                subtitle = stringResource(R.string.system_info_sub)
             )
 
             Spacer(modifier = Modifier.height(10.dp))

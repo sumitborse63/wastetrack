@@ -104,7 +104,7 @@ fun RecyclerDashboardScreen(
                             )
                         }
                         Text(
-                            text = "${stringResource(R.string.mpcb_approved)} · ${state.currentUser?.industrialArea.orEmpty().ifBlank { "MIDC Zone" }}",
+                            text = "${stringResource(R.string.mpcb_approved)} · ${state.currentUser?.industrialArea.orEmpty().ifBlank { stringResource(R.string.midc_zone_default) }}",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -191,14 +191,14 @@ fun RecyclerDashboardScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Surface(shape = CircleShape, color = AlertRed, modifier = Modifier.size(8.dp)) {}
                     Text(
-                        text = "Live Scrap Micro-Auctions",
+                        text = stringResource(R.string.live_micro_auctions),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 TextButton(onClick = onNavigateToBids) {
-                    Text("View Market", color = EmeraldPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.view_market), color = EmeraldPrimary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -214,7 +214,7 @@ fun RecyclerDashboardScreen(
 
             // Stats Overview Title
             Text(
-                text = "Recycling Procurement Metrics",
+                text = stringResource(R.string.recycling_procurement_metrics),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -229,9 +229,9 @@ fun RecyclerDashboardScreen(
             ) {
                 item {
                     RecyclerStatCard(
-                        title = "Won Auctions",
+                        title = stringResource(R.string.auctions_won),
                         value = "${state.wonAuctions.size}",
-                        subtitle = "Ready for pickup",
+                        subtitle = stringResource(R.string.ready_for_pickup),
                         icon = Icons.Outlined.Storefront,
                         accentColor = EmeraldPrimary,
                         containerColor = EmeraldContainer
@@ -239,9 +239,9 @@ fun RecyclerDashboardScreen(
                 }
                 item {
                     RecyclerStatCard(
-                        title = "Inbound Fleet",
+                        title = stringResource(R.string.inbound_fleet),
                         value = "${state.incomingShipments.size}",
-                        subtitle = "Trucks in transit",
+                        subtitle = stringResource(R.string.trucks_in_transit),
                         icon = Icons.Outlined.Navigation,
                         accentColor = Teal,
                         containerColor = TealContainer
@@ -249,9 +249,9 @@ fun RecyclerDashboardScreen(
                 }
                 item {
                     RecyclerStatCard(
-                        title = "Total Recycled",
+                        title = stringResource(R.string.total_recycled),
                         value = "${String.format("%.0f", state.totalWeightRecycledKg)} kg",
-                        subtitle = "Verified tonnage",
+                        subtitle = stringResource(R.string.verified_tonnage),
                         icon = Icons.Outlined.FactCheck,
                         accentColor = SyncBlue,
                         containerColor = TealContainer
@@ -276,8 +276,8 @@ fun RecyclerDashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 RecyclerQuickActionCard(
-                    title = "Bid Market",
-                    subtitle = "Browse factory lots",
+                    title = stringResource(R.string.bid_market),
+                    subtitle = stringResource(R.string.browse_factory_lots),
                     icon = Icons.Outlined.Storefront,
                     accentColor = EmeraldPrimary,
                     containerColor = EmeraldContainer,
@@ -285,8 +285,8 @@ fun RecyclerDashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 RecyclerQuickActionCard(
-                    title = "Fleet Tracker",
-                    subtitle = "Live inbound trucks",
+                    title = stringResource(R.string.fleet_tracker),
+                    subtitle = stringResource(R.string.live_inbound_trucks),
                     icon = Icons.Outlined.LocalShipping,
                     accentColor = Teal,
                     containerColor = TealContainer,
@@ -294,8 +294,8 @@ fun RecyclerDashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 RecyclerQuickActionCard(
-                    title = "EPR Certs",
-                    subtitle = "Form 10 ledger",
+                    title = stringResource(R.string.epr_certs),
+                    subtitle = stringResource(R.string.form10_ledger),
                     icon = Icons.Outlined.Verified,
                     accentColor = Gold,
                     containerColor = SafetyOrangeContainer,
@@ -309,7 +309,7 @@ fun RecyclerDashboardScreen(
             // Won Auctions Requiring Truck Dispatch
             if (state.wonAuctions.isNotEmpty()) {
                 Text(
-                    text = "Won Auctions Ready for Truck Dispatch",
+                    text = stringResource(R.string.won_auctions_dispatch_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -334,7 +334,7 @@ fun RecyclerDashboardScreen(
             // Active Inbound Shipments
             if (state.incomingShipments.isNotEmpty()) {
                 Text(
-                    text = "Inbound Shipments (Weighbridge Check)",
+                    text = stringResource(R.string.inbound_shipments_weighbridge_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -410,7 +410,7 @@ private fun AutoScrollingAuctionCarousel(
                     ) {
                         AsyncImage(
                             model = category.sampleImageUrl,
-                            contentDescription = category.displayName,
+                            contentDescription = stringResource(category.nameRes),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -434,7 +434,7 @@ private fun AutoScrollingAuctionCarousel(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(category.icon, fontSize = 11.sp)
-                                Text(category.displayName, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(category.nameRes), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -444,7 +444,7 @@ private fun AutoScrollingAuctionCarousel(
                             modifier = Modifier.padding(8.dp).align(Alignment.TopEnd)
                         ) {
                             Text(
-                                "LIVE AUCTION",
+                                stringResource(R.string.live_auction_badge),
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
@@ -453,7 +453,7 @@ private fun AutoScrollingAuctionCarousel(
                         }
 
                         Text(
-                            text = "${lot.estimatedWeightKg} kg (${String.format("%.1f", lot.estimatedWeightKg / 1000f)} MT)",
+                            text = stringResource(R.string.weight_metric_ton_format, lot.estimatedWeightKg, lot.estimatedWeightKg / 1000f),
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
@@ -473,11 +473,11 @@ private fun AutoScrollingAuctionCarousel(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("Reserve Price", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.reserve_price_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("₹${lot.reservePricePerKg}/kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = EmeraldPrimary)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("Lot Value", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.lot_value_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("₹${String.format("%.0f", lot.estimatedWeightKg * lot.reservePricePerKg)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
@@ -490,7 +490,7 @@ private fun AutoScrollingAuctionCarousel(
                         ) {
                             Icon(Icons.Filled.Gavel, contentDescription = null, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Place Competitive Bid", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.place_competitive_bid), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -649,7 +649,7 @@ private fun PendingPickupCard(
             ) {
                 AsyncImage(
                     model = category.sampleImageUrl,
-                    contentDescription = category.displayName,
+                    contentDescription = stringResource(category.nameRes),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -668,7 +668,7 @@ private fun PendingPickupCard(
                     modifier = Modifier.padding(10.dp).align(Alignment.TopEnd)
                 ) {
                     Text(
-                        "WON AUCTION",
+                        stringResource(R.string.won_auction_badge),
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
@@ -676,7 +676,7 @@ private fun PendingPickupCard(
                     )
                 }
                 Text(
-                    text = "${category.displayName} · ${request.estimatedWeightKg} kg",
+                    text = "${stringResource(category.nameRes)} · ${request.estimatedWeightKg} kg",
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
@@ -686,7 +686,7 @@ private fun PendingPickupCard(
 
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = "Origin Factory: ${request.factoryId}",
+                    text = stringResource(R.string.origin_factory_format, request.factoryId),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -699,7 +699,7 @@ private fun PendingPickupCard(
                 ) {
                     Icon(Icons.Filled.LocalShipping, null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Dispatch Truck & Assign Driver", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.dispatch_truck_assign_driver), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -726,13 +726,13 @@ private fun InTransitCard(
             ) {
                 Column {
                     Text(
-                        text = "Vehicle: ${transfer.vehicleNumber}",
+                        text = stringResource(R.string.vehicle_format, transfer.vehicleNumber),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Dispatched: ${DateUtils.formatTime(transfer.initiatedAt)}",
+                        text = "${stringResource(R.string.dispatched_label)}: ${DateUtils.formatTime(transfer.initiatedAt)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -762,7 +762,7 @@ private fun InTransitCard(
             ) {
                 Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Verify Arrival Weighbridge", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.verify_arrival_weighbridge), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -775,21 +775,22 @@ private fun InitiatePickupDialog(
     onDismiss: () -> Unit
 ) {
     var vehicleNo by remember { mutableStateOf("") }
+    val category = runCatching { ScrapCategory.valueOf(request.scrapCategory) }.getOrDefault(ScrapCategory.OTHER)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Assign Truck for Pickup", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.assign_truck_pickup_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "Factory: ${request.factoryId} (${request.estimatedWeightKg} kg ${request.scrapCategory})",
+                    stringResource(R.string.factory_pickup_format, request.factoryId, request.estimatedWeightKg, stringResource(category.nameRes)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = vehicleNo,
                     onValueChange = { vehicleNo = it.uppercase() },
-                    label = { Text("Vehicle Registration No.") },
-                    placeholder = { Text("e.g. MH-15-EG-4521") },
+                    label = { Text(stringResource(R.string.vehicle_reg_no)) },
+                    placeholder = { Text(stringResource(R.string.vehicle_reg_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -801,11 +802,11 @@ private fun InitiatePickupDialog(
                 enabled = vehicleNo.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Confirm Dispatch")
+                Text(stringResource(R.string.confirm_dispatch))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -820,18 +821,18 @@ private fun VerifyWeightDialog(
     val weight = weightText.toFloatOrNull()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Weighbridge Verification", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.weighbridge_verification_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "Truck: ${transfer.vehicleNumber} (Dispatched: ${transfer.weightAtSource} kg)",
+                    stringResource(R.string.truck_dispatched_format, transfer.vehicleNumber, transfer.weightAtSource),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = weightText,
                     onValueChange = { weightText = it },
-                    label = { Text("Measured Destination Weight (kg)") },
+                    label = { Text(stringResource(R.string.measured_dest_weight_kg)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -844,11 +845,11 @@ private fun VerifyWeightDialog(
                 enabled = weight != null && weight > 0f,
                 colors = ButtonDefaults.buttonColors(containerColor = Teal)
             ) {
-                Text("Verify & Complete Handshake")
+                Text(stringResource(R.string.verify_complete_handshake))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

@@ -68,11 +68,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         val filteredNavItems = remember(currentUser) {
-                            if (currentUser?.role == UserRole.RECYCLER) {
-                                bottomNavItems.filter { it.route != Screen.ScrapLog.route }
-                            } else {
-                                bottomNavItems
-                            }
+                            com.sktech.wastetrack.ui.navigation.getBottomNavItemsForRole(currentUser?.role)
                         }
 
                         val showBottomNav = currentRoute in filteredNavItems.map { it.route }

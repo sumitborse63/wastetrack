@@ -78,26 +78,45 @@ fun NavGraph(
                 }
             }
             
-            if (dashboardUser?.role == UserRole.RECYCLER) {
-                RecyclerDashboardScreen(
-                    onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
-                    onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
-                    onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
-                )
-            } else {
-                DashboardScreen(
-                    onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
-                    onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
-                    onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
-                    onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
-                    onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
-                    onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
-                    onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
-                    onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+            when (dashboardUser?.role) {
+                UserRole.RECYCLER -> {
+                    RecyclerDashboardScreen(
+                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                        onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
+                    )
+                }
+                UserRole.DRIVER -> {
+                    com.sktech.wastetrack.ui.screens.dashboard.DriverDashboardScreen(
+                        onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
+                        onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
+                UserRole.ADMIN -> {
+                    com.sktech.wastetrack.ui.screens.dashboard.AdminDashboardScreen(
+                        onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
+                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                        onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
+                else -> {
+                    DashboardScreen(
+                        onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
+                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                        onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
+                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                        onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
+                        onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
+                        onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
             }
         }
 

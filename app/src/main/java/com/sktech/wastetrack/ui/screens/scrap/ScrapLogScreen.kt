@@ -85,7 +85,7 @@ fun ScrapLogScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Intake Log & AI Material Verification",
+                            stringResource(R.string.intake_log_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -95,7 +95,7 @@ fun ScrapLogScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -242,7 +242,7 @@ fun ScrapLogScreen(
             // Scrap Photo Upload / Camera Preview Section
             item {
                 Text(
-                    "Scrap Lot Proof & Image",
+                    stringResource(R.string.scrap_proof_image),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -265,7 +265,7 @@ fun ScrapLogScreen(
                         Box(modifier = Modifier.fillMaxSize()) {
                             AsyncImage(
                                 model = displayImage,
-                                contentDescription = "Scrap Lot Image",
+                                contentDescription = stringResource(R.string.scrap_proof_image),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -283,7 +283,7 @@ fun ScrapLogScreen(
                                 ) {
                                     Icon(Icons.Filled.PhotoCamera, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                                     Text(
-                                        if (state.imageUri != null) "Custom Photo Attached" else "Tap to Replace Photo",
+                                        if (state.imageUri != null) stringResource(R.string.custom_photo_attached) else stringResource(R.string.tap_replace_photo),
                                         color = Color.White,
                                         style = MaterialTheme.typography.labelSmall
                                     )
@@ -298,8 +298,8 @@ fun ScrapLogScreen(
                         ) {
                             Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("Upload or Capture Scrap Photo", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
-                            Text("Attached to B2B auction lot for recyclers", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.upload_capture_photo), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                            Text(stringResource(R.string.attached_auction_lot_desc), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -362,7 +362,7 @@ fun ScrapLogScreen(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = if (isHeavy) "AI Fraud Shield: Suspicious weight density. Possible ballast." else "AI Fraud Shield: Material density verified within normal bounds.",
+                                    text = if (isHeavy) stringResource(R.string.ai_fraud_shield_warning) else stringResource(R.string.ai_fraud_shield_ok),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (isHeavy) AlertRed else EmeraldPrimary
@@ -409,7 +409,7 @@ fun ScrapLogScreen(
                     value = state.subCategory,
                     onValueChange = { viewModel.onSubCategoryChanged(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Copper Wire, Heavy Steel, Brass Scrap", color = TextMuted) },
+                    placeholder = { Text(stringResource(R.string.sub_category_placeholder), color = TextMuted) },
                     leadingIcon = {
                         Icon(Icons.Outlined.Category, contentDescription = null, tint = EmeraldPrimary)
                     },
@@ -433,7 +433,7 @@ fun ScrapLogScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(95.dp),
-                    placeholder = { Text("Additional batch notes...", color = TextMuted) },
+                    placeholder = { Text(stringResource(R.string.notes_placeholder), color = TextMuted) },
                     leadingIcon = {
                         Icon(Icons.AutoMirrored.Outlined.Notes, contentDescription = null, tint = EmeraldPrimary)
                     },

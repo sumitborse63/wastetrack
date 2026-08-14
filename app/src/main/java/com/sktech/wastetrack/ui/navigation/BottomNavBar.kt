@@ -25,6 +25,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sktech.wastetrack.R
 
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Navigation
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Settings
+import com.sktech.wastetrack.domain.model.UserRole
+
 data class BottomNavItem(
     val labelRes: Int,
     val route: String,
@@ -32,13 +44,47 @@ data class BottomNavItem(
     val unselectedIcon: ImageVector
 )
 
-val bottomNavItems = listOf(
+val supervisorNavItems = listOf(
     BottomNavItem(R.string.dashboard, Screen.Dashboard.route, Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
     BottomNavItem(R.string.log_scrap, Screen.ScrapLog.route, Icons.Filled.DeleteSweep, Icons.Outlined.DeleteSweep),
     BottomNavItem(R.string.transfers, Screen.TransferList.route, Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
     BottomNavItem(R.string.nav_bids, Screen.BidMarket.route, Icons.Filled.Storefront, Icons.Outlined.Storefront),
     BottomNavItem(R.string.nav_compliance, Screen.Compliance.route, Icons.Filled.Description, Icons.Outlined.Description),
 )
+
+val recyclerNavItems = listOf(
+    BottomNavItem(R.string.dashboard, Screen.Dashboard.route, Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
+    BottomNavItem(R.string.transfers, Screen.FleetTracker.route, Icons.Filled.Navigation, Icons.Outlined.Navigation),
+    BottomNavItem(R.string.nav_bids, Screen.BidMarket.route, Icons.Filled.Storefront, Icons.Outlined.Storefront),
+    BottomNavItem(R.string.nav_compliance, Screen.Compliance.route, Icons.Filled.Description, Icons.Outlined.Description),
+    BottomNavItem(R.string.settings, Screen.Settings.route, Icons.Filled.Settings, Icons.Outlined.Settings),
+)
+
+val driverNavItems = listOf(
+    BottomNavItem(R.string.dashboard, Screen.Dashboard.route, Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
+    BottomNavItem(R.string.transfers, Screen.FleetTracker.route, Icons.Filled.Navigation, Icons.Outlined.Navigation),
+    BottomNavItem(R.string.scan_qr, Screen.QRScan.route, Icons.Filled.QrCodeScanner, Icons.Outlined.QrCodeScanner),
+    BottomNavItem(R.string.settings, Screen.Settings.route, Icons.Filled.Settings, Icons.Outlined.Settings),
+)
+
+val adminNavItems = listOf(
+    BottomNavItem(R.string.dashboard, Screen.Dashboard.route, Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
+    BottomNavItem(R.string.bin_monitor, Screen.BinMonitor.route, Icons.Filled.Delete, Icons.Outlined.Delete),
+    BottomNavItem(R.string.nav_bids, Screen.BidMarket.route, Icons.Filled.Storefront, Icons.Outlined.Storefront),
+    BottomNavItem(R.string.nav_compliance, Screen.Compliance.route, Icons.Filled.Description, Icons.Outlined.Description),
+    BottomNavItem(R.string.analytics, Screen.Analytics.route, Icons.Filled.BarChart, Icons.Outlined.BarChart),
+)
+
+val bottomNavItems = supervisorNavItems
+
+fun getBottomNavItemsForRole(role: UserRole?): List<BottomNavItem> {
+    return when (role) {
+        UserRole.RECYCLER -> recyclerNavItems
+        UserRole.DRIVER -> driverNavItems
+        UserRole.ADMIN -> adminNavItems
+        else -> supervisorNavItems
+    }
+}
 
 @Composable
 fun BottomNavBar(

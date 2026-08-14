@@ -64,7 +64,7 @@ fun BidDetailScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Auction Batch #${bidRequestId.take(8).uppercase()}",
+                            stringResource(R.string.auction_batch_format, bidRequestId.take(8).uppercase()),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -86,6 +86,7 @@ fun BidDetailScreen(
         },
         bottomBar = {
             if (userRole == UserRole.RECYCLER && request?.status == BidStatus.OPEN) {
+                val validBidErrorMsg = stringResource(R.string.enter_valid_bid_rate)
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
@@ -125,7 +126,7 @@ fun BidDetailScreen(
                                 onClick = {
                                     val price = bidPriceText.toFloatOrNull()
                                     if (price == null || price <= 0f) {
-                                        localError = "Enter a valid bid rate"
+                                        localError = validBidErrorMsg
                                     } else {
                                         viewModel.submitBid(price)
                                         bidPriceText = ""
@@ -240,7 +241,7 @@ fun BidDetailScreen(
                                     ) {
                                         Icon(Icons.Outlined.Timer, null, tint = SafetyOrange, modifier = Modifier.size(16.dp))
                                         Text(
-                                            text = "Closing in: ${DateUtils.getRemainingTimeString(request.auctionEndTime)}",
+                                            text = stringResource(R.string.closing_in_format, DateUtils.getRemainingTimeString(request.auctionEndTime)),
                                             style = MaterialTheme.typography.labelMedium,
                                             color = SafetyOrange,
                                             fontWeight = FontWeight.SemiBold
@@ -267,7 +268,7 @@ fun BidDetailScreen(
                         )
                         if (detailState.bids.isNotEmpty()) {
                             Text(
-                                text = "Highest: ₹${detailState.bids.maxOf { it.pricePerKg }}/kg",
+                                text = stringResource(R.string.highest_bid_format, detailState.bids.maxOf { it.pricePerKg }.toString()),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = EmeraldPrimary
@@ -363,13 +364,13 @@ private fun ModernBidRow(
                 }
                 Column {
                     Text(
-                        text = bid.recyclerName.ifBlank { "Recycler #${bid.recyclerId.take(6).uppercase()}" },
+                        text = bid.recyclerName.ifBlank { stringResource(R.string.recycler_id_format, bid.recyclerId.take(6).uppercase()) },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Total: ₹${String.format("%.0f", bid.pricePerKg * totalWeightKg)}",
+                        text = stringResource(R.string.total_bid_value_format, String.format("%.0f", bid.pricePerKg * totalWeightKg)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

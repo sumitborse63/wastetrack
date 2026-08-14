@@ -331,4 +331,200 @@
     <string name="bin_category_format">%1$s Bin (Capacity: %2$.0f kg)</string>
     <string name="current_fill_kg">Current Fill (kg)</string>
     <string name="update_fill">Update Fill Level</string>
+
+    <!-- Signup & Organization Setup -->
+    <string name="org_registration_title">Organization Registration</string>
+    <string name="profile_setup_subtitle">Profile Setup for %1$s</string>
+    <string name="role_recycler_setup_desc">B2B Scrap Auctions, Live Weighbridge, and Fleet Truck Pickup</string>
+    <string name="role_supervisor_setup_desc">Shop Floor Scrap Logging, IoT Telemetry, and Gate Pass Handshake</string>
+    <string name="account_role_type">Account Role Type</string>
+    <string name="authorized_rep_name">Authorized Representative Name</string>
+    <string name="rep_name_placeholder">e.g. Rajesh Sharma</string>
+    <string name="recycling_agency_name">Recycling Enterprise / Agency Name</string>
+    <string name="manufacturing_plant_name">Manufacturing Plant / Factory Name</string>
+    <string name="agency_name_placeholder">e.g. Apex Green Metal Refiners Pvt Ltd</string>
+    <string name="plant_name_placeholder">e.g. Tata Motors Forgings Plant 2</string>
+    <string name="industrial_zone_city">Industrial Zone / City</string>
+    <string name="zone_city_placeholder">e.g. Ambad MIDC, Nashik</string>
+    <string name="mpcb_auth_number">MPCB Authorization / Consent Number</string>
+    <string name="gstin_license_number">GSTIN / Factory License Number (Optional)</string>
+    <string name="mpcb_number_placeholder">e.g. MPCB/MH/NAS/RECY/2024/09</string>
+    <string name="gstin_placeholder">e.g. 27AAAAA0000A1Z5</string>
+    <string name="launch_workspace">Launch WasteTrack Workspace</string>
+
+    <!-- Dashboard & Quick Actions -->
+    <string name="enterprise_floor_terminal">Enterprise Floor Terminal</string>
+    <string name="unit_code_format">%1$s · Unit #%2$s</string>
+    <string name="record_scrap_weight_sub">Record scrap weight</string>
+    <string name="b2b_lot_auctions_sub">B2B Lot Auctions</string>
+    <string name="bin_telemetry_title">Bin Telemetry</string>
+    <string name="iot_level_sensors_sub">IoT level sensors</string>
+    <string name="gate_pass_title">Gate Pass</string>
+    <string name="qr_handshake_sub">QR handshake</string>
+    <string name="camera_ocr_scanner_sub">Camera OCR scanner</string>
+    <string name="esg_reports_title">ESG Reports</string>
+    <string name="mpcb_manifests_sub">MPCB Form 10 manifests</string>
+    <string name="recent_shop_floor_entries">Recent Shop Floor Entries</string>
+    <string name="log_entry_btn">Log Entry</string>
+    <string name="no_scrap_logged_today">No scrap logged today</string>
+    <string name="no_scrap_logged_desc">Logged scrap records will appear here in real-time.</string>
+
+    <!-- Recycler Dashboard & Procurement -->
+    <string name="midc_zone_default">MIDC Zone</string>
+    <string name="live_micro_auctions">Live Scrap Micro-Auctions</string>
+    <string name="view_market">View Market</string>
+    <string name="recycling_procurement_metrics">Recycling Procurement Metrics</string>
+    <string name="ready_for_pickup">Ready for pickup</string>
+    <string name="inbound_fleet">Inbound Fleet</string>
+    <string name="trucks_in_transit">Trucks in transit</string>
+    <string name="verified_tonnage">Verified tonnage</string>
+    <string name="browse_factory_lots">Browse factory lots</string>
+    <string name="live_inbound_trucks">Live inbound trucks</string>
+    <string name="epr_certs">EPR Certs</string>
+    <string name="form10_ledger">Form 10 ledger</string>
+    <string name="won_auctions_dispatch_title">Won Auctions Ready for Truck Dispatch</string>
+    <string name="inbound_shipments_weighbridge_title">Inbound Shipments (Weighbridge Check)</string>
+    <string name="live_auction_badge">LIVE AUCTION</string>
+    <string name="reserve_price_label">Reserve Price</string>
+    <string name="lot_value_label">Lot Value</string>
+    <string name="place_competitive_bid">Place Competitive Bid</string>
+    <string name="won_auction_badge">WON AUCTION</string>
+    <string name="origin_factory_format">Origin Factory: %1$s</string>
+    <string name="dispatch_truck_assign_driver">Dispatch Truck &amp; Assign Driver</string>
+    <string name="vehicle_format">Vehicle: %1$s</string>
+    <string name="verify_arrival_weighbridge">Verify Arrival Weighbridge</string>
+    <string name="assign_truck_pickup_title">Assign Truck for Pickup</string>
+    <string name="factory_pickup_format">Factory: %1$s (%2$.0f kg %3$s)</string>
+    <string name="vehicle_reg_no">Vehicle Registration No.</string>
+    <string name="vehicle_reg_placeholder">e.g. MH-15-EG-4521</string>
+    <string name="confirm_dispatch">Confirm Dispatch</string>
+    <string name="weighbridge_verification_title">Weighbridge Verification</string>
+    <string name="truck_dispatched_format">Truck: %1$s (Dispatched: %2$.1f kg)</string>
+    <string name="measured_dest_weight_kg">Measured Destination Weight (kg)</string>
+    <string name="verify_complete_handshake">Verify &amp; Complete Handshake</string>
+    <string name="weight_metric_ton_format">%1$.0f kg (%2$.1f MT)</string>
+
+    <!-- Ledger OCR & AI Scrap Log -->
+    <string name="ocr_nlp_subtitle">On-Device OCR &amp; NLP Entity Extraction</string>
+    <string name="scan_another_page">Scan Another Page</string>
+    <string name="structured_records_count_format">Structured Records Found (%1$d)</string>
+    <string name="import_records_btn_format">Import %1$d Records to Scrap Log</string>
+    <string name="extracted_ocr_text">Extracted OCR Text</string>
+    <string name="capture_ledger">Capture Ledger</string>
+    <string name="intake_log_subtitle">Intake Log &amp; AI Material Verification</string>
+    <string name="scrap_proof_image">Scrap Lot Proof &amp; Image</string>
+    <string name="custom_photo_attached">Custom Photo Attached</string>
+    <string name="tap_replace_photo">Tap to Replace Photo</string>
+    <string name="upload_capture_photo">Upload or Capture Scrap Photo</string>
+    <string name="attached_auction_lot_desc">Attached to B2B auction lot for recyclers</string>
+    <string name="verified_audit_ledger_sub">Verified Intake Audit Ledger</string>
+    <string name="ai_classifier_subtitle">Edge-AI Scrap Classifier &amp; Density Inspector</string>
+    <string name="flash_on">Flash On</string>
+    <string name="flash_off">Flash Off</string>
+    <string name="confidence_format">Confidence: %1$d%%</string>
+
+    <!-- Transfers, QR & Fleet Tracker -->
+    <string name="gatepass_ledger_subtitle">Chain-of-Custody &amp; Gatepass Ledger</string>
+    <string name="dispatch_number_format">Dispatch #%1$s</string>
+    <string name="time_label">Time</string>
+    <string name="handshake_subtitle">Cryptographic Driver &amp; Weighbridge Handshake</string>
+    <string name="point_camera_qr_title">Point Camera at Driver\'s Gate Pass QR</string>
+    <string name="align_qr_desc">Align the QR code within the frame to verify chain-of-custody</string>
+    <string name="dest_weighbridge_check">Destination Weighbridge Check</string>
+    <string name="auto_cert_issued_note">Automatic MPCB Form 10 ESG certificate will be issued upon verification.</string>
+    <string name="verify_complete_transfer">Verify &amp; Complete Transfer</string>
+    <string name="fleet_transport_hub">Fleet Transportation Hub</string>
+    <string name="live_gps_telemetry_sub">Live GPS Telemetry &amp; Chain-of-Custody</string>
+    <string name="in_transit_tab_format">In Transit (%1$d)</string>
+    <string name="completed_tab_format">Completed (%1$d)</string>
+    <string name="no_trucks_in_transit">No Trucks Currently in Transit</string>
+    <string name="no_completed_deliveries">No Completed Deliveries Yet</string>
+    <string name="no_trucks_in_transit_desc">Dispatched vehicles and won scrap auctions will show live GPS tracking here.</string>
+    <string name="no_completed_deliveries_desc">Verified weighbridge shipments will appear in the completed ledger.</string>
+    <string name="unassigned_truck">Unassigned Truck</string>
+    <string name="gatepass_dispatched_format">Gate Pass #%1$s · Dispatched %2$s</string>
+    <string name="live_route_demo">Live Route: NH-84 Expressway (42 km/h)</string>
+    <string name="origin_ambad_demo">Origin: Ambad MIDC Gate #1</string>
+    <string name="eta_demo">ETA: ~14 mins (5.8 km)</string>
+    <string name="delivered_label">Delivered</string>
+    <string name="factory_plant_label">Factory Plant</string>
+    <string name="recycler_yard_label">Recycler Yard</string>
+    <string name="source_weight_label">Source Weight</string>
+    <string name="dest_weight_label">Destination Weight</string>
+    <string name="driver_contact_label">Driver Contact</string>
+    <string name="call_driver">Call Driver</string>
+    <string name="weighbridge_check">Weighbridge Check</string>
+
+    <!-- Bids & Auctions -->
+    <string name="micro_auctions_subtitle">24-Hour Micro-Auctions &amp; Price Discovery</string>
+    <string name="auction_batch_format">Auction Batch #%1$s</string>
+    <string name="enter_valid_bid_rate">Enter a valid bid rate</string>
+    <string name="closing_in_format">Closing in: %1$s</string>
+    <string name="highest_bid_format">Highest: ₹%1$s/kg</string>
+    <string name="recycler_id_format">Recycler #%1$s</string>
+    <string name="total_bid_value_format">Total: ₹%1$s</string>
+
+    <!-- Bin, Compliance & Analytics -->
+    <string name="bin_telemetry_subtitle">Predictive Zero-Overflow IoT Telemetry</string>
+    <string name="compliance_manifests_sub">Statutory MPCB Form 10 &amp; ESG Manifests</string>
+    <string name="transfer_number_format">Transfer #%1$s</string>
+    <string name="cert_details_format">%1$s Details</string>
+    <string name="cert_id_prefix">Certificate ID: %1$s</string>
+    <string name="transfer_id_prefix">Transfer ID: %1$s</string>
+    <string name="factory_id_prefix">Factory ID: %1$s</string>
+    <string name="generated_at_prefix">Generated At: %1$s</string>
+    <string name="digital_hash_prefix">Digital Hash: %1$s</string>
+    <string name="analytics_ledger_sub">Circular Economy &amp; 75% EPR Statutory Ledger</string>
+    <string name="efficiency_score_basis">Based on Zero-Overflow &amp; On-Time Dispatches</string>
+
+    <!-- Settings & Voice -->
+    <string name="settings_subtitle">Enterprise Configuration &amp; Biometric Security</string>
+    <string name="lang_selected_msg">%1$s Selected</string>
+    <string name="edit_profile_title">Edit Organization Profile</string>
+    <string name="full_name_label">Full Name</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="unassigned_operator">Unassigned Operator</string>
+    <string name="org_profile_incomplete">Organization Profile Incomplete</string>
+    <string name="role_operator">OPERATOR</string>
+    <string name="recycling_enterprise_label">Recycling Enterprise</string>
+    <string name="manufacturing_plant_label">Manufacturing Plant</string>
+    <string name="not_configured">Not Configured</string>
+    <string name="recycler_identifier_label">Recycler Identifier</string>
+    <string name="plant_unit_code_label">Plant Unit Code</string>
+    <string name="unassigned_label">Unassigned</string>
+    <string name="sync_status_desc">Active Continuous Sync (Room DB + Firestore)</string>
+    <string name="biometric_auth_desc">Require biometric authentication for scrap dispatches</string>
+    <string name="system_info_title">System Information</string>
+    <string name="system_info_desc">WasteTrack Enterprise v1.2.0 (IIT Bombay Sustainability Edition)</string>
+    <string name="mic_permission_required">Microphone permission required for voice logging</string>
+    <string name="speech_not_supported">Speech recognition not supported on this device</string>
+    <string name="voice_input_action">Voice Input</string>
+    <string name="stop_listening">Stop Listening</string>
+
+    <!-- Driver & Admin Specific -->
+    <string name="driver_dashboard_title">Fleet Driver Logistics Cockpit</string>
+    <string name="active_trip">Active Dispatched Trip</string>
+    <string name="no_active_trips">No Active Dispatches</string>
+    <string name="no_active_trips_desc">When a factory supervisor or recycler assigns a scrap shipment to your vehicle, it will appear here.</string>
+    <string name="scan_gate_qr">Scan Gate Pass QR</string>
+    <string name="start_gps_nav">Start GPS Navigation</string>
+    <string name="confirm_arrival">Confirm Weighbridge Arrival</string>
+    <string name="report_incident">Report Delay / Incident</string>
+    <string name="driver_trips_completed">Completed Trips</string>
+    <string name="driver_tonnage">Tonnage Hauled</string>
+    <string name="driver_on_time">On-Time Index</string>
+    <string name="vehicle_no_label">Assigned Vehicle</string>
+    <string name="origin_factory">Origin Plant</string>
+    <string name="destination_hub">Destination Recycler</string>
+
+    <string name="admin_dashboard_title">Industrial Plant Executive Command</string>
+    <string name="admin_kpi_total_scrap">Total Scrap Logged</string>
+    <string name="admin_kpi_revenue">Auction Revenue</string>
+    <string name="admin_kpi_diversion">Landfill Diversion</string>
+    <string name="admin_kpi_carbon">CO2 Offset</string>
+    <string name="smart_bin_fleet_matrix">Plant-Wide Smart Bins Telemetry</string>
+    <string name="regulatory_audit_score">MPCB Regulatory Audit Score</string>
+    <string name="supervisor_audit_trail">Real-Time Floor Audit Log</string>
+    <string name="export_audit_report">Export ESG &amp; MPCB Audit Report</string>
+    <string name="analytics">Analytics</string>
 </resources>

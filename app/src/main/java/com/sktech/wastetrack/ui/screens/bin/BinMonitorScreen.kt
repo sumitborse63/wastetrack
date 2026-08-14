@@ -76,7 +76,7 @@ fun BinMonitorScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Predictive Zero-Overflow IoT Telemetry",
+                            stringResource(R.string.bin_telemetry_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

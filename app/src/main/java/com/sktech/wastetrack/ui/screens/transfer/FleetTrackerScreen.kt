@@ -54,26 +54,26 @@ fun FleetTrackerScreen(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.Scale, contentDescription = null, tint = EmeraldPrimary)
-                    Text("Destination Weighbridge Check", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.weighbridge_dialog_title), fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        "Vehicle: ${transfer.vehicleNumber} (Dispatched: ${transfer.weightAtSource} kg)",
+                        stringResource(R.string.vehicle_dispatched_format, transfer.vehicleNumber, transfer.weightAtSource.toString()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     OutlinedTextField(
                         value = receivedWeightText,
                         onValueChange = { receivedWeightText = it },
-                        label = { Text("Measured Destination Weight (kg)") },
+                        label = { Text(stringResource(R.string.measured_dest_weight_label)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text(
-                        "Automatic MPCB Form 10 ESG certificate will be issued upon verification.",
+                        stringResource(R.string.mpcb_form10_cert_notice),
                         style = MaterialTheme.typography.labelSmall,
                         color = EmeraldPrimary
                     )
@@ -90,12 +90,12 @@ fun FleetTrackerScreen(
                     enabled = parsedWeight != null && parsedWeight > 0f,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Verify & Complete Transfer")
+                    Text(stringResource(R.string.verify_complete_transfer_btn))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { verifyTransferDialog = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -107,13 +107,13 @@ fun FleetTrackerScreen(
                 title = {
                     Column {
                         Text(
-                            "Fleet Transportation Hub",
+                            stringResource(R.string.fleet_transport_hub),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Live GPS Telemetry & Chain-of-Custody",
+                            stringResource(R.string.live_gps_telemetry_sub),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -201,7 +201,7 @@ fun FleetTrackerScreen(
                     onClick = { selectedTab = 0 },
                     text = {
                         Text(
-                            "In Transit (${activeShipments.size})",
+                            stringResource(R.string.in_transit_tab_format, activeShipments.size),
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium
                         )
                     }
@@ -211,7 +211,7 @@ fun FleetTrackerScreen(
                     onClick = { selectedTab = 1 },
                     text = {
                         Text(
-                            "Completed (${completedShipments.size})",
+                            stringResource(R.string.completed_tab_format, completedShipments.size),
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium
                         )
                     }
@@ -242,13 +242,13 @@ fun FleetTrackerScreen(
                         }
                         Spacer(modifier = Modifier.height(14.dp))
                         Text(
-                            if (selectedTab == 0) "No Trucks Currently in Transit" else "No Completed Deliveries Yet",
+                            if (selectedTab == 0) stringResource(R.string.no_trucks_in_transit) else stringResource(R.string.no_completed_deliveries),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            if (selectedTab == 0) "Dispatched vehicles and won scrap auctions will show live GPS tracking here." else "Verified weighbridge shipments will appear in the completed ledger.",
+                            if (selectedTab == 0) stringResource(R.string.trucks_in_transit_sub) else stringResource(R.string.completed_deliveries_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
@@ -323,13 +323,13 @@ fun InteractiveFleetTruckCard(
                     }
                     Column {
                         Text(
-                            transfer.vehicleNumber.ifBlank { "Unassigned Truck" },
+                            transfer.vehicleNumber.ifBlank { stringResource(R.string.unassigned_truck) },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Gate Pass #${transfer.id.take(8).uppercase()} · Dispatched ${DateUtils.formatTime(transfer.initiatedAt)}",
+                            stringResource(R.string.gatepass_dispatched_format, transfer.id.take(8).uppercase(), DateUtils.formatTime(transfer.initiatedAt)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -345,7 +345,7 @@ fun InteractiveFleetTruckCard(
                     }
                 ) {
                     Text(
-                        text = transfer.status,
+                        text = stringResource(statusEnum.nameRes),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = when (transfer.status) {
@@ -375,14 +375,14 @@ fun InteractiveFleetTruckCard(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Filled.Navigation, contentDescription = null, tint = Teal, modifier = Modifier.size(14.dp))
                             Text(
-                                if (isInTransit) "Live Route: NH-84 Expressway (42 km/h)" else "Origin: Ambad MIDC Gate #1",
+                                if (isInTransit) stringResource(R.string.live_route_demo) else stringResource(R.string.origin_demo),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         Text(
-                            if (isInTransit) "ETA: ~14 mins (5.8 km)" else "Delivered",
+                            if (isInTransit) stringResource(R.string.eta_demo) else stringResource(R.string.delivered_label),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (isInTransit) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -403,9 +403,9 @@ fun InteractiveFleetTruckCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Factory Plant", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("In Transit", style = MaterialTheme.typography.labelSmall, color = Teal, fontWeight = FontWeight.Bold)
-                        Text("Recycler Yard", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.factory_plant_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.in_transit_badge), style = MaterialTheme.typography.labelSmall, color = Teal, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.recycler_yard_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -419,19 +419,19 @@ fun InteractiveFleetTruckCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Source Weight", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.source_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("${transfer.weightAtSource} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 if (transfer.weightAtDestination != null && transfer.weightAtDestination > 0f) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Destination Weight", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.destination_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("${transfer.weightAtDestination} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
                     }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Driver Contact", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.driver_contact_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Suresh Patil", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
@@ -450,7 +450,7 @@ fun InteractiveFleetTruckCard(
                     ) {
                         Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Call Driver", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.call_driver_btn), style = MaterialTheme.typography.labelMedium)
                     }
 
                     Button(
@@ -461,7 +461,7 @@ fun InteractiveFleetTruckCard(
                     ) {
                         Icon(Icons.Filled.Scale, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Weighbridge Check", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.weighbridge_check_btn), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

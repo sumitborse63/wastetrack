@@ -46,7 +46,7 @@ fun AnalyticsScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Circular Economy & 75% EPR Statutory Ledger",
+                            stringResource(R.string.analytics_ledger_sub),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -205,7 +205,7 @@ fun EfficiencyScoreCard(score: Int) {
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                "Based on Zero-Overflow & On-Time Dispatches",
+                stringResource(R.string.efficiency_score_basis),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

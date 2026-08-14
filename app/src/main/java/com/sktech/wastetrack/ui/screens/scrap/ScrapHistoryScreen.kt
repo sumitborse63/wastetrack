@@ -58,7 +58,7 @@ fun ScrapHistoryScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Verified Intake Audit Ledger",
+                            stringResource(R.string.verified_audit_ledger_sub),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

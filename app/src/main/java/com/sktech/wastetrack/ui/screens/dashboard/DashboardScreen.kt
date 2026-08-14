@@ -73,7 +73,10 @@ fun DashboardScreen(
                             )
                         }
                         Text(
-                            text = if (!state.currentUser?.industrialArea.isNullOrBlank()) "${state.currentUser?.industrialArea} · Unit #${state.currentUser?.factoryId.orEmpty().take(6).uppercase()}" else "Enterprise Floor Terminal",
+                            text = if (!state.currentUser?.industrialArea.isNullOrBlank())
+                                stringResource(R.string.unit_code_format, state.currentUser?.industrialArea.orEmpty(), state.currentUser?.factoryId.orEmpty().take(6).uppercase())
+                            else
+                                stringResource(R.string.enterprise_floor_terminal),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -223,7 +226,7 @@ fun DashboardScreen(
                 ) {
                     ModernQuickActionButton(
                         title = stringResource(R.string.log_scrap),
-                        subtitle = "Record scrap weight",
+                        subtitle = stringResource(R.string.record_scrap_weight_sub),
                         icon = Icons.Outlined.AddCircleOutline,
                         accentColor = EmeraldPrimary,
                         containerColor = EmeraldContainer,
@@ -232,7 +235,7 @@ fun DashboardScreen(
                     )
                     ModernQuickActionButton(
                         title = stringResource(R.string.live_auctions),
-                        subtitle = "B2B Lot Auctions",
+                        subtitle = stringResource(R.string.b2b_lot_auctions_sub),
                         icon = Icons.Outlined.Storefront,
                         accentColor = Teal,
                         containerColor = TealContainer,
@@ -240,8 +243,8 @@ fun DashboardScreen(
                         modifier = Modifier.weight(1f)
                     )
                     ModernQuickActionButton(
-                        title = "Bin Telemetry",
-                        subtitle = "IoT level sensors",
+                        title = stringResource(R.string.bin_telemetry_title),
+                        subtitle = stringResource(R.string.iot_level_sensors_sub),
                         icon = Icons.Outlined.Sensors,
                         accentColor = Gold,
                         containerColor = SafetyOrangeContainer,
@@ -255,8 +258,8 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     ModernQuickActionButton(
-                        title = "Gate Pass",
-                        subtitle = "QR handshake",
+                        title = stringResource(R.string.gate_pass_title),
+                        subtitle = stringResource(R.string.qr_handshake_sub),
                         icon = Icons.Outlined.QrCodeScanner,
                         accentColor = EmeraldPrimary,
                         containerColor = EmeraldContainer,
@@ -265,7 +268,7 @@ fun DashboardScreen(
                     )
                     ModernQuickActionButton(
                         title = stringResource(R.string.digitize_ledger),
-                        subtitle = "Camera OCR scanner",
+                        subtitle = stringResource(R.string.camera_ocr_scanner_sub),
                         icon = Icons.Outlined.DocumentScanner,
                         accentColor = Teal,
                         containerColor = TealContainer,
@@ -273,8 +276,8 @@ fun DashboardScreen(
                         modifier = Modifier.weight(1f)
                     )
                     ModernQuickActionButton(
-                        title = "ESG Reports",
-                        subtitle = "MPCB Form 10 manifests",
+                        title = stringResource(R.string.esg_reports_title),
+                        subtitle = stringResource(R.string.mpcb_manifests_sub),
                         icon = Icons.Outlined.Assessment,
                         accentColor = SyncBlue,
                         containerColor = TealContainer,
@@ -295,14 +298,14 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Recent Shop Floor Entries",
+                    text = stringResource(R.string.recent_shop_floor_entries),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 TextButton(onClick = onNavigateToScrapLog) {
                     Text(
-                        "Log Entry",
+                        stringResource(R.string.log_entry_btn),
                         color = EmeraldPrimary,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
@@ -333,13 +336,13 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "No scrap logged today",
+                            stringResource(R.string.no_scrap_logged_today),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Logged scrap records will appear here in real-time.",
+                            stringResource(R.string.no_scrap_logged_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -526,7 +529,7 @@ private fun ModernScrapEntryRow(entry: ScrapEntryEntity) {
 
                 Column {
                     Text(
-                        text = "${category.displayName} · ${entry.weightKg} kg",
+                        text = "${stringResource(category.nameRes)} · ${entry.weightKg} kg",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface

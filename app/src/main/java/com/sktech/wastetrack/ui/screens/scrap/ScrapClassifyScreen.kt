@@ -91,7 +91,7 @@ fun ScrapClassifyScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Edge-AI Scrap Classifier & Density Inspector",
+                            stringResource(R.string.ai_classifier_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -111,7 +111,7 @@ fun ScrapClassifyScreen(
                         IconButton(onClick = { isFlashEnabled = !isFlashEnabled }) {
                             Icon(
                                 imageVector = if (isFlashEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
-                                contentDescription = if (isFlashEnabled) "Flash On" else "Flash Off",
+                                contentDescription = if (isFlashEnabled) stringResource(R.string.flash_on) else stringResource(R.string.flash_off),
                                 tint = if (isFlashEnabled) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -227,7 +227,7 @@ fun ScrapClassifyScreen(
                             .size(72.dp)
                             .background(Color.White.copy(alpha = 0.35f), CircleShape)
                     ) {
-                        Icon(Icons.Filled.CameraAlt, contentDescription = "Capture", modifier = Modifier.size(36.dp), tint = Color.White)
+                        Icon(Icons.Filled.CameraAlt, contentDescription = stringResource(R.string.capture_ledger), modifier = Modifier.size(36.dp), tint = Color.White)
                     }
                 }
             } else {
@@ -238,7 +238,7 @@ fun ScrapClassifyScreen(
                     Box(modifier = Modifier.weight(1f)) {
                         Image(
                             bitmap = state.capturedImage!!.asImageBitmap(),
-                            contentDescription = "Captured Scrap",
+                            contentDescription = stringResource(R.string.scrap_proof_image),
                             modifier = Modifier.fillMaxSize()
                         )
 
@@ -308,7 +308,7 @@ fun ScrapClassifyScreen(
                                         shape = MaterialTheme.shapes.small
                                     ) {
                                         Text(
-                                            text = "Confidence: ${(state.result!!.confidence * 100).toInt()}%",
+                                            text = stringResource(R.string.confidence_format, (state.result!!.confidence * 100).toInt()),
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,

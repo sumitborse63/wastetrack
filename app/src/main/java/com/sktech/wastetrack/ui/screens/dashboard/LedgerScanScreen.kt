@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -40,6 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
 
@@ -61,13 +63,13 @@ fun LedgerScanScreen(
                 title = {
                     Column {
                         Text(
-                            "Digitize Paper Ledger",
+                            stringResource(R.string.digitize_ledger),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "On-Device OCR & NLP Entity Extraction",
+                            stringResource(R.string.ocr_nlp_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -77,7 +79,7 @@ fun LedgerScanScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -99,7 +101,7 @@ fun LedgerScanScreen(
                     CircularProgressIndicator(color = EmeraldPrimary)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Extracting & Structuring Text (OCR + NLP)...",
+                        stringResource(R.string.extracting_ocr),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -116,13 +118,13 @@ fun LedgerScanScreen(
                 ) {
                     Icon(
                         Icons.Filled.CheckCircle,
-                        contentDescription = "Success",
+                        contentDescription = stringResource(R.string.synced_label),
                         tint = EmeraldPrimary,
                         modifier = Modifier.size(72.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Digitization Complete!",
+                        stringResource(R.string.digitization_complete),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
                         color = EmeraldPrimary
@@ -140,7 +142,7 @@ fun LedgerScanScreen(
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                     ) {
-                        Text("Scan Another Page", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.scan_another_page), fontWeight = FontWeight.Bold)
                     }
                 }
             } else if (state.extractedText.isNotEmpty() || state.error != null) {
@@ -175,7 +177,7 @@ fun LedgerScanScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Structured Records Found (${state.parsedEntries.size})",
+                                stringResource(R.string.structured_records_count_format, state.parsedEntries.size),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -210,7 +212,7 @@ fun LedgerScanScreen(
                                         }
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                "${entry.category.displayName} — ${entry.weightKg} kg",
+                                                "${stringResource(entry.category.nameRes)} — ${entry.weightKg} kg",
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface
@@ -240,12 +242,12 @@ fun LedgerScanScreen(
                             } else {
                                 Icon(Icons.Filled.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Import ${state.parsedEntries.size} Records to Scrap Log", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.import_records_btn_format, state.parsedEntries.size), fontWeight = FontWeight.Bold)
                             }
                         }
                     } else {
                         // Raw OCR text view if no structured items matched
-                        Text("Extracted OCR Text", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.extracted_ocr_text), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
@@ -269,7 +271,7 @@ fun LedgerScanScreen(
                     ) {
                         Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Retake Photo", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.retake), fontWeight = FontWeight.SemiBold)
                     }
                 }
             } else {
@@ -331,7 +333,7 @@ fun LedgerScanScreen(
                     ) {
                         Icon(
                             Icons.Filled.CameraAlt,
-                            contentDescription = "Capture Ledger",
+                            contentDescription = stringResource(R.string.capture_ledger),
                             modifier = Modifier.size(36.dp),
                             tint = Color.White
                         )

@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.res.stringResource
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.ui.theme.SafetyOrange
 
 enum class RegionalLanguage(val displayName: String, val localeTag: String) {
@@ -54,7 +56,7 @@ fun VoiceInputButton(
     ) { isGranted ->
         hasAudioPermission = isGranted
         if (!isGranted) {
-            Toast.makeText(context, "Microphone permission required for voice logging", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.mic_permission_required), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -115,7 +117,7 @@ fun VoiceInputButton(
                 )
             },
             leadingIcon = {
-                Icon(Icons.Filled.Language, contentDescription = "Language", modifier = Modifier.size(14.dp))
+                Icon(Icons.Filled.Language, contentDescription = stringResource(R.string.language), modifier = Modifier.size(14.dp))
             }
         )
 
@@ -143,7 +145,7 @@ fun VoiceInputButton(
                 }
 
                 if (speechRecognizer == null) {
-                    Toast.makeText(context, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.speech_not_supported), Toast.LENGTH_SHORT).show()
                     return@FloatingActionButton
                 }
 
@@ -168,7 +170,7 @@ fun VoiceInputButton(
         ) {
             Icon(
                 imageVector = if (isListening) Icons.Filled.MicOff else Icons.Filled.Mic,
-                contentDescription = if (isListening) "Stop Listening" else "Voice Input",
+                contentDescription = if (isListening) stringResource(R.string.stop_listening) else stringResource(R.string.voice_input_action),
                 modifier = Modifier.size(24.dp)
             )
         }

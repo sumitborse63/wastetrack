@@ -79,7 +79,7 @@ fun QRScanScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "Cryptographic Driver & Weighbridge Handshake",
+                            stringResource(R.string.handshake_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -279,13 +279,13 @@ fun QRScanScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    "Point Camera at Driver's Gate Pass QR",
+                                    stringResource(R.string.point_camera_qr_title),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    "Align the QR code within the frame to verify chain-of-custody",
+                                    stringResource(R.string.align_qr_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
