@@ -1,9 +1,8 @@
 package com.sktech.wastetrack.di
 
 import com.sktech.wastetrack.data.remote.api.HoneywellApi
-import com.sktech.wastetrack.data.remote.api.MockApiInterceptor
+import com.sktech.wastetrack.BuildConfig
 import com.sktech.wastetrack.data.remote.api.MpcbApi
-import com.sktech.wastetrack.util.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,11 +22,10 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
-            .addInterceptor(MockApiInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -38,7 +36,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(Constants.BASE_URL)
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

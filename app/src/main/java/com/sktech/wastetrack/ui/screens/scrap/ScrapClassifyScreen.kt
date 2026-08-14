@@ -36,7 +36,10 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.ui.screens.scrap.color
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,9 +80,9 @@ fun ScrapClassifyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AI Scrap Classifier", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.capturing_ai), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
                 },
                 actions = {
                     if (state.capturedImage == null && hasCameraPermission) {
@@ -104,7 +107,7 @@ fun ScrapClassifyScreen(
             if (!hasCameraPermission) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                        Text("Grant Camera Permission")
+                        Text(stringResource(R.string.grant_permission))
                     }
                 }
             } else if (state.capturedImage == null) {
@@ -206,7 +209,7 @@ fun ScrapClassifyScreen(
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("Analyzing with AI...", color = Color.White)
+                                    Text(stringResource(R.string.analyzing_with_ai), color = Color.White)
                                 }
                             }
                         }
@@ -223,12 +226,12 @@ fun ScrapClassifyScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    "Identified Material",
+                                    stringResource(R.string.select_category),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "${state.result!!.category.icon} ${state.result!!.category.displayName}",
+                                    "${state.result!!.category.icon} ${stringResource(state.result!!.category.nameRes)}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = state.result!!.category.color()
@@ -241,7 +244,7 @@ fun ScrapClassifyScreen(
                                         modifier = Modifier.padding(top = 6.dp)
                                     ) {
                                         Text(
-                                            text = "Sub-Type: ${state.result!!.subCategory}",
+                                            text = state.result!!.subCategory,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -250,11 +253,36 @@ fun ScrapClassifyScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    "Confidence: ${(state.result!!.confidence * 100).toInt()}%",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        color = if (state.result!!.confidence >= 0.90f) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "Confidence: ${(state.result!!.confidence * 100).toInt()}%",
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (state.result!!.confidence >= 0.90f) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = state.result!!.engine,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                                 
                                 Spacer(modifier = Modifier.height(20.dp))
                                 
@@ -266,13 +294,13 @@ fun ScrapClassifyScreen(
                                         onClick = { viewModel.reset() },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Retake")
+                                        Text(stringResource(R.string.retake))
                                     }
                                     Button(
                                         onClick = { onClassificationComplete(state.result!!.category, state.result!!.subCategory) },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Use Result")
+                                        Text(stringResource(R.string.use_result))
                                     }
                                 }
                             }
@@ -288,7 +316,7 @@ fun ScrapClassifyScreen(
                             ) {
                                 Text(state.error!!, color = MaterialTheme.colorScheme.onErrorContainer)
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { viewModel.reset() }) { Text("Try Again") }
+                                Button(onClick = { viewModel.reset() }) { Text(stringResource(R.string.try_again)) }
                             }
                         }
                     }
@@ -296,4 +324,5 @@ fun ScrapClassifyScreen(
             }
         }
     }
+
 }

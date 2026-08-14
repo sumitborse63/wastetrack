@@ -1,11 +1,12 @@
 package com.sktech.wastetrack.ui.screens.dashboard
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -15,16 +16,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.data.local.db.entity.TransferEntity
 import com.sktech.wastetrack.data.local.db.entity.BidRequestEntity
 import com.sktech.wastetrack.domain.model.ScrapCategory
@@ -47,7 +50,6 @@ fun RecyclerDashboardScreen(
     var showPickupDialog by remember { mutableStateOf<BidRequestEntity?>(null) }
     var showVerifyDialog by remember { mutableStateOf<TransferEntity?>(null) }
 
-    // Dialogs
     showPickupDialog?.let { request ->
         InitiatePickupDialog(
             request = request,
@@ -76,8 +78,9 @@ fun RecyclerDashboardScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
-        // Premium Header
+        // Modern Recycler Header
         RecyclerHeader(
+            user = state.currentUser,
             onSettingsClick = onNavigateToSettings
         )
 
@@ -85,8 +88,10 @@ fun RecyclerDashboardScreen(
 
         // Message Banners
         state.successMessage?.let { msg ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = IndustrialGreen.copy(alpha = 0.15f)),
+            Surface(
+                color = EmeraldContainer,
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.3f)),
                 modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()
             ) {
                 Row(
@@ -94,8 +99,8 @@ fun RecyclerDashboardScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Filled.CheckCircle, null, tint = IndustrialGreenLight)
-                    Text(msg, style = MaterialTheme.typography.bodyMedium, color = IndustrialGreenLight)
+                    Icon(Icons.Filled.CheckCircle, null, tint = EmeraldPrimary)
+                    Text(msg, style = MaterialTheme.typography.bodyMedium, color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
                 }
             }
             LaunchedEffect(msg) {
@@ -105,397 +110,259 @@ fun RecyclerDashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        state.error?.let { err ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AlertRed.copy(alpha = 0.1f)),
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(Icons.Filled.Error, null, tint = AlertRed)
-                    Text(err, style = MaterialTheme.typography.bodyMedium, color = AlertRed)
-                }
-            }
-            LaunchedEffect(err) {
-                kotlinx.coroutines.delay(6000)
-                viewModel.clearMessages()
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // Stats Overview Row
+        // Stats Overview Title
         Text(
-            text = "Recycler Overview",
-            style = MaterialTheme.typography.titleLarge,
+            text = "Recycling Procurement Metrics",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // Metrics Carousel
         LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                StatCard(
-                    title = "Auctions Won",
-                    value = "${state.wonBidsCount}",
-                    subtitle = "Pending Pickup",
-                    icon = Icons.Filled.EmojiEvents,
-                    gradientColors = listOf(Gold, SafetyOrangeLight)
+                RecyclerStatCard(
+                    title = "Pending Pickups",
+                    value = "${state.pendingPickups.size}",
+                    subtitle = "Action required",
+                    icon = Icons.Outlined.LocalShipping,
+                    accentColor = EmeraldPrimary,
+                    containerColor = EmeraldContainer
                 )
             }
             item {
-                StatCard(
-                    title = "Total Recycled",
-                    value = "${String.format("%.1f", state.totalWeightRecycledKg)}",
-                    subtitle = "Kilograms",
-                    icon = Icons.Filled.Recycling,
-                    gradientColors = listOf(IndustrialGreen, IndustrialGreenLight)
+                RecyclerStatCard(
+                    title = "In Transit",
+                    value = "${state.inTransitTransfers.size}",
+                    subtitle = "Trucks on route",
+                    icon = Icons.Outlined.Navigation,
+                    accentColor = Teal,
+                    containerColor = TealContainer
                 )
             }
             item {
-                StatCard(
-                    title = "ESG Certificates",
-                    value = "${state.certificateCount}",
-                    subtitle = "MPCB Approved",
-                    icon = Icons.Filled.VerifiedUser,
-                    gradientColors = listOf(Teal, SyncBlue)
+                RecyclerStatCard(
+                    title = "Delivered Total",
+                    value = "${state.completedTransfers.size}",
+                    subtitle = "Verified shipments",
+                    icon = Icons.Outlined.FactCheck,
+                    accentColor = SyncBlue,
+                    containerColor = TealContainer
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Quick Actions
+        // Quick Actions Grid
         Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleLarge,
+            text = stringResource(R.string.quick_actions),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickActionCard(
+            RecyclerQuickActionCard(
                 title = "Bid Market",
-                subtitle = "Browse & Bid",
+                subtitle = "Browse factory lots",
                 icon = Icons.Outlined.Storefront,
-                color = Gold,
+                accentColor = EmeraldPrimary,
+                containerColor = EmeraldContainer,
                 onClick = onNavigateToBids,
                 modifier = Modifier.weight(1f)
             )
-            QuickActionCard(
-                title = "Compliance",
-                subtitle = "MPCB Certificates",
-                icon = Icons.Outlined.Description,
-                color = IndustrialGreenLight,
+            RecyclerQuickActionCard(
+                title = "Fleet Tracker",
+                subtitle = "Live inbound trucks",
+                icon = Icons.Outlined.LocalShipping,
+                accentColor = Teal,
+                containerColor = TealContainer,
+                onClick = onNavigateToFleet,
+                modifier = Modifier.weight(1f)
+            )
+            RecyclerQuickActionCard(
+                title = "EPR Certs",
+                subtitle = "Form 10 ledger",
+                icon = Icons.Outlined.Verified,
+                accentColor = Gold,
+                containerColor = SafetyOrangeContainer,
                 onClick = onNavigateToCompliance,
                 modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
-        ) {
-            QuickActionCard(
-                title = "Fleet Tracker",
-                subtitle = "Live Trucks",
-                icon = Icons.Outlined.LocalShipping,
-                color = SyncBlue,
-                onClick = onNavigateToFleet,
-                modifier = Modifier.weight(1f)
+        // Pending Dispatches Requiring Pickup
+        if (state.pendingPickups.isNotEmpty()) {
+            Text(
+                text = "Won Auctions Ready for Truck Dispatch",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 20.dp)
             )
-            Spacer(modifier = Modifier.weight(1f))
-        }
+            Spacer(modifier = Modifier.height(10.dp))
 
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Incoming Deliveries (In Transit) Section
-        Text(
-            text = "Active Shipments (In Transit)",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (state.incomingShipments.isEmpty()) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Outlined.LocalShipping, null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("No shipments in transit", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        } else {
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                state.incomingShipments.forEach { shipment ->
-                    val cat = try { ScrapCategory.valueOf(shipment.scrapEntryId.take(2)) } catch (e: Exception) { ScrapCategory.OTHER }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text("Shipment #${shipment.id.take(8)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("Vehicle: ${shipment.vehicleNumber}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Est. Weight: ${shipment.weightAtSource} kg", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Button(
-                                onClick = { showVerifyDialog = shipment },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Filled.Scale, null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Verify Weight", style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
-                    }
+                state.pendingPickups.forEach { request ->
+                    PendingPickupCard(
+                        request = request,
+                        onInitiate = { showPickupDialog = request }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Active In-Transit Trucks
+        if (state.inTransitTransfers.isNotEmpty()) {
+            Text(
+                text = "Inbound Shipments (Weighbridge Check)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                state.inTransitTransfers.forEach { transfer ->
+                    InTransitCard(
+                        transfer = transfer,
+                        onVerify = { showVerifyDialog = transfer }
+                    )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
-
-        // Won Auctions Pending Pickup
-        Text(
-            text = "Won Bids Pending Pickup",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (state.wonAuctions.isEmpty()) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Outlined.EmojiEvents, null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("No pending auction wins", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        } else {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                state.wonAuctions.forEach { request ->
-                    val cat = try { ScrapCategory.valueOf(request.scrapCategory) } catch (e: Exception) { ScrapCategory.OTHER }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text("${cat.displayName} Scrap", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("Estimated Weight: ${request.estimatedWeightKg} kg", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Reserve Price: ₹${request.reservePricePerKg}/kg", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Button(
-                                onClick = { showPickupDialog = request },
-                                colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Filled.LocalShipping, null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Dispatch Truck", style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
 @Composable
-private fun RecyclerHeader(
-    onSettingsClick: () -> Unit
+private fun RecyclerStatCard(
+    title: String,
+    value: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    containerColor: Color
 ) {
     Surface(
+        modifier = Modifier
+            .width(160.dp)
+            .height(115.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 48.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "WasteTrack",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Mumbai Green Recyclers",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = containerColor,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(16.dp)
                         )
-                        Surface(
-                            shape = MaterialTheme.shapes.extraSmall,
-                            color = IndustrialGreenLight.copy(alpha = 0.15f)
-                        ) {
-                            Text(
-                                "CERTIFIED",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = IndustrialGreenLight,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
                 }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            }
+
+            Column {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
         }
     }
 }
 
 @Composable
-private fun StatCard(
-    title: String,
-    value: String,
-    subtitle: String,
-    icon: ImageVector,
-    gradientColors: List<Color>
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .height(120.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(gradientColors),
-                    shape = MaterialTheme.shapes.medium
-                )
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(24.dp)
-                )
-                Column {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.align(Alignment.TopEnd)
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickActionCard(
+private fun RecyclerQuickActionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    color: Color,
+    accentColor: Color,
+    containerColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Surface(
         modifier = modifier
-            .height(90.dp)
+            .height(105.dp)
+            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Surface(
-                shape = MaterialTheme.shapes.small,
-                color = color.copy(alpha = 0.15f),
-                modifier = Modifier.size(48.dp)
+                shape = MaterialTheme.shapes.medium,
+                color = containerColor,
+                modifier = Modifier.size(36.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = title,
-                        tint = color,
-                        modifier = Modifier.size(26.dp)
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -503,70 +370,282 @@ private fun QuickActionCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PendingPickupCard(
+    request: BidRequestEntity,
+    onInitiate: () -> Unit
+) {
+    val category = runCatching { ScrapCategory.valueOf(request.scrapCategory) }.getOrDefault(ScrapCategory.OTHER)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = category.color().copy(alpha = 0.15f),
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(category.icon, fontSize = 18.sp)
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = category.displayName,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Origin: ${request.factoryId}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = EmeraldContainer
+                ) {
+                    Text(
+                        text = "${request.estimatedWeightKg} kg",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Button(
+                onClick = onInitiate,
+                modifier = Modifier.fillMaxWidth().height(42.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+            ) {
+                Icon(Icons.Filled.LocalShipping, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Dispatch Truck & Assign Driver", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun InTransitCard(
+    transfer: TransferEntity,
+    onVerify: () -> Unit
+) {
+    val category = runCatching { ScrapCategory.valueOf(transfer.scrapCategory) }.getOrDefault(ScrapCategory.OTHER)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Vehicle: ${transfer.vehicleNumber}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Dispatched: ${DateUtils.formatTime(transfer.dispatchedAt ?: transfer.createdAt)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = TealContainer
+                ) {
+                    Text(
+                        text = "${transfer.dispatchedWeightKg} kg",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Teal,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Button(
+                onClick = onVerify,
+                modifier = Modifier.fillMaxWidth().height(42.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(containerColor = Teal)
+            ) {
+                Icon(Icons.Filled.CheckCircle, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Verify Arrival Weighbridge", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecyclerHeader(
+    user: com.sktech.wastetrack.domain.model.User?,
+    onSettingsClick: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Recycling,
+                        contentDescription = null,
+                        tint = EmeraldPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Text(
+                        text = user?.organizationName?.ifBlank { "Certified Recycler Hub" } ?: "Certified Recycler Hub",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+                Text(
+                    text = "MPCB Certified Agency · ${user?.industrialArea.orEmpty().ifBlank { "MIDC Zone" }}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = EmeraldContainer
+                ) {
+                    Text(
+                        "CERTIFIED",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = EmeraldPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = stringResource(R.string.settings),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun InitiatePickupDialog(
     request: BidRequestEntity,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var vehicleNumber by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-
+    var vehicleNo by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Initiate Pickup", fontWeight = FontWeight.Bold) },
+        title = { Text("Assign Truck for Pickup", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Assign a truck and vehicle number to dispatch a pickup driver to the MIDC factory.", style = MaterialTheme.typography.bodyMedium)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Factory: ${request.factoryId} (${request.estimatedWeightKg} kg ${request.scrapCategory})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 OutlinedTextField(
-                    value = vehicleNumber,
-                    onValueChange = { vehicleNumber = it },
-                    label = { Text("Vehicle Number") },
-                    placeholder = { Text("e.g. MH-15-AB-1234") },
+                    value = vehicleNo,
+                    onValueChange = { vehicleNo = it.uppercase() },
+                    label = { Text("Vehicle Registration No.") },
+                    placeholder = { Text("e.g. MH-15-EG-4521") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                error?.let {
-                    Text(it, color = AlertRed, style = MaterialTheme.typography.bodySmall)
-                }
             }
         },
         confirmButton = {
             Button(
-                onClick = {
-                    if (vehicleNumber.isBlank()) {
-                        error = "Vehicle number cannot be empty"
-                    } else {
-                        onConfirm(vehicleNumber)
-                    }
-                }
+                onClick = { onConfirm(vehicleNo) },
+                enabled = vehicleNo.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Dispatch Truck")
+                Text("Confirm Dispatch")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VerifyWeightDialog(
     transfer: TransferEntity,
@@ -574,48 +653,38 @@ private fun VerifyWeightDialog(
     onDismiss: () -> Unit
 ) {
     var weightText by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-
+    val weight = weightText.toFloatOrNull()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Verify Weight", fontWeight = FontWeight.Bold) },
+        title = { Text("Weighbridge Verification", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Source weight: ${transfer.weightAtSource} kg.\nInput the measured weight at destination to complete the chain-of-custody digital handshake.",
-                    style = MaterialTheme.typography.bodyMedium
+                    "Truck: ${transfer.vehicleNumber} (Dispatched: ${transfer.dispatchedWeightKg} kg)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = weightText,
                     onValueChange = { weightText = it },
-                    label = { Text("Measured Weight (kg)") },
+                    label = { Text("Measured Destination Weight (kg)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                error?.let {
-                    Text(it, color = AlertRed, style = MaterialTheme.typography.bodySmall)
-                }
             }
         },
         confirmButton = {
             Button(
-                onClick = {
-                    val weight = weightText.toFloatOrNull()
-                    if (weight == null || weight <= 0f) {
-                        error = "Please enter a valid weight"
-                    } else {
-                        onConfirm(weight)
-                    }
-                }
+                onClick = { weight?.let(onConfirm) },
+                enabled = weight != null && weight > 0f,
+                colors = ButtonDefaults.buttonColors(containerColor = Teal)
             ) {
-                Text("Verify & Accept")
+                Text("Verify & Complete Handshake")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }

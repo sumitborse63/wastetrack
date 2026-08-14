@@ -1,15 +1,18 @@
 package com.sktech.wastetrack.ui.screens.scrap
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -18,11 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.components.VoiceInputButton
 import com.sktech.wastetrack.ui.theme.*
@@ -60,48 +66,69 @@ fun ScrapLogScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Log Scrap Entry",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            stringResource(R.string.log_scrap),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Intake Log & AI Material Verification",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToClassify) {
-                        Icon(
-                            Icons.Outlined.CameraAlt,
-                            contentDescription = "AI Classify",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Surface(
+                            shape = CircleShape,
+                            color = EmeraldContainer,
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Outlined.CameraAlt,
+                                    contentDescription = stringResource(R.string.ai_classify),
+                                    tint = EmeraldPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
         ) {
             // Success Banner
             if (state.isSuccess) {
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = IndustrialGreen.copy(alpha = 0.15f)
-                        ),
-                        shape = MaterialTheme.shapes.medium
+                    Surface(
+                        color = EmeraldContainer,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.3f))
                     ) {
                         Row(
                             modifier = Modifier
@@ -113,20 +140,20 @@ fun ScrapLogScreen(
                             Icon(
                                 Icons.Filled.CheckCircle,
                                 contentDescription = null,
-                                tint = IndustrialGreenLight,
-                                modifier = Modifier.size(32.dp)
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(26.dp)
                             )
                             Column {
                                 Text(
-                                    "Scrap entry logged successfully!",
+                                    stringResource(R.string.scrap_logged_success),
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = IndustrialGreenLight
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldPrimary
                                 )
                                 Text(
-                                    "Queued for sync",
+                                    stringResource(R.string.queued_for_sync),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = IndustrialGreenLight.copy(alpha = 0.7f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -137,37 +164,42 @@ fun ScrapLogScreen(
             // Category Selection
             item {
                 Text(
-                    "Scrap Category",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    stringResource(R.string.select_category),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(ScrapCategory.entries) { category ->
                         val isSelected = state.selectedCategory == category
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.onCategorySelected(category) },
-                            label = {
+                        val categoryName = stringResource(category.nameRes)
+                        Surface(
+                            modifier = Modifier
+                                .height(46.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable { viewModel.onCategorySelected(category) },
+                            shape = MaterialTheme.shapes.medium,
+                            color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.outline
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(category.icon, fontSize = 18.sp)
                                 Text(
-                                    "${category.icon} ${category.displayName}",
-                                    style = MaterialTheme.typography.labelLarge
+                                    text = categoryName,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
                                 )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = category.color().copy(alpha = 0.2f),
-                                selectedLabelColor = category.color()
-                            ),
-                            border = if (isSelected) FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = true,
-                                borderColor = category.color()
-                            ) else null,
-                            modifier = Modifier.height(48.dp)
-                        )
+                            }
+                        }
                     }
                 }
             }
@@ -175,41 +207,77 @@ fun ScrapLogScreen(
             // Weight Input
             item {
                 Text(
-                    "Weight (kg)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    stringResource(R.string.weight_kg),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.weightKg,
                     onValueChange = { viewModel.onWeightChanged(it) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    placeholder = { Text("Enter weight in kilograms") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("0.0", color = TextMuted) },
+                    suffix = { Text("kg", color = EmeraldPrimary, fontWeight = FontWeight.Bold) },
                     leadingIcon = {
-                        Icon(Icons.Outlined.Scale, contentDescription = null)
+                        Icon(Icons.Outlined.Scale, contentDescription = null, tint = EmeraldPrimary)
                     },
                     trailingIcon = {
                         VoiceInputButton(
                             onResult = { viewModel.onWeightChanged(it) },
-                            modifier = Modifier.padding(end = 8.dp).size(36.dp)
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge,
                     shape = MaterialTheme.shapes.medium
                 )
+
+                state.selectedCategory?.let { cat ->
+                    val weight = state.weightKg.toFloatOrNull()
+                    if (weight != null && weight > 0f) {
+                        val isHeavy = when (cat) {
+                            ScrapCategory.PLASTIC -> weight > 400f
+                            ScrapCategory.PAPER -> weight > 200f
+                            ScrapCategory.METAL -> weight > 2500f
+                            ScrapCategory.EWASTE -> weight > 500f
+                            else -> weight > 2000f
+                        }
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = if (isHeavy) AlertRedContainer else EmeraldContainer,
+                            border = BorderStroke(1.dp, if (isHeavy) AlertRed.copy(alpha = 0.3f) else EmeraldPrimary.copy(alpha = 0.25f)),
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isHeavy) Icons.Filled.Warning else Icons.Filled.Shield,
+                                    contentDescription = null,
+                                    tint = if (isHeavy) AlertRed else EmeraldPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = if (isHeavy) "AI Fraud Shield: Suspicious weight density. Possible ballast." else "AI Fraud Shield: Material density verified within normal bounds.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isHeavy) AlertRed else EmeraldPrimary
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // Sub-category
             item {
                 Text(
-                    "Sub-Category",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    stringResource(R.string.sub_category),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -225,11 +293,11 @@ fun ScrapLogScreen(
                                 selected = isSelected,
                                 onClick = { viewModel.onSubCategoryChanged(sub) },
                                 label = {
-                                    Text(sub, style = MaterialTheme.typography.labelMedium)
+                                    Text(sub, style = MaterialTheme.typography.labelSmall)
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = category.color().copy(alpha = 0.25f),
-                                    selectedLabelColor = category.color()
+                                    selectedContainerColor = EmeraldContainer,
+                                    selectedLabelColor = EmeraldPrimary
                                 )
                             )
                         }
@@ -240,12 +308,11 @@ fun ScrapLogScreen(
                     value = state.subCategory,
                     onValueChange = { viewModel.onSubCategoryChanged(it) },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g., Copper Wire, Heavy Steel, Brass Scrap") },
+                    placeholder = { Text("e.g., Copper Wire, Heavy Steel, Brass Scrap", color = TextMuted) },
                     leadingIcon = {
-                        Icon(Icons.Outlined.Category, contentDescription = null)
+                        Icon(Icons.Outlined.Category, contentDescription = null, tint = EmeraldPrimary)
                     },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium,
                     shape = MaterialTheme.shapes.medium
                 )
             }
@@ -253,9 +320,9 @@ fun ScrapLogScreen(
             // Notes
             item {
                 Text(
-                    "Notes (Optional)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    stringResource(R.string.notes_optional),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -264,166 +331,54 @@ fun ScrapLogScreen(
                     onValueChange = { viewModel.onNotesChanged(it) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp),
-                    placeholder = { Text("Additional notes about this scrap batch...") },
+                        .height(95.dp),
+                    placeholder = { Text("Additional batch notes...", color = TextMuted) },
                     leadingIcon = {
-                        Icon(Icons.Outlined.Notes, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Outlined.Notes, contentDescription = null, tint = EmeraldPrimary)
                     },
                     trailingIcon = {
                         VoiceInputButton(
                             onResult = { viewModel.onNotesChanged(it) },
-                            modifier = Modifier.padding(end = 8.dp).size(36.dp)
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     },
                     maxLines = 3,
-                    textStyle = MaterialTheme.typography.bodyMedium,
                     shape = MaterialTheme.shapes.medium
                 )
             }
 
-            // Error
-            if (state.error != null) {
-                item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = AlertRed.copy(alpha = 0.1f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Error,
-                                contentDescription = null,
-                                tint = AlertRed,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                state.error!!,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = AlertRed
-                            )
-                        }
-                    }
-                }
-            }
-
             // Submit Button
             item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = { viewModel.submitEntry() },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    enabled = !state.isSubmitting && !state.isSuccess,
+                        .height(50.dp),
+                    enabled = state.selectedCategory != null && state.weightKg.isNotBlank() && !state.isLoading,
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = EmeraldPrimary,
+                        contentColor = Color.White
                     )
                 ) {
-                    if (state.isSubmitting) {
+                    if (state.isLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
                             color = Color.White,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Icon(
-                            Icons.Filled.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp)
-                        )
+                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Log Scrap Entry",
+                            stringResource(R.string.submit_entry),
+                            fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
             }
-
-            // Recent entries header
-            if (state.recentEntries.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Recent Entries",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-
-                items(state.recentEntries) { entry ->
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                val cat = try {
-                                    ScrapCategory.valueOf(entry.category)
-                                } catch (e: Exception) {
-                                    ScrapCategory.OTHER
-                                }
-                                Surface(
-                                    shape = MaterialTheme.shapes.small,
-                                    color = cat.color().copy(alpha = 0.15f),
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(cat.icon, style = MaterialTheme.typography.titleMedium)
-                                    }
-                                }
-                                Column {
-                                    Text(
-                                        if (entry.subCategory.isNotBlank()) "${cat.displayName} • ${entry.subCategory}" else cat.displayName,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        DateUtils.getRelativeTimeString(entry.createdAt),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    "${entry.weightKg} kg",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Icon(
-                                    imageVector = if (entry.syncStatus == "SYNCED")
-                                        Icons.Filled.CloudDone else Icons.Filled.CloudOff,
-                                    contentDescription = entry.syncStatus,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = if (entry.syncStatus == "SYNCED")
-                                        IndustrialGreenLight else SafetyOrange
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }

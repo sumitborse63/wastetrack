@@ -2,11 +2,11 @@ package com.sktech.wastetrack.ui.navigation
  
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,8 +27,6 @@ import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.domain.model.UserRole
 import com.sktech.wastetrack.domain.repository.IAuthRepository
 import com.sktech.wastetrack.ui.screens.auth.LoginScreen
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 
 @Composable
 fun NavGraph(
@@ -48,48 +46,58 @@ fun NavGraph(
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.SignUp.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
             )
         }
- 
+
+        composable(Screen.SignUp.route) {
+            com.sktech.wastetrack.ui.screens.auth.SignUpScreen(
+                onProfileCompleted = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Dashboard.route) {
-            // Fetch user role fresh each time this destination is composed
             val dashboardUser by produceState<com.sktech.wastetrack.domain.model.User?>(initialValue = null) {
                 value = authRepository.getCurrentUser()
             }
-            
-            when {
-                dashboardUser == null -> {
-                    // Loading state while fetching user
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        androidx.compose.material3.CircularProgressIndicator()
+
+            androidx.compose.runtime.LaunchedEffect(dashboardUser) {
+                if (dashboardUser != null && !dashboardUser!!.isProfileComplete) {
+                    navController.navigate(Screen.SignUp.route) {
+                        popUpTo(Screen.Dashboard.route) { inclusive = true }
                     }
                 }
-                dashboardUser?.role == UserRole.RECYCLER -> {
-                    RecyclerDashboardScreen(
-                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
-                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
-                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                        onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
-                    )
-                }
-                else -> {
-                    DashboardScreen(
-                        onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
-                        onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
-                        onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
-                        onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
-                        onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
-                        onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
-                        onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
-                        onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                    )
-                }
+            }
+            
+            if (dashboardUser?.role == UserRole.RECYCLER) {
+                RecyclerDashboardScreen(
+                    onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                    onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                    onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToFleet = { navController.navigate(Screen.FleetTracker.route) }
+                )
+            } else {
+                DashboardScreen(
+                    onNavigateToScrapLog = { navController.navigate(Screen.ScrapLog.route) },
+                    onNavigateToTransfer = { navController.navigate(Screen.TransferList.route) },
+                    onNavigateToQRScan = { navController.navigate(Screen.QRScan.route) },
+                    onNavigateToBids = { navController.navigate(Screen.BidMarket.route) },
+                    onNavigateToCompliance = { navController.navigate(Screen.Compliance.route) },
+                    onNavigateToBinMonitor = { navController.navigate(Screen.BinMonitor.route) },
+                    onNavigateToLedgerScan = { navController.navigate(Screen.LedgerScan.route) },
+                    onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
             }
         }
 

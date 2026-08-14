@@ -25,6 +25,9 @@ interface BidDao {
     @Query("SELECT * FROM bid_requests WHERE status = 'OPEN' AND factoryId = :factoryId")
     fun getActiveRequests(factoryId: String): Flow<List<BidRequestEntity>>
 
+    @Query("SELECT * FROM bid_requests WHERE status = 'OPEN' ORDER BY auctionEndTime ASC")
+    fun getAllActiveRequests(): Flow<List<BidRequestEntity>>
+
     @Query("SELECT * FROM bids WHERE bidRequestId = :requestId ORDER BY pricePerKg DESC")
     fun getBidsByRequest(requestId: String): Flow<List<BidEntity>>
 

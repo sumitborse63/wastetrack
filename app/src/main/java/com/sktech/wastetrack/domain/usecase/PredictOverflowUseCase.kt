@@ -6,12 +6,9 @@ import javax.inject.Inject
 class PredictOverflowUseCase @Inject constructor() {
     
     /**
-     * Simulates an ML prediction of when the bin will overflow.
-     * In a production app, this would use a TFLite model trained on historical fill rates,
-     * shift times, and factory production schedules.
-     * 
-     * For the MVP, we use a heuristic based on current fill percentage 
-     * and an assumed generation rate per hour.
+     * Estimates when a bin will reach capacity using a conservative category baseline.
+     * A future server/edge model can replace these rates when enough historical fill events
+     * have been collected, but this estimator is deterministic and works offline today.
      */
     operator fun invoke(bin: Bin): Long? {
         if (bin.fillPercentage >= 100f) {
@@ -22,8 +19,7 @@ class PredictOverflowUseCase @Inject constructor() {
             return null // Not enough data to predict
         }
 
-        // Mock ML calculation:
-        // Assume factory generates X kg per hour based on category.
+        // Baseline generation rate in kg/hour for initial offline operation.
         val generationRateKgPerHour = when (bin.scrapCategory) {
             com.sktech.wastetrack.domain.model.ScrapCategory.METAL -> 50f
             com.sktech.wastetrack.domain.model.ScrapCategory.PAPER -> 30f

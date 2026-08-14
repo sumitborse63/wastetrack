@@ -14,10 +14,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
+import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,10 +34,10 @@ fun AnalyticsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Enterprise Analytics", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.enterprise_analytics), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -80,11 +83,11 @@ fun EPRTargetCard(compliancePercentage: Float) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("EPR Compliance Ledger", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.epr_ledger_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                "Government Mandate: 75% Recycling Target", 
+                stringResource(R.string.epr_mandate_subtitle), 
                 style = MaterialTheme.typography.bodySmall, 
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -112,13 +115,13 @@ fun EPRTargetCard(compliancePercentage: Float) {
             Spacer(modifier = Modifier.height(12.dp))
             if (isCompliant) {
                 Text(
-                    "✓ Compliant with current fiscal year EPR targets.",
+                    stringResource(R.string.epr_compliant_desc),
                     style = MaterialTheme.typography.labelSmall,
                     color = IndustrialGreen
                 )
             } else {
                 Text(
-                    "⚠ At risk of EPR non-compliance penalties.",
+                    stringResource(R.string.epr_risk_desc),
                     style = MaterialTheme.typography.labelSmall,
                     color = AlertRed
                 )
@@ -137,7 +140,7 @@ fun EfficiencyScoreCard(score: Int) {
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Factory Efficiency Score", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.efficiency_score_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
@@ -167,7 +170,7 @@ fun TrendChartCard(data: List<Float>) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("Scrap Generation Trend (6 Months)", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.trend_chart_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(24.dp))
             
             // Simple Bar Chart
@@ -210,15 +213,17 @@ fun CategoryBreakdownCard(breakdown: Map<String, Float>) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("Category Breakdown (%)", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.category_breakdown_title), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
             
-            breakdown.forEach { (category, percentage) ->
+            breakdown.forEach { (categoryStr, percentage) ->
+                val categoryEnum = runCatching { ScrapCategory.valueOf(categoryStr) }.getOrNull()
+                val catName = if (categoryEnum != null) stringResource(categoryEnum.nameRes) else categoryStr
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(category, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text(catName, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
                     LinearProgressIndicator(
                         progress = { percentage / 100f },
                         modifier = Modifier.weight(2f).height(8.dp),
@@ -231,3 +236,4 @@ fun CategoryBreakdownCard(breakdown: Map<String, Float>) {
         }
     }
 }
+

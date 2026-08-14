@@ -1,8 +1,11 @@
 package com.sktech.wastetrack.domain.model
 
-enum class BinStatus(val displayName: String) {
-    ACTIVE("Active"),
-    FULL("Full"),
-    DISPATCHED("Dispatched"),
-    MAINTENANCE("Maintenance")
+import com.sktech.wastetrack.R
+
+enum class BinStatus(val displayName: String, val nameRes: Int) {
+    ACTIVE("Active", R.string.bin_status_active),
+    FULL("Full", R.string.bin_status_full),
+    DISPATCHED("Dispatched", R.string.bin_status_dispatched),
+    MAINTENANCE("Maintenance", R.string.bin_status_maintenance)
 }
+

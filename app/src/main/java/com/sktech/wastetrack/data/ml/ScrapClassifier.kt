@@ -3,6 +3,7 @@ package com.sktech.wastetrack.data.ml
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
+import com.sktech.wastetrack.BuildConfig
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.mlkit.vision.common.InputImage
@@ -11,11 +12,11 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.sktech.wastetrack.domain.model.ScrapCategory
-import com.sktech.wastetrack.util.Constants
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,7 +39,8 @@ data class ClassificationResult(
     val category: ScrapCategory,
     val subCategory: String = "",
     val confidence: Float,
-    val rawLabels: List<String>
+    val rawLabels: List<String>,
+    val engine: String = "Offline Edge AI"
 )
 
 @Singleton
@@ -62,9 +64,10 @@ class ScrapClassifier @Inject constructor(
         9 to Triple(ScrapCategory.RUBBER, "Tire Shreds / Whole Tires", "Rubber & Tire Scrap")
     )
 
+    // MobileNetV2 requires normalization to [-1.0, 1.0] (mean=127.5, std=127.5)
     private val wasteModelProcessor = ImageProcessor.Builder()
         .add(ResizeOp(224, 224, ResizeOp.ResizeMethod.BILINEAR))
-        .add(NormalizeOp(0f, 255f))
+        .add(NormalizeOp(127.5f, 127.5f))
         .build()
 
     // 2. ML Kit Object Detection (Backup Engine)
@@ -81,11 +84,11 @@ class ScrapClassifier @Inject constructor(
         .build()
     private val imageLabeler = ImageLabeling.getClient(defaultLabelerOptions)
 
-    // 4. OkHttp Client for Optional Gemini Cloud AI Upgrade
+    // 4. OkHttp Client for Optional Gemini Cloud AI Upgrade (Fast timeouts to prevent spinner freeze)
     private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
-        .writeTimeout(10, TimeUnit.SECONDS)
+        .connectTimeout(4, TimeUnit.SECONDS)
+        .readTimeout(6, TimeUnit.SECONDS)
+        .writeTimeout(4, TimeUnit.SECONDS)
         .build()
 
     private val gson = Gson()
@@ -103,7 +106,11 @@ class ScrapClassifier @Inject constructor(
             val declaredLength = fileDescriptor.declaredLength
             val modelBuffer: MappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
 
-            wasteInterpreter = Interpreter(modelBuffer)
+            val options = Interpreter.Options().apply {
+                setNumThreads(4)
+                setCancellable(true)
+            }
+            wasteInterpreter = Interpreter(modelBuffer, options)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -118,13 +125,15 @@ class ScrapClassifier @Inject constructor(
             return@withContext offlineResult
         }
 
-        // --- STEP 2: IF ACCURACY IS < 90%, UPGRADE TO GEMINI FLASH VISION AI ---
-        val geminiResult = classifyWithLatestGeminiVision(bitmap)
+        // --- STEP 2: IF ACCURACY IS < 90% (OR OTHER), UPGRADE TO GEMINI FLASH VISION AI ---
+        val geminiResult = withTimeoutOrNull(7000L) {
+            classifyWithLatestGeminiVision(bitmap)
+        }
         if (geminiResult != null) {
             return@withContext geminiResult
         }
 
-        // Fallback to offline result if Gemini Cloud is unavailable or API key is blank
+        // Fallback to offline result if Gemini Cloud is unavailable, offline, or API key is blank
         return@withContext offlineResult
     }
 
@@ -143,14 +152,15 @@ class ScrapClassifier @Inject constructor(
                 val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: -1
                 val maxScore = if (maxIndex != -1) scores[maxIndex] else 0f
 
-                if (maxIndex in wasteCategoriesMap.keys && maxScore >= 0.25f) {
+                if (maxIndex in wasteCategoriesMap.keys && maxScore >= 0.20f) {
                     val (mappedCategory, subCategory, labelName) = wasteCategoriesMap[maxIndex]!!
                     val finalConfidence = if (maxScore > 0.40f) maxScore else 0.75f
                     return ClassificationResult(
                         category = mappedCategory,
                         subCategory = subCategory,
                         confidence = finalConfidence,
-                        rawLabels = listOf("Offline Waste AI: $labelName (${(maxScore * 100).toInt()}%)")
+                        rawLabels = listOf("Offline Waste AI: $labelName (${(maxScore * 100).toInt()}%)"),
+                        engine = "Offline TFLite Model"
                     )
                 }
             }
@@ -158,27 +168,37 @@ class ScrapClassifier @Inject constructor(
             e.printStackTrace()
         }
 
-        // Engine B: Fallback ML Kit Object Detector + Image Labeler
+        // Engine B: Fallback ML Kit Object Detector + Image Labeler (Guarded with timeout)
         val detectedLabels = mutableListOf<String>()
         var highestConfidence = 0.0f
         try {
-            val image = InputImage.fromBitmap(bitmap, rotationDegrees)
+            withTimeoutOrNull(2500L) {
+                val image = InputImage.fromBitmap(bitmap, rotationDegrees)
 
-            val detectedObjects = objectDetector.process(image).await()
-            for (obj in detectedObjects) {
-                for (label in obj.labels) {
-                    detectedLabels.add(label.text.lowercase())
-                    if (label.confidence > highestConfidence) {
-                        highestConfidence = label.confidence
+                try {
+                    val detectedObjects = objectDetector.process(image).await()
+                    for (obj in detectedObjects) {
+                        for (label in obj.labels) {
+                            detectedLabels.add(label.text.lowercase())
+                            if (label.confidence > highestConfidence) {
+                                highestConfidence = label.confidence
+                            }
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            }
 
-            val imageLabels = imageLabeler.process(image).await()
-            for (label in imageLabels) {
-                detectedLabels.add(label.text.lowercase())
-                if (label.confidence > highestConfidence) {
-                    highestConfidence = label.confidence
+                try {
+                    val imageLabels = imageLabeler.process(image).await()
+                    for (label in imageLabels) {
+                        detectedLabels.add(label.text.lowercase())
+                        if (label.confidence > highestConfidence) {
+                            highestConfidence = label.confidence
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         } catch (e: Exception) {
@@ -192,22 +212,23 @@ class ScrapClassifier @Inject constructor(
             category = category,
             subCategory = category.subCategories.firstOrNull() ?: "",
             confidence = finalConfidence,
-            rawLabels = detectedLabels.distinct()
+            rawLabels = detectedLabels.distinct(),
+            engine = "Offline ML Kit Engine"
         )
     }
 
     private suspend fun classifyWithLatestGeminiVision(bitmap: Bitmap): ClassificationResult? {
-        val apiKey = Constants.GEMINI_API_KEY
+        val apiKey = BuildConfig.GEMINI_API_KEY
         if (apiKey.isBlank()) return null
 
         return withContext(Dispatchers.IO) {
+            // Prioritized Gemini Flash Vision models (including 3.6 Flash / 2.5 Flash / 2.0 Flash / 1.5 Flash)
             val geminiModels = listOf(
-                "gemini-3.6-flash",
-                "gemini-2.5-flash",
-                "gemini-2.5-pro",
                 "gemini-2.0-flash",
-                "gemini-2.0-flash-lite",
                 "gemini-1.5-flash",
+                "gemini-2.5-flash",
+                "gemini-3.6-flash",
+                "gemini-2.0-flash-lite",
                 "gemini-1.5-pro"
             )
 
@@ -228,7 +249,8 @@ class ScrapClassifier @Inject constructor(
                       "contents": [{
                         "parts": [
                           {"text": ${gson.toJson(prompt)}},
-                          {"inline_data": {"mime_type": "image/jpeg", "data": "$base64Image"}}
+                          {"inline_data": {"mime_type": "image/jpeg", "data": "$base64Image"}},
+                          {"inlineData": {"mimeType": "image/jpeg", "data": "$base64Image"}}
                         ]
                       }],
                       "generationConfig": {"response_mime_type": "application/json"}
@@ -281,7 +303,8 @@ class ScrapClassifier @Inject constructor(
                                     category = category,
                                     subCategory = finalSubCat,
                                     confidence = conf,
-                                    rawLabels = listOf("Gemini AI ($modelName): $detail")
+                                    rawLabels = listOf("Gemini AI ($modelName): $detail"),
+                                    engine = "Gemini Flash AI ($modelName)"
                                 )
                             }
                         }
@@ -313,7 +336,6 @@ class ScrapClassifier @Inject constructor(
         return ScrapCategory.OTHER
     }
 }
-
 
 
 

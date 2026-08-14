@@ -31,7 +31,7 @@ class ComplianceViewModel @Inject constructor(
     private val authRepository: com.sktech.wastetrack.domain.repository.IAuthRepository
 ) : ViewModel() {
 
-    private val factoryId = Constants.DEFAULT_FACTORY_ID
+    private var activeFactoryId = Constants.DEFAULT_FACTORY_ID
 
     private val _state = MutableStateFlow(ComplianceState())
     val state: StateFlow<ComplianceState> = _state.asStateFlow()
@@ -40,9 +40,10 @@ class ComplianceViewModel @Inject constructor(
         viewModelScope.launch {
             val user = authRepository.getCurrentUser()
             val isRecycler = user?.role == com.sktech.wastetrack.domain.model.UserRole.RECYCLER
+            activeFactoryId = user?.factoryId?.ifBlank { Constants.DEFAULT_FACTORY_ID } ?: Constants.DEFAULT_FACTORY_ID
 
             if (isRecycler && user != null) {
-                // Recycler: show all certificates (they generated via weight verification)
+                // Recycler: show all certificates (generated via weight verification)
                 launch {
                     certificateDao.getAllCertificates().collect { certs ->
                         _state.update { it.copy(certificates = certs) }
@@ -56,12 +57,12 @@ class ComplianceViewModel @Inject constructor(
             } else {
                 // Supervisor: show factory certificates
                 launch {
-                    certificateDao.getByFactory(factoryId).collect { certs ->
+                    certificateDao.getByFactory(activeFactoryId).collect { certs ->
                         _state.update { it.copy(certificates = certs) }
                     }
                 }
                 launch {
-                    transferDao.getByFactory(factoryId).collect { transfers ->
+                    transferDao.getByFactory(activeFactoryId).collect { transfers ->
                         _state.update { it.copy(completedTransfers = transfers.filter { t -> t.status == "VERIFIED" || t.status == "DELIVERED" }) }
                     }
                 }
@@ -82,12 +83,13 @@ class ComplianceViewModel @Inject constructor(
 
                 val certId = UUID.randomUUID().toString()
                 val now = System.currentTimeMillis()
+                val targetFactory = if (transfer.fromFactoryId.isNotBlank()) transfer.fromFactoryId else activeFactoryId
 
                 // Build MPCB-format JSON payload
                 val payload = mapOf(
                     "certificateId" to certId,
                     "type" to "MPCB_DISPOSAL",
-                    "factoryId" to factoryId,
+                    "factoryId" to targetFactory,
                     "factoryName" to "Ambad MIDC Pilot Unit",
                     "mpcbRegNumber" to "MPCB/MH/NAS/2024/001234",
                     "transferId" to transfer.id,
@@ -106,7 +108,7 @@ class ComplianceViewModel @Inject constructor(
                 val certificate = CertificateEntity(
                     id = certId,
                     transferId = transfer.id,
-                    factoryId = factoryId,
+                    factoryId = targetFactory,
                     type = "MPCB_DISPOSAL",
                     jsonPayload = jsonPayload,
                     digitalSignature = signature,

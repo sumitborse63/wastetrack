@@ -28,9 +28,6 @@ object Constants {
     // Bid Auction
     const val AUCTION_DURATION_HOURS = 24L
 
-    // API (mock for now)
-    const val BASE_URL = "https://api.wastetrack.mock/"
-
     // DataStore
     const val PREFERENCES_NAME = "wastetrack_prefs"
     const val KEY_USER_ID = "user_id"
@@ -39,6 +36,4 @@ object Constants {
     const val KEY_IS_LOGGED_IN = "is_logged_in"
     const val KEY_LANGUAGE = "language"
 
-    // Gemini Cloud AI Vision
-    const val GEMINI_API_KEY = "AIzaSyBHbmHMCa6QIEkTPyGTKqyhIqLZ9RAbWEw" // Optional: Insert Gemini API Key for 98%+ Cloud AI Vision Accuracy
 }

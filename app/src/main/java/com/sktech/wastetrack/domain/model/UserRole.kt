@@ -1,8 +1,11 @@
 package com.sktech.wastetrack.domain.model
 
-enum class UserRole(val displayName: String) {
-    SUPERVISOR("Floor Supervisor"),
-    DRIVER("Truck Driver"),
-    ADMIN("Factory Admin"),
-    RECYCLER("Recycler")
+import com.sktech.wastetrack.R
+
+enum class UserRole(val displayName: String, val nameRes: Int) {
+    SUPERVISOR("Floor Supervisor", R.string.role_supervisor),
+    DRIVER("Truck Driver", R.string.role_driver),
+    ADMIN("Factory Admin", R.string.role_admin),
+    RECYCLER("Recycler", R.string.role_recycler)
 }
+

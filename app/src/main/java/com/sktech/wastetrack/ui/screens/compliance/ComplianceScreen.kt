@@ -1,8 +1,10 @@
 package com.sktech.wastetrack.ui.screens.compliance
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -12,12 +14,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.data.local.db.entity.CertificateEntity
+import com.sktech.wastetrack.domain.model.CertificateStatus
 import com.sktech.wastetrack.domain.model.CertificateType
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
@@ -31,7 +37,6 @@ fun ComplianceScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // Certificate detail dialog
     state.selectedCertificate?.let { cert ->
         CertificateDetailDialog(
             certificate = cert,
@@ -43,36 +48,60 @@ fun ComplianceScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("ESG Compliance", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Column {
+                        Text(
+                            stringResource(R.string.compliance),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = OffWhite
+                        )
+                        Text(
+                            stringResource(R.string.esg_certs_sub),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMuted
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = OffWhite)
                     }
                 },
                 actions = {
                     if (state.completedTransfers.isNotEmpty()) {
                         IconButton(onClick = { viewModel.generateBulkCertificates() }) {
-                            Icon(Icons.Outlined.AutoAwesome, contentDescription = "Auto-Generate", tint = Gold)
+                            Icon(Icons.Filled.AutoAwesome, contentDescription = "Auto-Generate", tint = Gold)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Graphite)
             )
-        }
+        },
+        containerColor = CarbonBlack
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
         ) {
             // Success / Error banners
             state.successMessage?.let { msg ->
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = IndustrialGreen.copy(alpha = 0.15f))) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        color = IndustrialGreenSurface,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, IndustrialGreenLight.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Icon(Icons.Filled.CheckCircle, null, tint = IndustrialGreenLight)
-                            Text(msg, style = MaterialTheme.typography.bodyMedium, color = IndustrialGreenLight)
+                            Text(msg, style = MaterialTheme.typography.bodyMedium, color = OffWhite)
                         }
                     }
                     LaunchedEffect(msg) {
@@ -82,116 +111,117 @@ fun ComplianceScreen(
                 }
             }
 
-            state.error?.let { err ->
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = AlertRed.copy(alpha = 0.1f))) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Filled.Error, null, tint = AlertRed)
-                            Text(err, style = MaterialTheme.typography.bodyMedium, color = AlertRed)
-                        }
-                    }
-                }
-            }
-
-            // Summary stats
+            // Summary Stats Row
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     ComplianceStatCard(
-                        title = "Certificates",
+                        title = stringResource(R.string.certificates),
                         value = "${state.certificates.size}",
-                        icon = Icons.Outlined.VerifiedUser,
+                        icon = Icons.Filled.Verified,
                         color = IndustrialGreenLight,
                         modifier = Modifier.weight(1f)
                     )
                     ComplianceStatCard(
-                        title = "Audit Ready",
+                        title = stringResource(R.string.audit_ready),
                         value = "${state.certificates.count { it.status == "GENERATED" || it.status == "SUBMITTED" }}",
-                        icon = Icons.Outlined.FactCheck,
+                        icon = Icons.Filled.FactCheck,
                         color = Teal,
                         modifier = Modifier.weight(1f)
                     )
                     ComplianceStatCard(
-                        title = "Pending",
-                        value = "${state.completedTransfers.size - state.certificates.size}",
-                        icon = Icons.Outlined.PendingActions,
-                        color = SafetyOrange,
+                        title = stringResource(R.string.mpcb_certificates),
+                        value = "${state.completedTransfers.size}",
+                        icon = Icons.Filled.Description,
+                        color = Gold,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            // Pending transfers that need certificates
+            // Pending Transfers Header & List
             val uncertifiedTransfers = state.completedTransfers.filter { transfer ->
                 state.certificates.none { it.transferId == transfer.id }
             }
             if (uncertifiedTransfers.isNotEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Pending Certificate Generation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = SafetyOrange)
+                    Text(
+                        stringResource(R.string.pending_mpcb_generation),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SafetyOrange
+                    )
                 }
                 items(uncertifiedTransfers, key = { "pending-${it.id}" }) { transfer ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = SafetyOrange.copy(alpha = 0.06f)),
-                        shape = MaterialTheme.shapes.medium
+                    Surface(
+                        color = Graphite,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, SafetyOrange.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Icon(Icons.Outlined.Receipt, null, tint = SafetyOrange, modifier = Modifier.size(24.dp))
-                                Column {
-                                    Text("Transfer #${transfer.id.take(8)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                    Text("${transfer.weightAtSource} kg · ${transfer.status}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
+                            Column {
+                                Text("Transfer #${transfer.id.take(8).uppercase()}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OffWhite)
+                                Text("${transfer.weightAtSource} kg · Vehicle: ${transfer.vehicleNumber}", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                             }
-                            FilledTonalButton(
+                            Button(
                                 onClick = { viewModel.generateCertificateForTransfer(transfer) },
-                                enabled = !state.isGenerating,
-                                contentPadding = PaddingValues(horizontal = 12.dp)
+                                colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange, contentColor = CarbonBlack),
+                                shape = MaterialTheme.shapes.small,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                if (state.isGenerating) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Filled.Add, null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Generate", style = MaterialTheme.typography.labelSmall)
-                                }
+                                Icon(Icons.Filled.AutoAwesome, null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(stringResource(R.string.generate_certificate_btn), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
                 }
             }
 
-            // Generated certificates
-            if (state.certificates.isNotEmpty()) {
+            // Generated Certificates Header
+            item {
+                Text(
+                    stringResource(R.string.issued_certificates),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OffWhite
+                )
+            }
+
+            if (state.certificates.isEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Generated Certificates", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Surface(
+                        color = Graphite,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, SteelGray),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Outlined.VerifiedUser, null, tint = TextMuted, modifier = Modifier.size(36.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(stringResource(R.string.no_certificates_yet), style = MaterialTheme.typography.bodyMedium, color = OffWhite)
+                            Text(stringResource(R.string.certificates_empty_desc), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                        }
+                    }
                 }
+            } else {
                 items(state.certificates, key = { it.id }) { cert ->
-                    CertificateCard(
+                    ModernCertificateCard(
                         certificate = cert,
                         onClick = { viewModel.selectCertificate(cert) }
                     )
                 }
             }
-
-            if (state.certificates.isEmpty() && uncertifiedTransfers.isEmpty()) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                        Column(modifier = Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Outlined.VerifiedUser, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text("No compliance data yet", style = MaterialTheme.typography.titleSmall)
-                            Text("Complete scrap transfers to auto-generate MPCB certificates", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
@@ -204,123 +234,135 @@ private fun ComplianceStatCard(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Surface(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.08f)),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        color = Graphite,
+        border = BorderStroke(1.dp, SteelGray.copy(alpha = 0.6f))
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(22.dp))
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
-            Text(title, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.8f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, style = MaterialTheme.typography.labelSmall, color = TextMuted, maxLines = 1)
+                Icon(icon, null, tint = color, modifier = Modifier.size(14.dp))
+            }
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = color)
         }
     }
 }
 
 @Composable
-private fun CertificateCard(certificate: CertificateEntity, onClick: () -> Unit) {
-    val type = try { CertificateType.valueOf(certificate.type) } catch (_: Exception) { CertificateType.MPCB_DISPOSAL }
-    val statusColor = when (certificate.status) {
-        "GENERATED" -> IndustrialGreenLight
-        "SUBMITTED" -> Teal
-        "ACCEPTED" -> IndustrialGreen
-        else -> SteelGray
+private fun ModernCertificateCard(
+    certificate: CertificateEntity,
+    onClick: () -> Unit
+) {
+    val typeEnum = runCatching { CertificateType.valueOf(certificate.type) }.getOrDefault(CertificateType.MPCB_DISPOSAL)
+    val statusEnum = runCatching { CertificateStatus.valueOf(certificate.status) }.getOrDefault(CertificateStatus.GENERATED)
+    val typeColor = when (certificate.type) {
+        "MPCB_DISPOSAL", "FORM_38" -> IndustrialGreenLight
+        "ESG_CREDIT", "FORM_4" -> Teal
+        "AUDIT_REPORT", "RECYCLING_RECEIPT" -> Gold
+        else -> SyncBlue
     }
 
-    Card(
+    Surface(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.medium
+        color = Graphite,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, SteelGray.copy(alpha = 0.6f)),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = IndustrialGreenLight.copy(alpha = 0.15f),
-                    modifier = Modifier.size(44.dp)
+                    color = typeColor.copy(alpha = 0.18f),
+                    border = BorderStroke(1.dp, typeColor.copy(alpha = 0.35f)),
+                    modifier = Modifier.size(42.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.VerifiedUser, null, tint = IndustrialGreenLight, modifier = Modifier.size(24.dp))
+                        Icon(Icons.Filled.Description, null, tint = typeColor, modifier = Modifier.size(22.dp))
                     }
                 }
                 Column {
-                    Text(type.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("Transfer #${certificate.transferId.take(8)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(DateUtils.formatDateTime(certificate.generatedAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(typeEnum.nameRes), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OffWhite)
+                    Text("Ref: #${certificate.id.take(8).uppercase()}", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                 }
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Surface(shape = MaterialTheme.shapes.extraSmall, color = statusColor.copy(alpha = 0.15f)) {
-                    Text(certificate.status, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp), style = MaterialTheme.typography.labelSmall, color = statusColor, fontWeight = FontWeight.Bold)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Icon(Icons.Outlined.ChevronRight, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = IndustrialGreenSurface,
+                border = BorderStroke(1.dp, IndustrialGreenLight.copy(alpha = 0.4f))
+            ) {
+                Text(
+                    stringResource(statusEnum.nameRes),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = IndustrialGreenLight,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CertificateDetailDialog(certificate: CertificateEntity, onDismiss: () -> Unit) {
-    val type = try { CertificateType.valueOf(certificate.type) } catch (_: Exception) { CertificateType.MPCB_DISPOSAL }
+private fun CertificateDetailDialog(
+    certificate: CertificateEntity,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    var isExporting by remember { mutableStateOf(false) }
+    val typeEnum = runCatching { CertificateType.valueOf(certificate.type) }.getOrDefault(CertificateType.MPCB_DISPOSAL)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Filled.VerifiedUser, null, tint = IndustrialGreenLight)
-                Text(type.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
+            Text("${stringResource(typeEnum.nameRes)} Details", color = OffWhite, fontWeight = FontWeight.Bold)
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                DetailRow("Certificate ID", certificate.id.take(12) + "...")
-                DetailRow("Transfer ID", certificate.transferId.take(12) + "...")
-                DetailRow("Status", certificate.status)
-                DetailRow("Generated", DateUtils.formatDateTime(certificate.generatedAt))
-                certificate.submittedAt?.let { DetailRow("Submitted", DateUtils.formatDateTime(it)) }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                Text("Digital Signature", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        certificate.digitalSignature.take(48) + "...",
-                        modifier = Modifier.padding(8.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Certificate ID: ${certificate.id}", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Text("Transfer ID: ${certificate.transferId}", style = MaterialTheme.typography.bodySmall, color = OffWhite)
+                Text("Factory ID: ${certificate.factoryId}", style = MaterialTheme.typography.bodySmall, color = OffWhite)
+                Text("Generated At: ${DateUtils.formatDate(certificate.generatedAt)}", style = MaterialTheme.typography.bodySmall, color = OffWhite)
+                HorizontalDivider(color = SteelGray)
+                Text("Digital Hash: ${certificate.digitalSignature.take(24)}...", style = MaterialTheme.typography.labelSmall, color = Teal)
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val context = LocalContext.current
-                OutlinedButton(onClick = { PdfExporter.exportCertificate(context, certificate) }) {
-                    Icon(Icons.Outlined.PictureAsPdf, null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Export PDF")
-                }
-                Button(onClick = onDismiss) { Text("Close") }
+            Button(
+                onClick = {
+                    isExporting = true
+                    PdfExporter.exportCertificate(context, certificate)
+                    isExporting = false
+                    onDismiss()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = IndustrialGreenLight, contentColor = CarbonBlack)
+            ) {
+                Icon(Icons.Filled.Download, null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(stringResource(R.string.export_pdf), fontWeight = FontWeight.Bold)
             }
-        }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = TextMuted) }
+        },
+        containerColor = Graphite
     )
 }
 
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-    }
-}

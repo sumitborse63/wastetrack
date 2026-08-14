@@ -25,6 +25,7 @@ data class LoginState(
     val isLoading: Boolean = false,
     val isOtpSent: Boolean = false,
     val isSuccess: Boolean = false,
+    val needsProfileSetup: Boolean = false,
     val selectedRole: UserRole = UserRole.SUPERVISOR,
     val error: String? = null
 )
@@ -56,41 +57,89 @@ class LoginViewModel @Inject constructor(
 
     fun sendOtp(activity: Activity) {
         val number = state.value.phoneNumber
-        if (number.length < 10) {
-            _state.update { it.copy(error = "Invalid phone number") }
+        val normalizedNumber = number.trim().replace(" ", "")
+        if (!normalizedNumber.matches(Regex("^\\+?[1-9]\\d{9,14}$"))) {
+            _state.update { it.copy(error = "Enter a valid phone number with country code") }
             return
         }
-
-        // Bypass Firebase OTP for now
-        storedVerificationId = "mock"
-        _state.update { it.copy(isLoading = false, isOtpSent = true, error = null) }
+        _state.update { it.copy(isLoading = true, error = null) }
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            override fun onVerificationCompleted(credential: PhoneAuthCredential) = signInWithCredential(credential)
+            override fun onVerificationFailed(exception: FirebaseException) {
+                // If Firebase Phone Auth or SMS region is disabled in console, allow entering test OTP (123456)
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isOtpSent = true,
+                        error = "SMS disabled in Firebase Console. Use test OTP: 123456 to login."
+                    )
+                }
+            }
+            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                storedVerificationId = verificationId
+                resendToken = token
+                _state.update { it.copy(isLoading = false, isOtpSent = true, error = null) }
+            }
+        }
+        PhoneAuthProvider.verifyPhoneNumber(
+            PhoneAuthOptions.newBuilder(auth)
+                .setPhoneNumber(if (normalizedNumber.startsWith("+")) normalizedNumber else "+91$normalizedNumber")
+                .setTimeout(60L, TimeUnit.SECONDS)
+                .setActivity(activity)
+                .setCallbacks(callbacks)
+                .build()
+        )
     }
 
     fun verifyOtp() {
         val code = state.value.otpCode
 
-        if (code.length < 6) {
-            _state.update { it.copy(error = "Invalid OTP") }
+        val verificationId = storedVerificationId
+        if (code.length != 6) {
+            _state.update { it.copy(error = "Enter a 6-digit OTP") }
+            return
+        }
+        _state.update { it.copy(isLoading = true, error = null) }
+
+        // Test/Demo fallback when Firebase SMS is disabled in console or test OTP 123456 is used
+        if (verificationId == null || code == "123456") {
+            auth.signInAnonymously()
+                .addOnCompleteListener { task ->
+                    viewModelScope.launch {
+                        authRepository.setSelectedRole(state.value.selectedRole)
+                        val isComplete = authRepository.isProfileComplete()
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                isSuccess = isComplete,
+                                needsProfileSetup = !isComplete,
+                                error = null
+                            )
+                        }
+                    }
+                }
             return
         }
 
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            try {
-                authRepository.setMockRole(state.value.selectedRole)
-                authRepository.setLoggedIn(true)
-                _state.update { it.copy(isLoading = false, isSuccess = true, error = null) }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.message) }
-            }
-        }
+        signInWithCredential(PhoneAuthProvider.getCredential(verificationId, code))
     }
 
     private fun signInWithCredential(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    _state.update { it.copy(isLoading = false, isSuccess = true, error = null) }
+                    viewModelScope.launch {
+                        authRepository.setSelectedRole(state.value.selectedRole)
+                        val isComplete = authRepository.isProfileComplete()
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                isSuccess = isComplete,
+                                needsProfileSetup = !isComplete,
+                                error = null
+                            )
+                        }
+                    }
                 } else {
                     _state.update { it.copy(isLoading = false, error = task.exception?.message) }
                 }

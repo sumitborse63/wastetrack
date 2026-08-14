@@ -1,5 +1,7 @@
 package com.sktech.wastetrack.domain.model
 
+import com.sktech.wastetrack.R
+
 data class Certificate(
     val id: String,
     val transferId: String,
@@ -13,9 +15,10 @@ data class Certificate(
     val submittedAt: Long? = null
 )
 
-enum class CertificateStatus(val displayName: String) {
-    DRAFT("Draft"),
-    GENERATED("Generated"),
-    SUBMITTED("Submitted"),
-    ACCEPTED("Accepted")
+enum class CertificateStatus(val displayName: String, val nameRes: Int) {
+    DRAFT("Draft", R.string.cert_status_draft),
+    GENERATED("Generated", R.string.cert_status_generated),
+    SUBMITTED("Submitted", R.string.cert_status_submitted),
+    ACCEPTED("Accepted", R.string.cert_status_accepted)
 }
+

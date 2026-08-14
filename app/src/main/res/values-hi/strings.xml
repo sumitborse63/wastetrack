@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">वेस्टट्रॅक (WasteTrack)</string>
+    <string name="app_tagline">औद्योगिक चक्रीय अर्थव्यवस्था ऑपरेटिंग सिस्टम</string>
+    
+    <!-- Auth & Roles -->
+    <string name="select_user_role">उपयोगकर्ता भूमिका चुनें</string>
+    <string name="supervisor_role">फ्लोर सुपरवाइजर</string>
+    <string name="recycler_role">प्रमाणित पुनर्चक्रणकर्ता (Recycler)</string>
+    <string name="enter_phone_number">अपना मोबाइल नंबर दर्ज करें</string>
+    <string name="phone_number">मोबाइल नंबर</string>
+    <string name="send_otp">ओटीपी भेजें (Send OTP)</string>
+    <string name="enter_otp">६-अंकों का ओटीपी दर्ज करें</string>
+    <string name="verify_and_login">सत्यापित करें और लॉगिन करें</string>
+    <string name="resend_otp">ओटीपी पुनः भेजें</string>
+    <string name="logout">लॉग आउट</string>
+    <string name="logout_confirm">क्या आप वाकई लॉग आउट करना चाहते हैं?</string>
+    
+    <string name="role_supervisor">फ्लोर सुपरवाइजर</string>
+    <string name="role_driver">वाहन चालक (Driver)</string>
+    <string name="role_admin">फैक्ट्री एडमिन</string>
+    <string name="role_recycler">रिसाइकिलर (Recycler)</string>
+    <string name="certified_badge">प्रमाणित (CERTIFIED)</string>
+    
+    <!-- Common Buttons & Actions -->
+    <string name="close">बंद करें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="done">संपन्न</string>
+    <string name="save">सहेजें</string>
+    <string name="try_again">पुनः प्रयास करें</string>
+    <string name="retake">पुनः फोटो लें</string>
+    <string name="use_result">परिणाम उपयोग करें</string>
+    <string name="back">पीछे</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="filter_all">सभी</string>
+    <string name="grant_permission">अनुमति दें</string>
+    <string name="camera_permission_required">कैमरा अनुमति आवश्यक है</string>
+    <string name="scan_again">पुनः स्कैन करें</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard">डैशबोर्ड</string>
+    <string name="welcome_back">स्वागत है,</string>
+    <string name="today_scrap">आज का स्क्रैप</string>
+    <string name="today_weight">कुल वजन</string>
+    <string name="pending_transfers">लंबित स्थानांतरण</string>
+    <string name="active_bids">सक्रिय बोलियां</string>
+    <string name="bin_alerts">कचरा बिन अलर्ट</string>
+    <string name="certificates">प्रमाणपत्र</string>
+    <string name="quick_actions">त्वरित कार्य</string>
+    <string name="recent_activity">हालिया गतिविधियां</string>
+    <string name="no_recent_activity">कोई हालिया स्क्रैप प्रविष्टि नहीं</string>
+    <string name="ambad_pilot_subtitle">अंबड एमआईडीसी पायलट</string>
+    <string name="pending_sub">लंबित</string>
+    <string name="near_full_sub">भरने के करीब</string>
+    <string name="generated_sub">जारी किए गए</string>
+    <string name="synced_label">सिंक हो गया</string>
+    <string name="pending_sync_format">%1$d लंबित</string>
+    <string name="ai_classify_subtitle">एआई वर्गीकरण व वजन</string>
+    <string name="verify_handshake_sub">हैंडशेक सत्यापन</string>
+    <string name="transfer_action">स्थानांतरण</string>
+    <string name="new_dispatch_sub">नया प्रेषण</string>
+    <string name="bin_monitor_sub">भराव स्तर</string>
+    <string name="scan_ledger_sub">बहीखाता डिजिटाइज़</string>
+    <string name="esg_certs_sub">देखें व डाउनलोड करें</string>
+    <string name="analytics_sub">विश्लेषण चार्ट</string>
+    
+    <!-- Recycler Dashboard -->
+    <string name="recycler_overview">रिसाइकिलर विवरण</string>
+    <string name="auctions_won">जीती गई बोलियां</string>
+    <string name="pending_pickup">उठाव बाकी</string>
+    <string name="total_recycled">कुल पुनर्चक्रित</string>
+    <string name="kilograms">किलोग्राम</string>
+    <string name="esg_certificates">ईएसजी प्रमाणपत्र</string>
+    <string name="mpcb_approved">एमपीसीबी स्वीकृत</string>
+    <string name="active_shipments_transit">रास्ते में मौजूद गाड़ियां</string>
+    <string name="no_shipments_in_transit">रास्ते में कोई वाहन नहीं है</string>
+    <string name="verify_weight_btn">वजन सत्यापित करें</string>
+    <string name="awarded_auctions">स्वीकृत बोलियां (उठाव हेतु तैयार)</string>
+    <string name="no_awarded_auctions">कोई लंबित नीलामी जीत नहीं</string>
+    <string name="dispatch_truck_btn">गाड़ी भेजें</string>
+    <string name="initiate_pickup">पिकअप शुरू करें</string>
+    <string name="assign_truck_desc">फैक्ट्री से स्क्रैप लाने के लिए ट्रक और वाहन संख्या दर्ज करें।</string>
+    <string name="measured_weight_kg">मापा गया वजन (किग्रा)</string>
+    <string name="verify_and_accept">सत्यापित करें और स्वीकार करें</string>
+    <string name="browse_and_bid">नीलामी देखें व बोली लगाएं</string>
+    <string name="live_trucks">गाड़ियों का लाइव ट्रैक</string>
+    
+    <!-- Scrap Logging & History -->
+    <string name="log_scrap">स्क्रैप प्रविष्टि दर्ज करें</string>
+    <string name="select_category">स्क्रैप श्रेणी चुनें</string>
+    <string name="weight_kg">वजन (किग्रा)</string>
+    <string name="sub_category">उप-श्रेणी</string>
+    <string name="notes_optional">टिप्पणियां (वैकल्पिक)</string>
+    <string name="submit_entry">स्क्रैप सबमिट करें</string>
+    <string name="scrap_logged_success">स्क्रैप प्रविष्टि सफलतापूर्वक दर्ज की गई!</string>
+    <string name="ai_classify">एआई वर्गीकरण</string>
+    <string name="queued_for_sync">सिंक हेतु कतारबद्ध</string>
+    <string name="enter_weight_placeholder">किलोग्राम में वजन दर्ज करें</string>
+    <string name="sub_category_placeholder">उदा. तांबे का तार, भारी स्टील, पीतल स्क्रैप</string>
+    <string name="notes_placeholder">इस स्क्रैप बैच के बारे में अतिरिक्त टिप्पणी...</string>
+    <string name="scrap_history">स्क्रैप इतिहास</string>
+    <string name="entries">कुल प्रविष्टियां</string>
+    <string name="total_weight_label">कुल वजन</string>
+    <string name="anomalies">संदेह</string>
+    <string name="no_entries_found">कोई प्रविष्टि नहीं मिली</string>
+    <string name="anomaly_detected_score">संदेह पाया गया · स्कोर: %1$s</string>
+    
+    <!-- AI & Fraud Shield -->
+    <string name="ai_fraud_shield_ok">एआई सुरक्षा: सामग्री का घनत्व सामान्य सीमा में सत्यापित।</string>
+    <string name="ai_fraud_shield_warning">एआई सुरक्षा चेतावनी: संदिग्ध वजन घनत्व। मिलावट की संभावना।</string>
+    <string name="capturing_ai">एआई स्क्रैप वर्गीकरण</string>
+    <string name="classifying">स्क्रैप सामग्री का विश्लेषण जारी है...</string>
+    <string name="analyzing_with_ai">एआई द्वारा विश्लेषण किया जा रहा है...</string>
+    <string name="camera_permission_needed_classify">वर्गीकरण हेतु कैमरा अनुमति आवश्यक है</string>
+    <string name="take_photo_prompt">स्क्रैप सामग्री को फ्रेम में रखें और नीचे टैप करें</string>
+    
+    <!-- Bidding & Marketplace -->
+    <string name="bid_market">बोली बाजार (Bidding Market)</string>
+    <string name="bid_marketplace">नीलामी बाजार</string>
+    <string name="new_bid">नई बोली शुरू करें</string>
+    <string name="reserve_price">आरक्षित मूल्य (₹/किग्रा)</string>
+    <string name="ai_suggested_price">एआई सुझाई गई बाजार दर:</string>
+    <string name="place_bid">बोली लगाएं</string>
+    <string name="award_bid">विजेता बोली स्वीकृत करें</string>
+    <string name="auction_open">सक्रिय (OPEN)</string>
+    <string name="auction_awarded">स्वीकृत (AWARDED)</string>
+    <string name="bid_details">बोली विवरण</string>
+    <string name="your_bid">आपकी बोली</string>
+    <string name="highest_bid">सर्वोच्च बोली</string>
+    <string name="total_bids_label">कुल बोलियां</string>
+    <string name="no_bids_yet">अभी तक कोई बोली नहीं लगी</string>
+    <string name="award_auction_btn">विजेता बोली स्वीकृत करें</string>
+    <string name="bidding_history">बोली इतिहास</string>
+    <string name="create_bid_title">नई स्क्रैप नीलामी बनाएं</string>
+    <string name="select_scrap_batch">स्क्रैप बैच चुनें</string>
+    <string name="enter_reserve_price_prompt">प्रति किग्रा न्यूनतम मूल्य दर्ज करें</string>
+    <string name="ai_recommended_price">एआई सुझाई गई अनुमानित दर:</string>
+    <string name="create_auction_btn">नीलामी बाजार में पोस्ट करें</string>
+    <string name="enter_valid_price">कृपया वैध मूल्य दर्ज करें</string>
+    <string name="winning_bid_awarded_success">विजेता बोली सफलतापूर्वक स्वीकृत की गई!</string>
+    
+    <!-- Bin Monitor -->
+    <string name="bin_monitor">बिन मॉनिटर एवं ओवरफ्लो एआई</string>
+    <string name="add_bin">नया कचरा बिन जोड़ें</string>
+    <string name="overflow_alert">ओवरफ्लो जोखिम अलर्ट!</string>
+    <string name="dispatch_truck">गाड़ी भेजें (Dispatch)</string>
+    <string name="current_fill">वर्तमान भराव</string>
+    <string name="max_capacity">अधिकतम क्षमता</string>
+    <string name="no_bins_configured">कोई बिन कॉन्फ़िगर नहीं किया गया</string>
+    <string name="add_first_bin_desc">वास्तविक समय भराव स्तर की निगरानी के लिए बिन जोड़ें</string>
+    <string name="add_bin_title">कचरा बिन जोड़ें</string>
+    <string name="capacity_kg_label">क्षमता (किग्रा)</string>
+    <string name="update_fill_title">बिन भराव स्तर अपडेट करें</string>
+    <string name="current_fill_kg_label">वर्तमान भराव (किग्रा)</string>
+    <string name="critical_overflow_risk">गंभीर ओवरफ्लो जोखिम</string>
+    <string name="normal_capacity">सामान्य भराव स्तर</string>
+    
+    <!-- Transfers & QR Handshake -->
+    <string name="transfers">स्थानांतरण (Transfers)</string>
+    <string name="initiate_transfer">स्थानांतरण शुरू करें</string>
+    <string name="vehicle_number">वाहन संख्या</string>
+    <string name="generate_qr">गेट पास क्यूआर बनाएं</string>
+    <string name="scan_qr">गेट पास क्यूआर स्कैन करें</string>
+    <string name="verify_weight">प्राप्त वजन सत्यापित करें</string>
+    <string name="fleet_tracker">फ्लीट ट्रैकर (गाड़ियां)</string>
+    <string name="active_shipments">रास्ते में मौजूद गाड़ियां</string>
+    <string name="qr_handshake_title">डिजिटल क्यूआर हैंडशेक</string>
+    <string name="show_qr_desc">सत्यापन हेतु यह क्यूआर कोड ट्रक चालक को दिखाएं</string>
+    <string name="valid_30_min">३० मिनट के लिए वैध</string>
+    <string name="no_transfers_yet">अभी तक कोई स्थानांतरण नहीं</string>
+    <string name="log_scrap_first_desc">पहले स्क्रैप दर्ज करें, फिर स्थानांतरण शुरू करें</string>
+    <string name="transfer_verified_title">स्थानांतरण सत्यापन सफल!</string>
+    <string name="invalid_qr_title">अमान्य क्यूआर कोड</string>
+    <string name="transfer_verified_desc">डिजिटल हैंडशेक सत्यापित हो गया है। स्थानांतरण की पुष्टि हो गई।</string>
+    <string name="invalid_qr_desc">क्यूआर कोड अमान्य या समाप्त हो चुका है।</string>
+    <string name="scan_qr_handshake">गेट पास क्यूआर स्कैन करें</string>
+    
+    <!-- Fleet Tracker -->
+    <string name="no_inbound_trucks">रास्ते में कोई वाहन नहीं है</string>
+    <string name="inbound_trucks">आने वाले वाहन</string>
+    <string name="load_weight_label">वजन भार</string>
+    <string name="origin_label">उत्पत्ति</string>
+    <string name="unknown_vehicle">अज्ञात वाहन</string>
+    <string name="dispatched_label">रवानगी समय: %1$s</string>
+    
+    <!-- Compliance & MPCB -->
+    <string name="compliance">ईएसजी अनुपालन (ESG Compliance)</string>
+    <string name="mpcb_certificates">एमपीसीबी प्रमाणपत्र</string>
+    <string name="generate_certificate">एमपीसीबी प्रमाणपत्र बनाएं</string>
+    <string name="bulk_generate">सभी प्रमाणपत्र बनाएं</string>
+    <string name="export_pdf">पीडीएफ डाउनलोड करें</string>
+    <string name="epr_ledger">ईपीआर अनुपालन खाता</string>
+    <string name="epr_mandate">सरकारी लक्ष्य (७५%)</string>
+    <string name="auto_generate_certs">स्वतः बनाएं</string>
+    <string name="total_disposed_label">कुल निस्तारित</string>
+    <string name="active_audits_label">सक्रिय ऑडिट</string>
+    <string name="cert_details_title">प्रमाणपत्र विवरण</string>
+    <string name="view_pdf_btn">पीडीएफ डाउनलोड करें</string>
+    <string name="certificate_id_label">प्रमाणपत्र संख्या</string>
+    <string name="issue_date_label">जारी करने की तिथि</string>
+    <string name="digital_hash_label">ब्लॉकचेन ऑडिट हैश</string>
+    
+    <!-- Analytics -->
+    <string name="enterprise_analytics">एंटरप्राइज एनालिटिक्स</string>
+    <string name="recycling_target_mandate">सरकारी आदेश: ७५% पुनर्चक्रण लक्ष्य</string>
+    <string name="efficiency_score">सामग्री रिकवरी दक्षता</string>
+    <string name="monthly_trend">मासिक स्क्रॅप उत्पादन (किग्रा)</string>
+    <string name="scrap_breakdown">सामग्री श्रेणी वार विभाजन</string>
+    
+    <!-- Digitize Ledger (OCR) -->
+    <string name="digitize_ledger">कागजी बहीखाता स्कैन करें</string>
+    <string name="scan_ledger">बहीखाता स्कैन करें</string>
+    <string name="structured_records">पहचाने गए डिजिटल रिकॉर्ड</string>
+    <string name="import_to_scrap_log">स्क्रैप लॉग में आयात करें</string>
+    <string name="extracting_ocr">ओसीआर द्वारा पाठ पहचाना जा रहा है...</string>
+    <string name="digitization_complete">डिजिटलीकरण संपन्न!</string>
+    <string name="records_found_desc">तस्वीर से पहचाने गए स्क्रैप रिकॉर्ड</string>
+    
+    <!-- Settings & Language -->
+    <string name="settings">सेटिंग्स</string>
+    <string name="language">भाषा (Language)</string>
+    <string name="select_language">भाषा चुनें</string>
+    <string name="english">English</string>
+    <string name="hindi">हिंदी (Hindi)</string>
+    <string name="marathi">मराठी (Marathi)</string>
+    <string name="biometric_security">बायोमेट्रिक सुरक्षा</string>
+    <string name="sync_status">सिंक स्थिति</string>
+    <string name="factory_label">फैक्ट्री</string>
+    <string name="recycler_id_label">रिसाइकिलर आईडी</string>
+    <string name="auto_sync_15min">प्रत्येक १५ मिनट में स्वतः सिंक</string>
+    <string name="biometric_desc">सुरक्षित कार्यों हेतु फिंगरप्रिंट आवश्यक करें</string>
+    <string name="about_title">ऐप के बारे में</string>
+    <string name="app_version_label">WasteTrack v1.0.0</string>
+    <string name="enable_biometrics_title">बायोमेट्रिक सक्षम करें</string>
+    <string name="verify_identity_bio">सुरक्षा हेतु पहचान सत्यापित करें</string>
+    <string name="biometrics_enabled_msg">बायोमेट्रिक सुरक्षा सक्षम की गई</string>
+    <string name="biometrics_not_available">इस उपकरण पर बायोमेट्रिक उपलब्ध नहीं है</string>
+    
+    <!-- Transfer Statuses -->
+    <string name="status_initiated">प्रारंभ किया (Initiated)</string>
+    <string name="status_qr_generated">क्यूआर बनाया</string>
+    <string name="status_qr_scanned">क्यूआर स्कैन किया</string>
+    <string name="status_in_transit">रास्ते में (In Transit)</string>
+    <string name="status_delivered">पहुंचा दिया (Delivered)</string>
+    <string name="status_verified">सत्यापित (Verified)</string>
+    <string name="status_disputed">विवादित (Disputed)</string>
+    
+    <!-- Bid Statuses -->
+    <string name="bid_status_open">सक्रिय (Open)</string>
+    <string name="bid_status_closed">समाप्त (Closed)</string>
+    <string name="bid_status_awarded">स्वीकृत (Awarded)</string>
+    <string name="bid_status_expired">कालबाह्य (Expired)</string>
+    
+    <!-- Bin Statuses -->
+    <string name="bin_status_active">सक्रिय (Active)</string>
+    <string name="bin_status_full">भरा हुआ (Full)</string>
+    <string name="bin_status_dispatched">भेज दिया (Dispatched)</string>
+    <string name="bin_status_maintenance">मरम्मत (Maintenance)</string>
+    
+    <!-- Certificate Types -->
+    <string name="cert_type_mpcb">एमपीसीबी निस्तारण प्रमाणपत्र</string>
+    <string name="cert_type_esg">ईएसजी क्रेडिट प्रमाणपत्र</string>
+    <string name="cert_type_audit">ऑडिट रिपोर्ट</string>
+    
+    <!-- Certificate Statuses -->
+    <string name="cert_status_draft">प्रारूप (Draft)</string>
+    <string name="cert_status_generated">तैयार (Generated)</string>
+    <string name="cert_status_submitted">प्रस्तुत (Submitted)</string>
+    <string name="cert_status_accepted">स्वीकृत (Accepted)</string>
+    
+    <!-- Categories -->
+    <string name="cat_metal">धातु (Metal)</string>
+    <string name="cat_plastic">प्लास्टिक (Plastic)</string>
+    <string name="cat_rubber">रबर (Rubber)</string>
+    <string name="cat_ewaste">ई-कचरा (E-Waste)</string>
+    <string name="cat_chemical">रासायनिक (Chemical)</string>
+    <string name="cat_wood">लकड़ी (Wood)</string>
+    <string name="cat_paper">कागज / गत्ता (Paper/OCC)</string>
+    <string name="cat_glass">कांच (Glass)</string>
+    <string name="cat_other">अन्य / मिश्रित</string>
+
+    <!-- Additional Screen Strings (Hindi) -->
+    <string name="epr_ledger_title">ईपीआर अनुपालन बहीखाता</string>
+    <string name="epr_mandate_subtitle">सरकारी निर्देश: ७५% पुनर्चक्रण लक्ष्य</string>
+    <string name="epr_compliant_desc">✓ चालू वित्त वर्ष के ईपीआर लक्ष्यों के अनुसार अनुपालन.</string>
+    <string name="epr_risk_desc">⚠ ईपीआर गैर-अनुपालन जुर्माने का जोखिम.</string>
+    <string name="efficiency_score_title">कारखाना दक्षता स्कोर</string>
+    <string name="trend_chart_title">स्क्रैप उत्पादन रुझान (६ महीने)</string>
+    <string name="category_breakdown_title">श्रेणीवार विवरण (%)</string>
+    <string name="bid_detail">नीलामी कक्ष</string>
+    <string name="reserve_price_kg">आरक्षित मूल्य (₹/किग्रा)</string>
+    <string name="live_leaderboard">लाइव बोली लीडरबोर्ड</string>
+    <string name="live_auctions">सक्रिय नीलामी</string>
+    <string name="volume_value">कुल मूल्य</string>
+    <string name="no_active_auctions">वर्तमान में कोई सक्रिय नीलामी नहीं है</string>
+    <string name="no_active_auctions_desc">कारखानों से नए स्क्रैप बैच लाइव बोली के लिए यहाँ दिखाई देंगे।</string>
+    <string name="auction_concluded">नीलामी समाप्त</string>
+    <string name="reserve_price_format">आरक्षित दर: ₹%1$s/किग्रा</string>
+    <string name="est_total_format">अनुमानित कुल: ₹%1$s</string>
+    <string name="market_rate_format">एमआईडीसी बाजार दर: ~₹%1$s/किग्रा</string>
+    <string name="publish_auction">नीलामी प्रकाशित करें</string>
+    <string name="no_bins_configured_desc">लाइव टेलीमेट्री के लिए स्टोरेज डिब्बे जोड़ने के लिए + दबाएं</string>
+    <string name="overflow_imminent_format">ओवरफ्लो का खतरा (%1$d डिब्बे)</string>
+    <string name="auction_action">नीलामी करें</string>
+    <string name="cap_format">क्षमता: %1$s किग्रा</string>
+    <string name="tap_to_update_fill">स्तर दर्ज करने के लिए टैप करें</string>
+    <string name="max_capacity_kg">अधिकतम क्षमता (किग्रा)</string>
+    <string name="save_bin">डिब्बा सहेजें</string>
+    <string name="update_level_title">स्तर अपडेट करें: %1$s डिब्बा</string>
+    <string name="save_btn">अपडेट करें</string>
+    <string name="audit_ready">ऑडिट तैयार</string>
+    <string name="pending_mpcb_generation">लंबित एमपीसीबी प्रमाणपत्र निर्माण</string>
+    <string name="generate_certificate_btn">फॉर्म ३८ बनाएं</string>
+    <string name="issued_certificates">जारी अनुपालन प्रमाणपत्र</string>
+    <string name="no_certificates_yet">अभी तक कोई प्रमाणपत्र नहीं बना है</string>
+    <string name="certificates_empty_desc">स्क्रैप स्थानांतरण पूरा होने पर प्रमाणपत्र तैयार किए जाएंगे।</string>
+    <string name="system_version">सिस्टम संस्करण</string>
+</resources>

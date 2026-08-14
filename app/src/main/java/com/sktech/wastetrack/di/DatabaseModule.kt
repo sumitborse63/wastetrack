@@ -23,7 +23,14 @@ object DatabaseModule {
         context,
         WasteTrackDatabase::class.java,
         WasteTrackDatabase.DATABASE_NAME
-    ).fallbackToDestructiveMigration().build()
+    )
+    .addMigrations(
+        WasteTrackDatabase.MIGRATION_1_2,
+        WasteTrackDatabase.MIGRATION_2_3,
+        WasteTrackDatabase.MIGRATION_3_4
+    )
+    .fallbackToDestructiveMigration(dropAllTables = false)
+    .build()
 
     @Provides fun provideScrapEntryDao(db: WasteTrackDatabase): ScrapEntryDao = db.scrapEntryDao()
     @Provides fun provideTransferDao(db: WasteTrackDatabase): TransferDao = db.transferDao()

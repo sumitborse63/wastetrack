@@ -1,12 +1,12 @@
 package com.sktech.wastetrack.ui.screens.dashboard
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -17,16 +17,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
+import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
+import com.sktech.wastetrack.util.DateUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigateToScrapLog: () -> Unit,
@@ -48,8 +52,9 @@ fun DashboardScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header with sync status
+        // Modern Minimalist Top Header
         DashboardHeader(
+            user = state.currentUser,
             isOnline = state.isOnline,
             pendingSyncCount = state.pendingSyncCount,
             onSettingsClick = onNavigateToSettings
@@ -57,413 +62,466 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Stat Cards Row
-        Text(
-            text = "Today's Overview",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        // Performance Overview Title Strip
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.dashboard),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = stringResource(R.string.ambad_pilot_subtitle),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (state.isOnline) EmeraldPrimary else SafetyOrange,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
 
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Stat KPI Cards Horizontal Carousel
         LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                StatCard(
-                    title = "Scrap Logged",
+                ModernStatCard(
+                    title = stringResource(R.string.today_scrap),
                     value = "${state.todayScrapCount}",
                     subtitle = "${String.format("%.1f", state.todayWeightKg)} kg",
-                    icon = Icons.Filled.DeleteSweep,
-                    gradientColors = listOf(IndustrialGreen, IndustrialGreenLight)
+                    icon = Icons.Outlined.DeleteSweep,
+                    accentColor = EmeraldPrimary,
+                    containerColor = EmeraldContainer
                 )
             }
             item {
-                StatCard(
-                    title = "Transfers",
+                ModernStatCard(
+                    title = stringResource(R.string.transfers),
                     value = "${state.pendingTransfers}",
-                    subtitle = "Pending",
-                    icon = Icons.Filled.LocalShipping,
-                    gradientColors = listOf(Teal, SyncBlue)
+                    subtitle = stringResource(R.string.pending_sub),
+                    icon = Icons.Outlined.LocalShipping,
+                    accentColor = Teal,
+                    containerColor = TealContainer
                 )
             }
             item {
-                StatCard(
-                    title = "Bin Alerts",
+                ModernStatCard(
+                    title = stringResource(R.string.bin_alerts),
                     value = "${state.binAlerts}",
-                    subtitle = "Near full",
-                    icon = Icons.Filled.Warning,
-                    gradientColors = if (state.binAlerts > 0)
-                        listOf(SafetyOrange, AlertRed)
-                    else
-                        listOf(SteelGray, GraphiteLight)
+                    subtitle = if (state.binAlerts > 0) stringResource(R.string.overflow_alert) else stringResource(R.string.normal_capacity),
+                    icon = Icons.Outlined.Warning,
+                    accentColor = if (state.binAlerts > 0) AlertRed else EmeraldPrimary,
+                    containerColor = if (state.binAlerts > 0) AlertRedContainer else EmeraldContainer
                 )
             }
             item {
-                StatCard(
-                    title = "Certificates",
+                ModernStatCard(
+                    title = stringResource(R.string.certificates),
                     value = "${state.certificateCount}",
-                    subtitle = "Generated",
-                    icon = Icons.Filled.Description,
-                    gradientColors = listOf(Gold, SafetyOrangeLight)
+                    subtitle = stringResource(R.string.generated_sub),
+                    icon = Icons.Outlined.Verified,
+                    accentColor = Gold,
+                    containerColor = SafetyOrangeContainer
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Quick Actions
+        // Bento Quick Actions Grid
         Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleLarge,
+            text = stringResource(R.string.quick_actions),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Column(
             modifier = Modifier.padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                QuickActionCard(
-                    title = "Log Scrap",
-                    subtitle = "AI classify & weigh",
+                ModernQuickActionCard(
+                    title = stringResource(R.string.log_scrap),
+                    subtitle = stringResource(R.string.ai_classify_subtitle),
                     icon = Icons.Outlined.AddCircle,
-                    color = IndustrialGreenLight,
+                    accentColor = EmeraldPrimary,
+                    containerColor = EmeraldContainer,
                     onClick = onNavigateToScrapLog,
                     modifier = Modifier.weight(1f)
                 )
-                QuickActionCard(
-                    title = "Scan QR",
-                    subtitle = "Verify handshake",
+                ModernQuickActionCard(
+                    title = stringResource(R.string.scan_qr),
+                    subtitle = stringResource(R.string.verify_handshake_sub),
                     icon = Icons.Outlined.QrCodeScanner,
-                    color = Teal,
+                    accentColor = Teal,
+                    containerColor = TealContainer,
                     onClick = onNavigateToQRScan,
                     modifier = Modifier.weight(1f)
                 )
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                QuickActionCard(
-                    title = "Transfer",
-                    subtitle = "New dispatch",
+                ModernQuickActionCard(
+                    title = stringResource(R.string.transfer_action),
+                    subtitle = stringResource(R.string.new_dispatch_sub),
                     icon = Icons.Outlined.LocalShipping,
-                    color = SyncBlue,
+                    accentColor = SyncBlue,
+                    containerColor = TealContainer,
                     onClick = onNavigateToTransfer,
                     modifier = Modifier.weight(1f)
                 )
-                QuickActionCard(
-                    title = "Bin Monitor",
-                    subtitle = "Fill levels",
-                    icon = Icons.Outlined.Inventory2,
-                    color = SafetyOrange,
+                ModernQuickActionCard(
+                    title = stringResource(R.string.bin_monitor),
+                    subtitle = stringResource(R.string.bin_monitor_sub),
+                    icon = Icons.Outlined.Sensors,
+                    accentColor = SafetyOrange,
+                    containerColor = SafetyOrangeContainer,
                     onClick = onNavigateToBinMonitor,
                     modifier = Modifier.weight(1f)
                 )
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                QuickActionCard(
-                    title = "Scan Ledger",
-                    subtitle = "OCR digitize",
+                ModernQuickActionCard(
+                    title = stringResource(R.string.scan_ledger),
+                    subtitle = stringResource(R.string.scan_ledger_sub),
                     icon = Icons.Outlined.DocumentScanner,
-                    color = Gold,
+                    accentColor = Gold,
+                    containerColor = SafetyOrangeContainer,
                     onClick = onNavigateToLedgerScan,
                     modifier = Modifier.weight(1f)
                 )
-                QuickActionCard(
-                    title = "ESG Certs",
-                    subtitle = "View & export",
-                    icon = Icons.Outlined.VerifiedUser,
-                    color = IndustrialGreenLight,
+                ModernQuickActionCard(
+                    title = stringResource(R.string.compliance),
+                    subtitle = stringResource(R.string.esg_certs_sub),
+                    icon = Icons.Outlined.FactCheck,
+                    accentColor = PurpleViolet,
+                    containerColor = TealContainer,
                     onClick = onNavigateToCompliance,
                     modifier = Modifier.weight(1f)
                 )
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Recent Scrap Activity Timeline
+        if (state.recentEntries.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.recent_activity),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                QuickActionCard(
-                    title = "Analytics",
-                    subtitle = "Enterprise charts",
-                    icon = Icons.Outlined.Analytics,
-                    color = SyncBlue,
-                    onClick = onNavigateToAnalytics,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.weight(1f))
+                state.recentEntries.forEach { entry ->
+                    ModernRecentActivityCard(entry = entry)
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
-
-        // Recent Activity
-        if (state.recentEntries.isNotEmpty()) {
-            Text(
-                text = "Recent Activity",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                state.recentEntries.forEach { entry ->
-                    RecentActivityCard(entry = entry)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun RecentActivityCard(entry: com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val category = try {
-                com.sktech.wastetrack.domain.model.ScrapCategory.valueOf(entry.category)
-            } catch (e: Exception) {
-                com.sktech.wastetrack.domain.model.ScrapCategory.OTHER
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = IndustrialGreen.copy(alpha = 0.15f),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(category.icon, style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-                Column {
-                    Text(category.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        com.sktech.wastetrack.util.DateUtils.formatTime(entry.createdAt),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            Text(
-                "${entry.weightKg} kg",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
-@Composable
-private fun DashboardHeader(
-    isOnline: Boolean,
-    pendingSyncCount: Int,
-    onSettingsClick: () -> Unit
+private fun ModernStatCard(
+    title: String,
+    value: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    containerColor: Color
 ) {
     Surface(
+        modifier = Modifier
+            .width(160.dp)
+            .height(115.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 48.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "WasteTrack",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Ambad MIDC Pilot",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = containerColor,
+                    modifier = Modifier.size(28.dp)
                 ) {
-                    // Sync Status
-                    SyncStatusChip(isOnline = isOnline, pendingCount = pendingSyncCount)
-                    IconButton(onClick = onSettingsClick) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Outlined.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun SyncStatusChip(isOnline: Boolean, pendingCount: Int) {
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = if (isOnline) IndustrialGreen.copy(alpha = 0.15f) else SafetyOrange.copy(alpha = 0.15f),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(
-                imageVector = if (isOnline) Icons.Filled.CloudDone else Icons.Filled.CloudOff,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (isOnline) IndustrialGreenLight else SafetyOrange
-            )
-            Text(
-                text = if (isOnline) "Synced" else "$pendingCount pending",
-                style = MaterialTheme.typography.labelSmall,
-                color = if (isOnline) IndustrialGreenLight else SafetyOrange
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
-    title: String,
-    value: String,
-    subtitle: String,
-    icon: ImageVector,
-    gradientColors: List<Color>
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .height(120.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(gradientColors),
-                    shape = MaterialTheme.shapes.medium
-                )
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(24.dp)
-                )
-                Column {
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.align(Alignment.TopEnd)
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .height(90.dp)
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = color.copy(alpha = 0.15f),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = color,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-            }
             Column {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    text = value,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModernQuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    containerColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .height(90.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = containerColor,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            Column(verticalArrangement = Arrangement.Center) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModernRecentActivityCard(entry: com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity) {
+    val category = runCatching { ScrapCategory.valueOf(entry.category) }.getOrDefault(ScrapCategory.OTHER)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = category.color().copy(alpha = 0.15f),
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(category.icon, fontSize = 18.sp)
+                    }
+                }
+                Column {
+                    Text(
+                        text = if (entry.subCategory.isNotBlank()) "${entry.subCategory} (${stringResource(category.nameRes)})" else stringResource(category.nameRes),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = DateUtils.formatTime(entry.createdAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = EmeraldContainer
+            ) {
+                Text(
+                    text = "${entry.weightKg} kg",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = EmeraldPrimary,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardHeader(
+    user: com.sktech.wastetrack.domain.model.User?,
+    isOnline: Boolean,
+    pendingSyncCount: Int,
+    onSettingsClick: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Recycling,
+                        contentDescription = null,
+                        tint = EmeraldPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Text(
+                        text = user?.organizationName?.ifBlank { stringResource(R.string.app_name) } ?: stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+                Text(
+                    text = if (!user?.industrialArea.isNullOrBlank()) "${user?.industrialArea} · Unit #${user?.factoryId.orEmpty().take(6).uppercase()}" else "Enterprise Floor Terminal",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Online/Sync Status Pill
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = if (isOnline) EmeraldContainer else AlertRedContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isOnline) Icons.Filled.CloudDone else Icons.Filled.CloudOff,
+                            contentDescription = null,
+                            modifier = Modifier.size(13.dp),
+                            tint = if (isOnline) EmeraldPrimary else AlertRed
+                        )
+                        Text(
+                            text = if (isOnline) stringResource(R.string.synced_label) else stringResource(R.string.pending_sync_format, pendingSyncCount),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isOnline) EmeraldPrimary else AlertRed
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = stringResource(R.string.settings),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }

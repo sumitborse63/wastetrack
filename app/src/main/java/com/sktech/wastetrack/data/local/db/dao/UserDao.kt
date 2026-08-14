@@ -16,4 +16,7 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE phone = :phone")
     suspend fun getByPhone(phone: String): UserEntity?
+
+    @Query("DELETE FROM users")
+    suspend fun deleteAll()
 }

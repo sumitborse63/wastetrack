@@ -1,12 +1,15 @@
 package com.sktech.wastetrack.domain.model
 
+import com.sktech.wastetrack.R
+
 enum class ScrapCategory(
     val displayName: String,
     val icon: String,
+    val nameRes: Int,
     val subCategories: List<String>
 ) {
     METAL(
-        "Metal", "🔩",
+        "Metal", "🔩", R.string.cat_metal,
         listOf(
             "Copper Wire / Cable",
             "Aluminum Ingot / Extrusion",
@@ -20,7 +23,7 @@ enum class ScrapCategory(
         )
     ),
     PLASTIC(
-        "Plastic", "♻️",
+        "Plastic", "♻️", R.string.cat_plastic,
         listOf(
             "PET Bottles & Sheets",
             "HDPE Drums & Containers",
@@ -31,7 +34,7 @@ enum class ScrapCategory(
         )
     ),
     RUBBER(
-        "Rubber", "⚫",
+        "Rubber", "⚫", R.string.cat_rubber,
         listOf(
             "Tire Shreds / Whole Tires",
             "Conveyor Belting",
@@ -40,7 +43,7 @@ enum class ScrapCategory(
         )
     ),
     EWASTE(
-        "E-Waste", "💻",
+        "E-Waste", "💻", R.string.cat_ewaste,
         listOf(
             "Printed Circuit Boards (PCB)",
             "Li-ion / Lead-Acid Batteries",
@@ -50,7 +53,7 @@ enum class ScrapCategory(
         )
     ),
     CHEMICAL(
-        "Chemical", "⚗️",
+        "Chemical", "⚗️", R.string.cat_chemical,
         listOf(
             "Spent Solvent / Oil",
             "Acidic / Alkaline Residue",
@@ -59,7 +62,7 @@ enum class ScrapCategory(
         )
     ),
     WOOD(
-        "Wood", "🪵",
+        "Wood", "🪵", R.string.cat_wood,
         listOf(
             "Wooden Pallets",
             "Sawdust & Shavings",
@@ -68,7 +71,7 @@ enum class ScrapCategory(
         )
     ),
     PAPER(
-        "Paper", "📄",
+        "Paper", "📄", R.string.cat_paper,
         listOf(
             "Corrugated Cardboard (OCC)",
             "Office White Paper Shreds",
@@ -77,7 +80,7 @@ enum class ScrapCategory(
         )
     ),
     GLASS(
-        "Glass", "🪟",
+        "Glass", "🪟", R.string.cat_glass,
         listOf(
             "Clear Cullet Glass",
             "Amber / Green Bottles",
@@ -86,7 +89,7 @@ enum class ScrapCategory(
         )
     ),
     OTHER(
-        "Other", "📦",
+        "Other", "📦", R.string.cat_other,
         listOf(
             "Textiles & Fabric Rags",
             "Mixed Solid Scrap",

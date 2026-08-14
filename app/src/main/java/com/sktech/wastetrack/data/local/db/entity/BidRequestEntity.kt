@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class BidRequestEntity(
     @PrimaryKey val id: String,
     val factoryId: String,
+    val createdByUserId: String = "",
     val scrapEntryId: String,
     val scrapCategory: String,
     val estimatedWeightKg: Float,

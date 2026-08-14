@@ -3,6 +3,7 @@ package com.sktech.wastetrack.domain.model
 data class BidRequest(
     val id: String,
     val factoryId: String,
+    val createdByUserId: String = "",
     val scrapEntryId: String,
     val scrapCategory: ScrapCategory,
     val estimatedWeightKg: Float,

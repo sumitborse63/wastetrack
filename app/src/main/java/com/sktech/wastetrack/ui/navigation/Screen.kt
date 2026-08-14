@@ -2,6 +2,7 @@ package com.sktech.wastetrack.ui.navigation
 
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
+    data object SignUp : Screen("signup")
     data object Dashboard : Screen("dashboard")
     data object ScrapLog : Screen("scrap_log")
     data object ScrapHistory : Screen("scrap_history")

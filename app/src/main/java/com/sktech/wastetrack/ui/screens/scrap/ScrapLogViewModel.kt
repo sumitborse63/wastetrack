@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.sktech.wastetrack.domain.usecase.scrap.DetectAnomalyUseCase
+import com.sktech.wastetrack.domain.repository.IAuthRepository
 import java.util.UUID
 import javax.inject.Inject
 
@@ -33,18 +34,26 @@ data class ScrapLogState(
 class ScrapLogViewModel @Inject constructor(
     private val scrapEntryDao: ScrapEntryDao,
     private val syncQueueDao: SyncQueueDao,
-    private val detectAnomalyUseCase: DetectAnomalyUseCase
+    private val detectAnomalyUseCase: DetectAnomalyUseCase,
+    private val authRepository: IAuthRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScrapLogState())
     val state: StateFlow<ScrapLogState> = _state.asStateFlow()
 
-    private val factoryId = Constants.DEFAULT_FACTORY_ID
-    private val userId = "pilot-user-001" // Will come from auth
+    private var factoryId: String? = null
+    private var userId: String? = null
 
     init {
         viewModelScope.launch {
-            scrapEntryDao.getByFactory(factoryId).collect { entries ->
+            val user = authRepository.getCurrentUser()
+            if (user == null) {
+                _state.update { it.copy(error = "Sign in to log scrap") }
+                return@launch
+            }
+            factoryId = user.factoryId
+            userId = user.id
+            scrapEntryDao.getByFactory(user.factoryId.ifBlank { Constants.DEFAULT_FACTORY_ID }).collect { entries ->
                 _state.update { it.copy(recentEntries = entries.take(10)) }
             }
         }
@@ -77,9 +86,9 @@ class ScrapLogViewModel @Inject constructor(
             _state.update { it.copy(error = "Please enter a valid weight") }
             return
         }
+        val currentFactoryId = factoryId?.ifBlank { Constants.DEFAULT_FACTORY_ID } ?: Constants.DEFAULT_FACTORY_ID
+        val currentUserId = userId ?: "supervisor-001"
         
-        // If an anomaly warning was shown and they click submit again, we bypass it
-        // Or we can just flag it in the DB. Let's just flag it in the DB for now.
         val anomalyResult = detectAnomalyUseCase(current.selectedCategory, weight)
 
         viewModelScope.launch {
@@ -91,18 +100,18 @@ class ScrapLogViewModel @Inject constructor(
                     id = entryId,
                     category = current.selectedCategory.name,
                     weightKg = weight,
-                    factoryId = factoryId,
+                    factoryId = currentFactoryId,
                     timestamp = timestamp
                 )
 
                 val entity = ScrapEntryEntity(
                     id = entryId,
-                    factoryId = factoryId,
-                    loggedByUserId = userId,
+                    factoryId = currentFactoryId,
+                    loggedByUserId = currentUserId,
                     category = current.selectedCategory.name,
                     subCategory = current.subCategory,
                     weightKg = weight,
-                    estimatedVolumeL = 1000f, // Default 1m3 for MVP
+                    estimatedVolumeL = 1000f,
                     anomalyScore = anomalyResult.score,
                     anomalyFlagged = anomalyResult.flagged,
                     notes = current.notes,
@@ -124,7 +133,10 @@ class ScrapLogViewModel @Inject constructor(
                 )
 
                 _state.update {
-                    ScrapLogState(isSuccess = true, recentEntries = it.recentEntries)
+                    ScrapLogState(
+                        isSuccess = true,
+                        recentEntries = (listOf(entity) + it.recentEntries.filter { e -> e.id != entity.id }).take(10)
+                    )
                 }
             } catch (e: Exception) {
                 _state.update {

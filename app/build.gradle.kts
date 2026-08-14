@@ -42,6 +42,19 @@ android {
         compose = true
         buildConfig = true
     }
+
+    val apiBaseUrl = providers.gradleProperty("WASTETRACK_API_BASE_URL")
+        .orElse(providers.environmentVariable("WASTETRACK_API_BASE_URL"))
+        .orElse("https://api.wastetrack.invalid/")
+        .get()
+    val geminiApiKey = providers.gradleProperty("GEMINI_API_KEY")
+        .orElse(providers.environmentVariable("GEMINI_API_KEY"))
+        .orElse("")
+        .get()
+    defaultConfig {
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+    }
     
     androidResources {
         noCompress += "tflite"
@@ -85,7 +98,7 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // Retrofit + OkHttp (for future backend / mock API)
+    // Retrofit + OkHttp
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)

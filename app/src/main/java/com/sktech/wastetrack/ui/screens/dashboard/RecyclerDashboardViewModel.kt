@@ -11,6 +11,8 @@ import com.sktech.wastetrack.data.local.db.entity.BidRequestEntity
 import com.sktech.wastetrack.data.local.db.entity.CertificateEntity
 import com.sktech.wastetrack.data.local.db.entity.SyncQueueEntity
 import com.sktech.wastetrack.util.HashUtils
+import com.sktech.wastetrack.domain.repository.IAuthRepository
+import com.sktech.wastetrack.domain.model.User
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 data class RecyclerDashboardState(
+    val currentUser: User? = null,
     val activeBidsCount: Int = 0,
     val wonBidsCount: Int = 0,
     val totalWeightRecycledKg: Float = 0f,
@@ -38,10 +41,11 @@ class RecyclerDashboardViewModel @Inject constructor(
     private val transferDao: TransferDao,
     private val bidDao: BidDao,
     private val certificateDao: CertificateDao,
-    private val syncQueueDao: SyncQueueDao
+    private val syncQueueDao: SyncQueueDao,
+    private val authRepository: IAuthRepository
 ) : ViewModel() {
 
-    private val recyclerId = "mock_recycler_id"
+    private var currentUser: User? = null
 
     private val _state = MutableStateFlow(RecyclerDashboardState())
     val state: StateFlow<RecyclerDashboardState> = _state.asStateFlow()
@@ -51,9 +55,16 @@ class RecyclerDashboardViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        // Collect recycler-specific transfers
         viewModelScope.launch {
-            transferDao.getByRecycler(recyclerId).collect { transfers ->
+            val user = authRepository.getCurrentUser()
+            currentUser = user
+            _state.update { it.copy(currentUser = user) }
+            if (user == null || user.role != com.sktech.wastetrack.domain.model.UserRole.RECYCLER) {
+                _state.update { it.copy(error = "Recycler account required") }
+                return@launch
+            }
+            currentUser = user
+            transferDao.getByRecycler(user.id).collect { transfers ->
                 val incoming = transfers.filter { it.status == "IN_TRANSIT" || it.status == "DELIVERED" }
                 _state.update { it.copy(incomingShipments = incoming) }
             }
@@ -61,14 +72,16 @@ class RecyclerDashboardViewModel @Inject constructor(
 
         // Sum recycled weight
         viewModelScope.launch {
-            transferDao.getRecycledWeightSum(recyclerId).collect { sum ->
+            val user = authRepository.getCurrentUser() ?: return@launch
+            transferDao.getRecycledWeightSum(user.id).collect { sum ->
                 _state.update { it.copy(totalWeightRecycledKg = sum ?: 0f) }
             }
         }
 
         // Get count of verified transfers (which correspond to certifications)
         viewModelScope.launch {
-            transferDao.getCountByRecyclerAndStatus(recyclerId, "VERIFIED").collect { count ->
+            val user = authRepository.getCurrentUser() ?: return@launch
+            transferDao.getCountByRecyclerAndStatus(user.id, "VERIFIED").collect { count ->
                 _state.update { it.copy(certificateCount = count) }
             }
         }
@@ -85,16 +98,25 @@ class RecyclerDashboardViewModel @Inject constructor(
     fun initiatePickup(requestId: String, vehicleNumber: String) {
         viewModelScope.launch {
             try {
+                val user = currentUser
+                if (user == null) {
+                    _state.update { it.copy(error = "Recycler account is not ready") }
+                    return@launch
+                }
                 val now = System.currentTimeMillis()
                 val transferId = UUID.randomUUID().toString()
                 
                 val request = bidDao.getRequestById(requestId) ?: return@launch
+                if (request.createdByUserId.isBlank()) {
+                    _state.update { it.copy(error = "This bid request is missing its supervisor assignment") }
+                    return@launch
+                }
                 
                 val contentHash = HashUtils.hashTransfer(
                     id = transferId,
                     scrapEntryId = request.scrapEntryId,
                     weightAtSource = request.estimatedWeightKg,
-                    supervisorId = "pilot-user-001",
+                    supervisorId = request.createdByUserId,
                     timestamp = now
                 )
 
@@ -102,8 +124,8 @@ class RecyclerDashboardViewModel @Inject constructor(
                     id = transferId,
                     scrapEntryId = request.scrapEntryId,
                     fromFactoryId = request.factoryId,
-                    toRecyclerId = recyclerId,
-                    supervisorId = "pilot-user-001",
+                    toRecyclerId = user.id,
+                    supervisorId = request.createdByUserId,
                     weightAtSource = request.estimatedWeightKg,
                     vehicleNumber = vehicleNumber,
                     status = "IN_TRANSIT",
@@ -138,6 +160,11 @@ class RecyclerDashboardViewModel @Inject constructor(
     fun verifyReceivedWeight(transferId: String, receivedWeight: Float) {
         viewModelScope.launch {
             try {
+                val user = currentUser
+                if (user == null) {
+                    _state.update { it.copy(error = "Recycler account is not ready") }
+                    return@launch
+                }
                 val transfer = transferDao.getById(transferId) ?: return@launch
                 val sourceWeight = transfer.weightAtSource
                 val discrepancy = Math.abs(receivedWeight - sourceWeight)
@@ -173,8 +200,8 @@ class RecyclerDashboardViewModel @Inject constructor(
                         "type" to "MPCB_DISPOSAL",
                         "factoryId" to transfer.fromFactoryId,
                         "factoryName" to "Ambad MIDC Pilot Unit",
-                        "recyclerId" to recyclerId,
-                        "recyclerName" to "Mumbai Green Recyclers",
+                        "recyclerId" to user.id,
+                        "recyclerName" to user.name,
                         "transferId" to transfer.id,
                         "weightDisposedKg" to receivedWeight,
                         "disposalDate" to now,

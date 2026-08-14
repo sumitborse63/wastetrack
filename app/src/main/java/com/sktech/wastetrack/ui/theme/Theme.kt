@@ -13,47 +13,49 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = IndustrialGreenLight,
-    onPrimary = Color.White,
-    primaryContainer = IndustrialGreen,
-    onPrimaryContainer = Color.White,
-    secondary = SafetyOrange,
-    onSecondary = Color.White,
-    secondaryContainer = SafetyOrangeLight,
-    onSecondaryContainer = Color.White,
-    tertiary = Teal,
-    onTertiary = Color.White,
+    primary = EmeraldLight,
+    onPrimary = CarbonBlack,
+    primaryContainer = IndustrialSurfaceDark(),
+    onPrimaryContainer = IndustrialGreenGlow,
+    secondary = SafetyOrangeLight,
+    onSecondary = CarbonBlack,
+    secondaryContainer = GraphiteLight,
+    onSecondaryContainer = SafetyOrangeContainer,
+    tertiary = TealLight,
+    onTertiary = CarbonBlack,
     background = CarbonBlack,
-    onBackground = LightGray,
+    onBackground = OffWhite,
     surface = Graphite,
-    onSurface = LightGray,
+    onSurface = OffWhite,
     surfaceVariant = GraphiteLight,
-    onSurfaceVariant = LightGray,
+    onSurfaceVariant = TextMuted,
     error = AlertRed,
-    onError = Color.White,
+    onError = OffWhite,
     outline = SteelGray
 )
 
+private fun IndustrialSurfaceDark() = Color(0xFF064E3B)
+
 private val LightColorScheme = lightColorScheme(
-    primary = IndustrialGreen,
+    primary = EmeraldPrimary,
     onPrimary = Color.White,
-    primaryContainer = IndustrialGreenSurface,
-    onPrimaryContainer = Color.White,
+    primaryContainer = EmeraldContainer,
+    onPrimaryContainer = EmeraldSurface,
     secondary = SafetyOrange,
     onSecondary = Color.White,
-    secondaryContainer = SafetyOrangeLight,
-    onSecondaryContainer = Color.White,
-    tertiary = TealDark,
+    secondaryContainer = SafetyOrangeContainer,
+    onSecondaryContainer = Color(0xFF7C2D12),
+    tertiary = Teal,
     onTertiary = Color.White,
-    background = LightBackground,
-    onBackground = CarbonBlack,
-    surface = LightSurface,
-    onSurface = CarbonBlack,
+    background = LightCanvas,
+    onBackground = TextPrimary,
+    surface = LightCard,
+    onSurface = TextPrimary,
     surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = SteelGray,
+    onSurfaceVariant = TextSecondary,
     error = AlertRed,
     onError = Color.White,
-    outline = SteelGray
+    outline = LightCardBorder
 )
 
 @Composable

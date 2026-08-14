@@ -3,10 +3,7 @@ package com.sktech.wastetrack.ui.screens.dashboard
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.util.Log
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
@@ -18,13 +15,17 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,12 +39,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.IndustrialGreen
+import com.sktech.wastetrack.ui.theme.IndustrialGreenLight
 import com.sktech.wastetrack.ui.theme.SafetyOrange
-import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +59,7 @@ fun LedgerScanScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Digitize Ledger", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                title = { Text("Digitize Paper Ledger", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -79,15 +78,50 @@ fun LedgerScanScreen(
                 ) {
                     CircularProgressIndicator(color = IndustrialGreen)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Extracting Text (OCR)...", style = MaterialTheme.typography.titleMedium)
+                    Text("Extracting & Structuring Text (OCR + NLP)...", style = MaterialTheme.typography.titleMedium)
                 }
-            } else if (state.extractedText.isNotEmpty() || state.error != null) {
-                // Result View
+            } else if (state.importSuccessMessage != null) {
+                // Success State
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp)
-                        .verticalScroll(rememberScrollState())
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Filled.CheckCircle,
+                        contentDescription = "Success",
+                        tint = IndustrialGreen,
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Digitization Complete!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        state.importSuccessMessage!!,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Button(
+                        onClick = { viewModel.clearResult() },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = IndustrialGreen)
+                    ) {
+                        Text("Scan Another Page")
+                    }
+                }
+            } else if (state.extractedText.isNotEmpty() || state.error != null) {
+                // Result & Parsing View
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
                 ) {
                     if (state.error != null) {
                         Card(
@@ -100,28 +134,103 @@ fun LedgerScanScreen(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    if (state.parsedEntries.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Structured Records Found (${state.parsedEntries.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(state.parsedEntries, key = { it.id }) { entry ->
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                    shape = MaterialTheme.shapes.medium
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Surface(
+                                            shape = MaterialTheme.shapes.small,
+                                            color = entry.category.color().copy(alpha = 0.15f),
+                                            modifier = Modifier.size(40.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(entry.category.icon, style = MaterialTheme.typography.titleMedium)
+                                            }
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                "${entry.category.displayName} — ${entry.weightKg} kg",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                entry.rawLine,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { viewModel.importParsedEntries() },
+                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                            enabled = !state.isImporting,
+                            colors = ButtonDefaults.buttonColors(containerColor = IndustrialGreen)
+                        ) {
+                            if (state.isImporting) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Import ${state.parsedEntries.size} Records to Scrap Log")
+                            }
+                        }
                     } else {
-                        Text("Extracted Text", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        // Raw OCR text view if no structured items matched
+                        Text("Extracted OCR Text", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().weight(1f)
                         ) {
                             Text(
                                 text = state.extractedText,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
                         onClick = { viewModel.clearResult() },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = IndustrialGreen)
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text("Scan Another Page")
+                        Icon(Icons.Filled.Refresh, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Retake Photo")
                     }
                 }
             } else {
@@ -187,16 +296,6 @@ fun LedgerScanScreen(
                             modifier = Modifier.size(36.dp),
                             tint = Color.White
                         )
-                    }
-                    
-                    // Scanning guidelines
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .fillMaxHeight(0.7f)
-                            .align(Alignment.Center)
-                    ) {
-                        // In a real app we'd draw a bordered rectangle here to guide the user
                     }
                 }
             }

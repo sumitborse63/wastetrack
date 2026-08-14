@@ -29,6 +29,7 @@ class FirebaseBidDataSource @Inject constructor() {
                         BidRequest(
                             id = doc.id,
                             factoryId = doc.getString("factoryId") ?: "",
+                            createdByUserId = doc.getString("createdByUserId") ?: "",
                             scrapEntryId = doc.getString("scrapEntryId") ?: "",
                             scrapCategory = ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name),
                             estimatedWeightKg = doc.getDouble("estimatedWeightKg")?.toFloat() ?: 0f,
@@ -47,6 +48,7 @@ class FirebaseBidDataSource @Inject constructor() {
     suspend fun createBidRequest(request: BidRequest): String {
         val data = hashMapOf(
             "factoryId" to request.factoryId,
+            "createdByUserId" to request.createdByUserId,
             "scrapEntryId" to request.scrapEntryId,
             "scrapCategory" to request.scrapCategory.name,
             "estimatedWeightKg" to request.estimatedWeightKg,
@@ -55,8 +57,8 @@ class FirebaseBidDataSource @Inject constructor() {
             "auctionEndTime" to request.auctionEndTime,
             "status" to request.status.name
         )
-        val docRef = bidRequestsCollection.add(data).await()
-        return docRef.id
+        bidRequestsCollection.document(request.id).set(data).await()
+        return request.id
     }
 
     fun getBidsForRequest(requestId: String): Flow<List<Bid>> {
@@ -71,6 +73,7 @@ class FirebaseBidDataSource @Inject constructor() {
                             id = doc.id,
                             bidRequestId = doc.getString("bidRequestId") ?: "",
                             recyclerId = doc.getString("recyclerId") ?: "",
+                            recyclerName = doc.getString("recyclerName") ?: "",
                             pricePerKg = doc.getDouble("pricePerKg")?.toFloat() ?: 0f,
                             totalBidAmount = doc.getDouble("totalBidAmount")?.toFloat() ?: 0f,
                             isWinning = doc.getBoolean("isWinning") ?: false,
@@ -87,6 +90,7 @@ class FirebaseBidDataSource @Inject constructor() {
         val data = hashMapOf(
             "bidRequestId" to bid.bidRequestId,
             "recyclerId" to bid.recyclerId,
+            "recyclerName" to bid.recyclerName,
             "pricePerKg" to bid.pricePerKg,
             "totalBidAmount" to bid.totalBidAmount,
             "isWinning" to bid.isWinning,
@@ -101,11 +105,7 @@ class FirebaseBidDataSource @Inject constructor() {
         bidsCollection.document(bidId).update("isWinning", true).await()
         
         // Update the BidRequest status to AWARDED
-        val querySnapshot = bidRequestsCollection.whereEqualTo("id", requestId).get().await()
-        if (!querySnapshot.isEmpty) {
-            val docId = querySnapshot.documents[0].id
-            bidRequestsCollection.document(docId).update("status", BidStatus.AWARDED.name).await()
-        }
+        bidRequestsCollection.document(requestId).update("status", BidStatus.AWARDED.name).await()
     }
 
     suspend fun getBidRequestById(requestId: String): BidRequest? {
@@ -115,6 +115,7 @@ class FirebaseBidDataSource @Inject constructor() {
                 BidRequest(
                     id = doc.id,
                     factoryId = doc.getString("factoryId") ?: "",
+                    createdByUserId = doc.getString("createdByUserId") ?: "",
                     scrapEntryId = doc.getString("scrapEntryId") ?: "",
                     scrapCategory = ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name),
                     estimatedWeightKg = doc.getDouble("estimatedWeightKg")?.toFloat() ?: 0f,

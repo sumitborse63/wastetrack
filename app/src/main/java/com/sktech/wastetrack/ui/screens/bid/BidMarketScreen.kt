@@ -1,11 +1,16 @@
 package com.sktech.wastetrack.ui.screens.bid
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -13,15 +18,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.BidRequest
 import com.sktech.wastetrack.domain.model.BidStatus
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.domain.model.UserRole
 import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
@@ -36,7 +45,6 @@ fun BidMarketScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val userRole by viewModel.userRole.collectAsStateWithLifecycle()
 
-    // Create Bid Dialog
     if (state.showCreateDialog) {
         CreateBidDialog(
             scrapEntries = state.scrapEntries,
@@ -56,15 +64,27 @@ fun BidMarketScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Bid Marketplace",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            stringResource(R.string.bid_market),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (userRole == UserRole.RECYCLER) stringResource(R.string.browse_and_bid) else "24-Hour Micro-Auctions & Price Discovery",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -73,18 +93,25 @@ fun BidMarketScreen(
             )
         },
         floatingActionButton = {
-            if (userRole != com.sktech.wastetrack.domain.model.UserRole.RECYCLER) {
+            if (userRole != UserRole.RECYCLER) {
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.showCreateDialog() },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
+                    containerColor = EmeraldPrimary,
+                    contentColor = Color.White,
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = FloatingActionButtonDefaults.elevation(3.dp)
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Icon(Icons.Filled.AddCircle, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("New Bid", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        stringResource(R.string.new_bid),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -92,29 +119,29 @@ fun BidMarketScreen(
                 .padding(padding)
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp)
         ) {
-            // Success banner
+            // Success Notification Banner
             if (state.successMessage != null) {
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = IndustrialGreen.copy(alpha = 0.15f)
-                        ),
-                        shape = MaterialTheme.shapes.medium
+                    Surface(
+                        color = EmeraldContainer,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.3f))
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Filled.CheckCircle, null, tint = IndustrialGreenLight)
+                            Icon(Icons.Filled.CheckCircle, null, tint = EmeraldPrimary)
                             Text(
                                 state.successMessage!!,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = IndustrialGreenLight
+                                fontWeight = FontWeight.SemiBold,
+                                color = EmeraldPrimary
                             )
                         }
                     }
@@ -125,173 +152,271 @@ fun BidMarketScreen(
                 }
             }
 
-            // Stats header
+            // Market Summary Row
             item {
+                val openCount = state.bidRequests.count { it.status == BidStatus.OPEN }
+                val awardedCount = state.bidRequests.count { it.status == BidStatus.AWARDED }
+                val totalRevenue = state.bidRequests
+                    .filter { it.status == BidStatus.AWARDED }
+                    .sumOf { it.estimatedWeightKg.toDouble() * it.reservePricePerKg.toDouble() }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    val openCount = state.bidRequests.count { it.status == BidStatus.OPEN }
-                    val awardedCount = state.bidRequests.count { it.status == BidStatus.AWARDED }
-                    val totalRevenue = state.bidRequests
-                        .filter { it.status == BidStatus.AWARDED }
-                        .sumOf { it.estimatedWeightKg.toDouble() * it.reservePricePerKg.toDouble() }
-
-                    BidStatChip(label = "Open", value = "$openCount", color = Gold)
-                    BidStatChip(label = "Awarded", value = "$awardedCount", color = IndustrialGreenLight)
-                    BidStatChip(
-                        label = "Revenue",
+                    BidStatCard(
+                        title = stringResource(R.string.live_auctions),
+                        value = "$openCount",
+                        accentColor = Gold,
+                        containerColor = SafetyOrangeContainer,
+                        icon = Icons.Outlined.Gavel,
+                        modifier = Modifier.weight(1f)
+                    )
+                    BidStatCard(
+                        title = stringResource(R.string.awarded_auctions),
+                        value = "$awardedCount",
+                        accentColor = EmeraldPrimary,
+                        containerColor = EmeraldContainer,
+                        icon = Icons.Outlined.Verified,
+                        modifier = Modifier.weight(1f)
+                    )
+                    BidStatCard(
+                        title = stringResource(R.string.volume_value),
                         value = "₹${String.format("%.0f", totalRevenue)}",
-                        color = Teal
+                        accentColor = Teal,
+                        containerColor = TealContainer,
+                        icon = Icons.Outlined.TrendingUp,
+                        modifier = Modifier.weight(1.2f)
                     )
                 }
             }
 
             if (state.bidRequests.isEmpty()) {
                 item {
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 32.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                            .padding(top = 20.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .padding(36.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Outlined.Storefront, null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(56.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Outlined.Gavel,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
                             Text(
-                                "No bid requests yet",
+                                stringResource(R.string.no_active_auctions),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Create a bid to let recyclers compete for your scrap",
+                                stringResource(R.string.no_active_auctions_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
                 }
             } else {
                 items(state.bidRequests, key = { it.id }) { request ->
-                    BidRequestCard(
+                    ModernBidRequestCard(
                         request = request,
                         onClick = { onNavigateToBidDetail(request.id) }
                     )
                 }
             }
-
-            item { Spacer(modifier = Modifier.height(80.dp)) } // FAB clearance
         }
     }
 }
 
 @Composable
-private fun BidStatChip(label: String, value: String, color: Color) {
+private fun BidStatCard(
+    title: String,
+    value: String,
+    accentColor: Color,
+    containerColor: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier
+) {
     Surface(
-        shape = MaterialTheme.shapes.small,
-        color = color.copy(alpha = 0.12f),
-        modifier = Modifier.height(48.dp)
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.8f))
-        }
-    }
-}
-
-@Composable
-private fun BidRequestCard(request: BidRequest, onClick: () -> Unit) {
-    val category = request.scrapCategory
-    val statusColor = when (request.status) {
-        BidStatus.OPEN -> Gold
-        BidStatus.AWARDED -> IndustrialGreenLight
-        BidStatus.CLOSED -> SteelGray
-        else -> SafetyOrange
-    }
-    val remaining = DateUtils.getRemainingTimeString(request.auctionEndTime)
-
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = accentColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModernBidRequestCard(request: BidRequest, onClick: () -> Unit) {
+    val category = request.scrapCategory
+    val isOpen = request.status == BidStatus.OPEN
+    val statusColor = when (request.status) {
+        BidStatus.OPEN -> Gold
+        BidStatus.AWARDED -> EmeraldPrimary
+        BidStatus.CLOSED -> TextSecondary
+        else -> SafetyOrange
+    }
+    val statusContainer = when (request.status) {
+        BidStatus.OPEN -> SafetyOrangeContainer
+        BidStatus.AWARDED -> EmeraldContainer
+        BidStatus.CLOSED -> LightSurfaceVariant
+        else -> SafetyOrangeContainer
+    }
+    val remaining = DateUtils.getRemainingTimeString(request.auctionEndTime)
+
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Surface(
-                        shape = MaterialTheme.shapes.extraSmall,
+                        shape = MaterialTheme.shapes.small,
                         color = category.color().copy(alpha = 0.15f),
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(category.icon, style = MaterialTheme.typography.titleSmall)
+                            Text(category.icon, fontSize = 18.sp)
                         }
                     }
                     Column {
                         Text(
-                            "${category.displayName} Scrap",
+                            text = stringResource(category.nameRes),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "${request.estimatedWeightKg} kg · Reserve ₹${request.reservePricePerKg}/kg",
+                            text = "${request.estimatedWeightKg} kg",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
+
                 Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
-                    color = statusColor.copy(alpha = 0.15f)
+                    shape = MaterialTheme.shapes.small,
+                    color = statusContainer
                 ) {
                     Text(
-                        request.status.name,
+                        text = stringResource(request.status.nameRes),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Outlined.Timer, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(remaining, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Timer,
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp),
+                        tint = if (isOpen) Gold else TextMuted
+                    )
+                    Text(
+                        text = if (isOpen) remaining else stringResource(R.string.auction_concluded),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isOpen) MaterialTheme.colorScheme.onSurface else TextMuted,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
-                Text(
-                    "Est. ₹${String.format("%.0f", request.estimatedWeightKg * request.reservePricePerKg)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = stringResource(R.string.reserve_price_format, request.reservePricePerKg),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = stringResource(R.string.est_total_format, String.format("%.0f", request.estimatedWeightKg * request.reservePricePerKg)),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = EmeraldPrimary
+                    )
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateBidDialog(
     scrapEntries: List<com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity>,
@@ -305,124 +430,103 @@ private fun CreateBidDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedEntry = scrapEntries.find { it.id == selectedEntryId }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Create Bid Request", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.new_bid),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (error != null) {
+                    Text(error, color = AlertRed, style = MaterialTheme.typography.bodySmall)
+                }
+
                 Text(
-                    "Select a scrap entry and set your minimum reserve price. A 24-hour blind auction will notify certified recyclers.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    stringResource(R.string.select_scrap_batch),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Scrap entry selector
-                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-                    OutlinedTextField(
-                        value = selectedEntry?.let {
-                            val cat = try { ScrapCategory.valueOf(it.category) } catch (_: Exception) { ScrapCategory.OTHER }
-                            "${cat.icon} ${cat.displayName} — ${it.weightKg} kg"
-                        } ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Scrap Entry") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    )
-                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        scrapEntries.take(20).forEach { entry ->
-                            val cat = try { ScrapCategory.valueOf(entry.category) } catch (_: Exception) { ScrapCategory.OTHER }
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "${cat.icon} ${cat.displayName} — ${entry.weightKg} kg",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                },
-                                onClick = {
-                                    onSelectEntry(entry.id)
-                                    expanded = false
-                                }
+                if (scrapEntries.isEmpty()) {
+                    Text(stringResource(R.string.log_scrap_first_desc), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                } else {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(scrapEntries) { entry ->
+                            val isSelected = entry.id == selectedEntryId
+                            val cat = try { ScrapCategory.valueOf(entry.category) } catch (e: Exception) { ScrapCategory.OTHER }
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onSelectEntry(entry.id) },
+                                label = { Text("${cat.icon} ${entry.weightKg} kg") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = EmeraldContainer,
+                                    selectedLabelColor = EmeraldPrimary
+                                )
                             )
                         }
                     }
                 }
 
-                // Reserve price
+                Text(
+                    stringResource(R.string.reserve_price_kg),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
                 OutlinedTextField(
                     value = reservePrice,
                     onValueChange = onReservePriceChanged,
-                    label = { Text("Reserve Price") },
-                    placeholder = { Text("Min ₹/kg") },
-                    prefix = { Text("₹") },
-                    suffix = { Text("/kg") },
+                    placeholder = { Text("e.g. 45", color = TextMuted) },
+                    prefix = { Text("₹ ", color = EmeraldPrimary, fontWeight = FontWeight.Bold) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                if (suggestedPrice != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                suggestedPrice?.let {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = SafetyOrangeContainer
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoGraph,
-                            contentDescription = "AI Suggestion",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
                         Text(
-                            "AI Suggested Market Price: ₹$suggestedPrice/kg",
+                            stringResource(R.string.market_rate_format, it),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.Bold,
+                            color = SafetyOrange
                         )
                     }
-                }
-
-                if (selectedEntry != null) {
-                    val reserve = reservePrice.toFloatOrNull() ?: 0f
-                    if (reserve > 0) {
-                        Surface(
-                            color = IndustrialGreen.copy(alpha = 0.1f),
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                "Estimated minimum: ₹${String.format("%.0f", reserve * selectedEntry.weightKg)}",
-                                modifier = Modifier.padding(12.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = IndustrialGreenLight,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                }
-
-                if (error != null) {
-                    Text(error, style = MaterialTheme.typography.bodySmall, color = AlertRed)
                 }
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm, enabled = !isCreating) {
+            Button(
+                onClick = onConfirm,
+                enabled = !isCreating && selectedEntryId != null && reservePrice.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = Color.White)
+            ) {
                 if (isCreating) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
                 } else {
-                    Text("Start 24h Auction")
+                    Text(stringResource(R.string.publish_auction), fontWeight = FontWeight.Bold)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel), color = TextSecondary)
+            }
         }
     )
 }

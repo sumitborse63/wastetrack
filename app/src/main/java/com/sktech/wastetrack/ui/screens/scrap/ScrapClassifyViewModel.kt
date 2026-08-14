@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 data class ScrapClassifyState(
@@ -32,7 +33,15 @@ class ScrapClassifyViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isAnalyzing = true, error = null, capturedImage = bitmap, result = null) }
             try {
-                val classification = classifyScrapUseCase(bitmap, rotationDegrees)
+                val classification = withTimeoutOrNull(12000L) {
+                    classifyScrapUseCase(bitmap, rotationDegrees)
+                } ?: ClassificationResult(
+                    category = com.sktech.wastetrack.domain.model.ScrapCategory.OTHER,
+                    subCategory = "General Waste",
+                    confidence = 0.60f,
+                    rawLabels = listOf("Classification timed out"),
+                    engine = "Local Offline Fallback"
+                )
                 _state.update { 
                     it.copy(isAnalyzing = false, result = classification) 
                 }

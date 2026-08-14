@@ -12,6 +12,7 @@ import com.sktech.wastetrack.data.local.db.entity.SyncQueueEntity
 import com.sktech.wastetrack.util.Constants
 import com.sktech.wastetrack.util.HashUtils
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -36,8 +37,8 @@ class TransferViewModel @Inject constructor(
     private val authRepository: com.sktech.wastetrack.domain.repository.IAuthRepository
 ) : ViewModel() {
 
-    private val factoryId = Constants.DEFAULT_FACTORY_ID
-    private val userId = "pilot-user-001"
+    private var factoryId: String? = null
+    private var userId: String? = null
 
     private val _state = MutableStateFlow(TransferState())
     val state: StateFlow<TransferState> = _state.asStateFlow()
@@ -45,14 +46,21 @@ class TransferViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val user = authRepository.getCurrentUser()
-            val isRecycler = user?.role == com.sktech.wastetrack.domain.model.UserRole.RECYCLER
+            if (user == null) {
+                _state.update { it.copy(error = "Sign in to view transfers") }
+                return@launch
+            }
+            val authenticatedFactoryId = user.factoryId
+            factoryId = authenticatedFactoryId
+            userId = user.id
+            val isRecycler = user.role == com.sktech.wastetrack.domain.model.UserRole.RECYCLER
             
-            if (isRecycler && user != null) {
+            if (isRecycler) {
                 transferDao.getByRecycler(user.id).collect { transfers ->
                     _state.update { it.copy(transfers = transfers) }
                 }
             } else {
-                transferDao.getByFactory(factoryId).collect { transfers ->
+                transferDao.getByFactory(authenticatedFactoryId).collect { transfers ->
                     _state.update { it.copy(transfers = transfers) }
                 }
             }
@@ -65,6 +73,12 @@ class TransferViewModel @Inject constructor(
 
     fun initiateTransfer(scrapEntryId: String, weightKg: Float) {
         viewModelScope.launch {
+            val currentFactoryId = factoryId ?: Constants.DEFAULT_FACTORY_ID
+            val currentUserId = userId ?: "supervisor-001"
+            if (_state.value.vehicleNumber.trim().isBlank()) {
+                _state.update { it.copy(error = "Enter a vehicle number") }
+                return@launch
+            }
             _state.update { it.copy(isCreating = true) }
             try {
                 val transferId = UUID.randomUUID().toString()
@@ -73,15 +87,15 @@ class TransferViewModel @Inject constructor(
                     id = transferId,
                     scrapEntryId = scrapEntryId,
                     weightAtSource = weightKg,
-                    supervisorId = userId,
+                    supervisorId = currentUserId,
                     timestamp = timestamp
                 )
 
                 val transfer = TransferEntity(
                     id = transferId,
                     scrapEntryId = scrapEntryId,
-                    fromFactoryId = factoryId,
-                    supervisorId = userId,
+                    fromFactoryId = currentFactoryId,
+                    supervisorId = currentUserId,
                     weightAtSource = weightKg,
                     vehicleNumber = _state.value.vehicleNumber,
                     status = "QR_GENERATED",
@@ -95,9 +109,9 @@ class TransferViewModel @Inject constructor(
                 val qrData = mapOf(
                     "transferId" to transferId,
                     "scrapEntryId" to scrapEntryId,
-                    "factoryId" to factoryId,
+                    "factoryId" to currentFactoryId,
                     "weightKg" to weightKg,
-                    "supervisorId" to userId,
+                    "supervisorId" to currentUserId,
                     "timestamp" to timestamp.toString(),
                     "contentHash" to contentHash
                 )
@@ -107,7 +121,7 @@ class TransferViewModel @Inject constructor(
                     id = UUID.randomUUID().toString(),
                     transferId = transferId,
                     qrPayload = payload,
-                    supervisorSignature = userId,
+                    supervisorSignature = currentUserId,
                     generatedAt = timestamp
                 )
                 qrHandshakeDao.insert(handshake)
@@ -124,6 +138,7 @@ class TransferViewModel @Inject constructor(
 
                 _state.update {
                     it.copy(
+                        transfers = listOf(transfer) + it.transfers.filter { t -> t.id != transfer.id },
                         isCreating = false,
                         qrPayload = payload,
                         error = null
@@ -137,10 +152,42 @@ class TransferViewModel @Inject constructor(
         }
     }
 
-    fun verifyQRHandshake(payload: String): Boolean {
+    suspend fun verifyQRHandshake(payload: String): Boolean {
         return try {
-            val data = Gson().fromJson(payload, Map::class.java)
-            data.containsKey("transferId") && data.containsKey("contentHash")
+            val data = Gson().fromJson(payload, JsonObject::class.java)
+            val transferId = data.get("transferId")?.asString ?: return false
+            val scrapEntryId = data.get("scrapEntryId")?.asString ?: return false
+            val supervisorId = data.get("supervisorId")?.asString ?: return false
+            val timestamp = data.get("timestamp")?.asString?.toLongOrNull() ?: return false
+            val payloadHash = data.get("contentHash")?.asString ?: return false
+            val weightKg = data.get("weightKg")?.asFloat ?: return false
+            val transfer = transferDao.getById(transferId) ?: return false
+            val handshake = qrHandshakeDao.getByTransferId(transferId) ?: return false
+            val expectedHash = HashUtils.hashTransfer(transferId, scrapEntryId, weightKg, supervisorId, timestamp)
+            val isExpired = System.currentTimeMillis() > handshake.generatedAt + Constants.QR_EXPIRY_MINUTES * 60_000L
+            val isValid = !isExpired &&
+                transfer.status == "QR_GENERATED" &&
+                transfer.scrapEntryId == scrapEntryId &&
+                transfer.supervisorId == supervisorId &&
+                transfer.contentHash == payloadHash &&
+                expectedHash == payloadHash &&
+                handshake.qrPayload == payload
+            if (isValid) {
+                qrHandshakeDao.update(
+                    handshake.copy(
+                        driverSignature = userId.orEmpty(),
+                        scannedAt = System.currentTimeMillis(),
+                        isValid = true
+                    )
+                )
+                transferDao.updateStatus(transferId, "QR_SCANNED")
+                _state.update { current ->
+                    current.copy(
+                        transfers = current.transfers.map { if (it.id == transferId) it.copy(status = "QR_SCANNED") else it }
+                    )
+                }
+            }
+            isValid
         } catch (e: Exception) {
             false
         }

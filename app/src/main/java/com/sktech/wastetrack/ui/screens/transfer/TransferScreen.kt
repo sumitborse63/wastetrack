@@ -1,12 +1,15 @@
 package com.sktech.wastetrack.ui.screens.transfer
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -15,12 +18,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.sktech.wastetrack.R
+import com.sktech.wastetrack.data.local.db.entity.TransferEntity
 import com.sktech.wastetrack.domain.model.TransferStatus
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
@@ -49,22 +56,35 @@ fun TransferScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Transfers",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            stringResource(R.string.transfers),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Chain-of-Custody & Gatepass Ledger",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         // QR Display Dialog
         if (state.qrPayload != null) {
@@ -72,9 +92,10 @@ fun TransferScreen(
                 onDismissRequest = { viewModel.clearQR() },
                 title = {
                     Text(
-                        "QR Digital Handshake",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        stringResource(R.string.qr_handshake_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 text = {
@@ -83,37 +104,50 @@ fun TransferScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Show this QR code to the truck driver to verify the transfer",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            stringResource(R.string.show_qr_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         val bitmap = remember(state.qrPayload) {
                             generateQRBitmap(state.qrPayload!!)
                         }
-                        Card(
+                        Surface(
                             shape = MaterialTheme.shapes.medium,
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                            color = Color.White,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            shadowElevation = 4.dp
                         ) {
                             Image(
                                 bitmap = bitmap.asImageBitmap(),
-                                contentDescription = "QR Code",
+                                contentDescription = "Transfer QR Code",
                                 modifier = Modifier
-                                    .size(280.dp)
-                                    .padding(16.dp)
+                                    .size(240.dp)
+                                    .padding(12.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Valid for 30 minutes",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SafetyOrange
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = SafetyOrangeContainer
+                        ) {
+                            Text(
+                                stringResource(R.string.valid_30_min),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SafetyOrange,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 },
                 confirmButton = {
-                    Button(onClick = { viewModel.clearQR() }) {
-                        Text("Done")
+                    Button(
+                        onClick = { viewModel.clearQR() },
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = Color.White)
+                    ) {
+                        Text(stringResource(R.string.done), fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -125,45 +159,58 @@ fun TransferScreen(
                 .padding(padding)
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
         ) {
             if (state.transfers.isEmpty()) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .padding(36.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Outlined.LocalShipping,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Outlined.LocalShipping,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
                             Text(
-                                "No transfers yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                stringResource(R.string.no_transfers_yet),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "Log scrap entries first, then initiate transfers",
+                                stringResource(R.string.log_scrap_first_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
                 }
             } else {
-                items(state.transfers) { transfer ->
-                    TransferCard(transfer = transfer)
+                items(state.transfers, key = { it.id }) { transfer ->
+                    ModernTransferCard(transfer = transfer)
                 }
             }
         }
@@ -171,34 +218,31 @@ fun TransferScreen(
 }
 
 @Composable
-private fun TransferCard(transfer: com.sktech.wastetrack.data.local.db.entity.TransferEntity) {
-    val status = try {
-        TransferStatus.valueOf(transfer.status)
-    } catch (e: Exception) {
-        TransferStatus.INITIATED
+private fun ModernTransferCard(transfer: TransferEntity) {
+    val statusEnum = runCatching { TransferStatus.valueOf(transfer.status) }.getOrDefault(TransferStatus.INITIATED)
+    val statusColor = when (transfer.status) {
+        "QR_GENERATED" -> Gold
+        "QR_SCANNED" -> Teal
+        "IN_TRANSIT" -> SafetyOrange
+        "COMPLETED", "VERIFIED" -> EmeraldPrimary
+        else -> TextSecondary
+    }
+    val statusContainer = when (transfer.status) {
+        "QR_GENERATED" -> SafetyOrangeContainer
+        "QR_SCANNED" -> TealContainer
+        "IN_TRANSIT" -> SafetyOrangeContainer
+        "COMPLETED", "VERIFIED" -> EmeraldContainer
+        else -> LightSurfaceVariant
     }
 
-    val statusColor = when (status) {
-        TransferStatus.INITIATED -> SyncBlue
-        TransferStatus.QR_GENERATED -> Gold
-        TransferStatus.QR_SCANNED -> Teal
-        TransferStatus.IN_TRANSIT -> SafetyOrange
-        TransferStatus.DELIVERED -> IndustrialGreenLight
-        TransferStatus.VERIFIED -> IndustrialGreen
-        TransferStatus.DISPUTED -> AlertRed
-    }
-
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = MaterialTheme.shapes.medium
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -206,55 +250,71 @@ private fun TransferCard(transfer: com.sktech.wastetrack.data.local.db.entity.Tr
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.LocalShipping,
-                        contentDescription = null,
-                        tint = statusColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        "Transfer #${transfer.id.take(8)}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
-                    color = statusColor.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        status.displayName,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = statusColor
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        "Weight: ${transfer.weightAtSource} kg",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    if (transfer.vehicleNumber.isNotBlank()) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = TealContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Filled.LocalShipping, null, tint = Teal, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                    Column {
                         Text(
-                            "Vehicle: ${transfer.vehicleNumber}",
+                            text = "Dispatch #${transfer.id.take(8).uppercase()}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${stringResource(R.string.vehicle_number)}: ${transfer.vehicleNumber}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                Text(
-                    DateUtils.getRelativeTimeString(transfer.initiatedAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = statusContainer
+                ) {
+                    Text(
+                        text = stringResource(statusEnum.nameRes),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(stringResource(R.string.load_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${transfer.weightAtSource} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
+                }
+
+                if (transfer.weightAtDestination != null) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(stringResource(R.string.measured_weight_kg), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${transfer.weightAtDestination} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = EmeraldPrimary)
+                    }
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(DateUtils.formatTime(transfer.initiatedAt), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                }
             }
         }
     }
