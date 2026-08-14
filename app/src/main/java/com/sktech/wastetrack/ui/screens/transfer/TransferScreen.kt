@@ -48,6 +48,7 @@ private fun generateQRBitmap(content: String, size: Int = 512): Bitmap {
 @Composable
 fun TransferScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToGatePass: (String) -> Unit = {},
     viewModel: TransferViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -210,7 +211,10 @@ fun TransferScreen(
                 }
             } else {
                 items(state.transfers, key = { it.id }) { transfer ->
-                    ModernTransferCard(transfer = transfer)
+                    ModernTransferCard(
+                        transfer = transfer,
+                        onClick = { onNavigateToGatePass(transfer.id) }
+                    )
                 }
             }
         }
@@ -218,7 +222,10 @@ fun TransferScreen(
 }
 
 @Composable
-private fun ModernTransferCard(transfer: TransferEntity) {
+private fun ModernTransferCard(
+    transfer: TransferEntity,
+    onClick: () -> Unit = {}
+) {
     val statusEnum = runCatching { TransferStatus.valueOf(transfer.status) }.getOrDefault(TransferStatus.INITIATED)
     val statusColor = when (transfer.status) {
         "QR_GENERATED" -> Gold
@@ -236,6 +243,7 @@ private fun ModernTransferCard(transfer: TransferEntity) {
     }
 
     Surface(
+        onClick = onClick,
         color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),

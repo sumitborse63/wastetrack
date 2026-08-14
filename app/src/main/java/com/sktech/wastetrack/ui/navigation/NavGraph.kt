@@ -143,7 +143,10 @@ fun NavGraph(
 
         composable(Screen.TransferList.route) {
             TransferScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToGatePass = { transferId ->
+                    navController.navigate(Screen.GatePass.createRoute(transferId))
+                }
             )
         }
 
@@ -207,6 +210,12 @@ fun NavGraph(
  
         composable(Screen.QRScan.route) {
             QRScanScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.GatePass.route) { backStackEntry ->
+            com.sktech.wastetrack.ui.screens.transfer.GatePassScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

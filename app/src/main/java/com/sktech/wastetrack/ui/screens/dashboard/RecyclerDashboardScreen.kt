@@ -127,8 +127,8 @@ fun RecyclerDashboardScreen(
         ) {
             item {
                 RecyclerStatCard(
-                    title = "Pending Pickups",
-                    value = "${state.pendingPickups.size}",
+                    title = "Won Auctions",
+                    value = "${state.wonAuctions.size}",
                     subtitle = "Action required",
                     icon = Icons.Outlined.LocalShipping,
                     accentColor = EmeraldPrimary,
@@ -138,7 +138,7 @@ fun RecyclerDashboardScreen(
             item {
                 RecyclerStatCard(
                     title = "In Transit",
-                    value = "${state.inTransitTransfers.size}",
+                    value = "${state.incomingShipments.size}",
                     subtitle = "Trucks on route",
                     icon = Icons.Outlined.Navigation,
                     accentColor = Teal,
@@ -147,8 +147,8 @@ fun RecyclerDashboardScreen(
             }
             item {
                 RecyclerStatCard(
-                    title = "Delivered Total",
-                    value = "${state.completedTransfers.size}",
+                    title = "EPR Certified",
+                    value = "${state.certificateCount}",
                     subtitle = "Verified shipments",
                     icon = Icons.Outlined.FactCheck,
                     accentColor = SyncBlue,
@@ -205,7 +205,7 @@ fun RecyclerDashboardScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Pending Dispatches Requiring Pickup
-        if (state.pendingPickups.isNotEmpty()) {
+        if (state.wonAuctions.isNotEmpty()) {
             Text(
                 text = "Won Auctions Ready for Truck Dispatch",
                 style = MaterialTheme.typography.titleMedium,
@@ -219,7 +219,7 @@ fun RecyclerDashboardScreen(
                 modifier = Modifier.padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                state.pendingPickups.forEach { request ->
+                state.wonAuctions.forEach { request ->
                     PendingPickupCard(
                         request = request,
                         onInitiate = { showPickupDialog = request }
@@ -230,7 +230,7 @@ fun RecyclerDashboardScreen(
         }
 
         // Active In-Transit Trucks
-        if (state.inTransitTransfers.isNotEmpty()) {
+        if (state.incomingShipments.isNotEmpty()) {
             Text(
                 text = "Inbound Shipments (Weighbridge Check)",
                 style = MaterialTheme.typography.titleMedium,
@@ -244,7 +244,7 @@ fun RecyclerDashboardScreen(
                 modifier = Modifier.padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                state.inTransitTransfers.forEach { transfer ->
+                state.incomingShipments.forEach { transfer ->
                     InTransitCard(
                         transfer = transfer,
                         onVerify = { showVerifyDialog = transfer }
@@ -468,8 +468,6 @@ private fun InTransitCard(
     transfer: TransferEntity,
     onVerify: () -> Unit
 ) {
-    val category = runCatching { ScrapCategory.valueOf(transfer.scrapCategory) }.getOrDefault(ScrapCategory.OTHER)
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
@@ -491,7 +489,7 @@ private fun InTransitCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Dispatched: ${DateUtils.formatTime(transfer.dispatchedAt ?: transfer.createdAt)}",
+                        text = "Dispatched: ${DateUtils.formatTime(transfer.initiatedAt)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -502,7 +500,7 @@ private fun InTransitCard(
                     color = TealContainer
                 ) {
                     Text(
-                        text = "${transfer.dispatchedWeightKg} kg",
+                        text = "${transfer.weightAtSource} kg",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = Teal,
@@ -660,7 +658,7 @@ private fun VerifyWeightDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "Truck: ${transfer.vehicleNumber} (Dispatched: ${transfer.dispatchedWeightKg} kg)",
+                    "Truck: ${transfer.vehicleNumber} (Dispatched: ${transfer.weightAtSource} kg)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

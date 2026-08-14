@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -63,16 +64,22 @@ fun SettingsScreen(
 
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            icon = { Icon(Icons.Outlined.Language, null, tint = IndustrialGreenLight) },
-            title = { Text(stringResource(R.string.select_language), fontWeight = FontWeight.Bold, color = OffWhite) },
+            icon = { Icon(Icons.Outlined.Language, null, tint = EmeraldPrimary) },
+            title = {
+                Text(
+                    stringResource(R.string.select_language),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     languages.forEach { (code, name, flag) ->
                         val isSelected = currentLangCode == code
                         Surface(
                             shape = MaterialTheme.shapes.medium,
-                            color = if (isSelected) IndustrialGreenLight.copy(alpha = 0.18f) else GraphiteLight,
-                            border = BorderStroke(1.dp, if (isSelected) IndustrialGreenLight else SteelGray),
+                            color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.outline),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -97,14 +104,14 @@ fun SettingsScreen(
                                         text = name,
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) IndustrialGreenLight else OffWhite
+                                        color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                                 if (isSelected) {
                                     Icon(
                                         Icons.Filled.Check,
                                         contentDescription = "Selected",
-                                        tint = IndustrialGreenLight,
+                                        tint = EmeraldPrimary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -115,10 +122,10 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Close", color = TextMuted)
+                    Text("Close", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Graphite
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -132,7 +139,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showEditProfileDialog = false },
             title = {
-                Text("Edit Business Profile", fontWeight = FontWeight.Bold, color = OffWhite)
+                Text("Edit Business Profile", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             },
             text = {
                 Column(
@@ -144,12 +151,6 @@ fun SettingsScreen(
                         onValueChange = { editName = it },
                         label = { Text("Full Name") },
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = IndustrialGreenLight,
-                            unfocusedBorderColor = SteelGray,
-                            focusedContainerColor = GraphiteLight,
-                            unfocusedContainerColor = GraphiteLight
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -157,12 +158,6 @@ fun SettingsScreen(
                         onValueChange = { editOrg = it },
                         label = { Text(if (user.role == UserRole.RECYCLER) "Recycling Agency Name" else "Factory / Plant Name") },
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = IndustrialGreenLight,
-                            unfocusedBorderColor = SteelGray,
-                            focusedContainerColor = GraphiteLight,
-                            unfocusedContainerColor = GraphiteLight
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -170,12 +165,6 @@ fun SettingsScreen(
                         onValueChange = { editArea = it },
                         label = { Text("Industrial Zone / City") },
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = IndustrialGreenLight,
-                            unfocusedBorderColor = SteelGray,
-                            focusedContainerColor = GraphiteLight,
-                            unfocusedContainerColor = GraphiteLight
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -183,12 +172,6 @@ fun SettingsScreen(
                         onValueChange = { editRegNo = it },
                         label = { Text(if (user.role == UserRole.RECYCLER) "MPCB Authorization No" else "GSTIN / Plant License No") },
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = IndustrialGreenLight,
-                            unfocusedBorderColor = SteelGray,
-                            focusedContainerColor = GraphiteLight,
-                            unfocusedContainerColor = GraphiteLight
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -199,17 +182,17 @@ fun SettingsScreen(
                         viewModel.updateProfile(editName, editOrg, editArea, editRegNo)
                         showEditProfileDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = IndustrialGreenLight, contentColor = CarbonBlack)
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = Color.White)
                 ) {
                     Text("Save Changes", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditProfileDialog = false }) {
-                    Text("Cancel", color = TextMuted)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Graphite
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -218,25 +201,25 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
             icon = { Icon(Icons.AutoMirrored.Filled.Logout, null, tint = AlertRed) },
-            title = { Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold, color = OffWhite) },
-            text = { Text(stringResource(R.string.logout_confirm), color = TextMuted) },
+            title = { Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold, color = AlertRed) },
+            text = { Text(stringResource(R.string.logout_confirm), color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 Button(
                     onClick = {
                         showLogoutConfirm = false
                         viewModel.logout { onLogout() }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = OffWhite)
+                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed, contentColor = Color.White)
                 ) {
                     Text(stringResource(R.string.logout), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirm = false }) {
-                    Text("Cancel", color = TextMuted)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Graphite
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -246,37 +229,44 @@ fun SettingsScreen(
                 title = {
                     Text(
                         stringResource(R.string.settings),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = OffWhite
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OffWhite)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Graphite)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
-        containerColor = CarbonBlack
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // Dynamic User Profile Card
+            // 1. User Profile Card (Stitch Style)
             Surface(
-                color = Graphite,
+                color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.large,
-                border = BorderStroke(1.dp, SteelGray.copy(alpha = 0.7f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                shadowElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -284,30 +274,30 @@ fun SettingsScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = IndustrialGreenLight.copy(alpha = 0.18f),
-                            border = BorderStroke(1.dp, IndustrialGreenLight.copy(alpha = 0.4f)),
+                            color = EmeraldContainer,
+                            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.3f)),
                             modifier = Modifier.size(56.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    if (user?.role == UserRole.RECYCLER) Icons.Outlined.Recycling else Icons.Outlined.Factory,
+                                    if (user?.role == UserRole.RECYCLER) Icons.Filled.Recycling else Icons.Filled.Factory,
                                     null,
-                                    tint = IndustrialGreenLight,
+                                    tint = EmeraldPrimary,
                                     modifier = Modifier.size(30.dp)
                                 )
                             }
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                user?.name?.ifBlank { "Unassigned Operator" } ?: "Loading...",
+                                user?.name?.ifBlank { "Industrial Operator" } ?: "Loading...",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = OffWhite
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                user?.organizationName?.ifBlank { "Organization Profile Incomplete" } ?: "",
+                                user?.organizationName?.ifBlank { "Enterprise Profile" } ?: "Enterprise Profile",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = IndustrialGreenLight,
+                                color = EmeraldPrimary,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Row(
@@ -317,20 +307,20 @@ fun SettingsScreen(
                             ) {
                                 Surface(
                                     shape = MaterialTheme.shapes.extraSmall,
-                                    color = IndustrialGreenSurface
+                                    color = EmeraldContainer
                                 ) {
                                     Text(
-                                        user?.role?.displayName?.uppercase() ?: "OPERATOR",
+                                        user?.role?.displayName?.uppercase() ?: "SUPERVISOR",
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = IndustrialGreenLight,
+                                        color = EmeraldPrimary,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                                 Text(
-                                    user?.phone ?: "",
+                                    user?.phone ?: "+91 94035 80730",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -342,8 +332,8 @@ fun SettingsScreen(
                         onClick = { showEditProfileDialog = true },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(1.dp, IndustrialGreenLight.copy(alpha = 0.5f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = IndustrialGreenLight)
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldPrimary)
                     ) {
                         Icon(Icons.Outlined.Edit, null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
@@ -352,48 +342,32 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Organization & Location Data Tiles
-            ModernSettingsItem(
-                icon = Icons.Outlined.Business,
-                title = if (user?.role == UserRole.RECYCLER) "Recycling Enterprise" else "Manufacturing Plant",
-                subtitle = if (!user?.organizationName.isNullOrBlank()) "${user?.organizationName} (${user?.industrialArea.orEmpty().ifBlank { "Ambad MIDC" }})" else "Not Configured"
-            )
-
-            ModernSettingsItem(
-                icon = Icons.Outlined.Pin,
-                title = if (user?.role == UserRole.RECYCLER) "Recycler Identifier" else "Plant Unit Code",
-                subtitle = user?.factoryId?.ifBlank { "Unassigned" } ?: "Unassigned"
-            )
-
-            if (!user?.registrationNumber.isNullOrBlank()) {
-                ModernSettingsItem(
-                    icon = Icons.Outlined.Badge,
-                    title = if (user?.role == UserRole.RECYCLER) "MPCB Consent Number" else "GSTIN / License No",
-                    subtitle = user.registrationNumber
-                )
+            // 2. Preferences Section (Stitch Style)
+            SectionHeader(title = "Preferences")
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                shadowElevation = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    StitchSettingsRow(
+                        icon = Icons.Outlined.Language,
+                        title = stringResource(R.string.language),
+                        subtitle = LocaleHelper.getLanguageDisplayName(currentLangCode),
+                        onClick = { showLanguageDialog = true }
+                    )
+                }
             }
 
-            // Language Selector Item
-            ModernSettingsItem(
-                icon = Icons.Outlined.Language,
-                title = stringResource(R.string.language),
-                subtitle = LocaleHelper.getLanguageDisplayName(currentLangCode),
-                onClick = { showLanguageDialog = true }
-            )
-
-            ModernSettingsItem(
-                icon = Icons.Outlined.CloudSync,
-                title = stringResource(R.string.sync_status),
-                subtitle = "Active (Room + Firestore Synchronization)"
-            )
-
-            // Biometric Toggle Card
+            // 3. Security Section (Stitch Style)
+            SectionHeader(title = "Security")
             Surface(
-                color = Graphite,
+                color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.medium,
-                border = BorderStroke(1.dp, SteelGray.copy(alpha = 0.6f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                shadowElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -402,17 +376,31 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = IndustrialGreenLight.copy(alpha = 0.15f),
+                        shape = CircleShape,
+                        color = EmeraldContainer,
                         modifier = Modifier.size(38.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Outlined.Security, contentDescription = null, tint = IndustrialGreenLight, modifier = Modifier.size(20.dp))
+                            Icon(
+                                Icons.Outlined.Fingerprint,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.biometric_security), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OffWhite)
-                        Text("Require biometric confirmation for scrap dispatch", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                        Text(
+                            stringResource(R.string.biometric_security),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Use Face ID / Fingerprint for gatepass authorize",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     Switch(
                         checked = biometricsEnabled,
@@ -444,87 +432,133 @@ fun SettingsScreen(
                             }
                         },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = CarbonBlack,
-                            checkedTrackColor = IndustrialGreenLight,
-                            uncheckedThumbColor = TextMuted,
-                            uncheckedTrackColor = GraphiteLight
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = EmeraldPrimary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     )
                 }
             }
 
-            ModernSettingsItem(
-                icon = Icons.Outlined.Info,
-                title = "System Information",
-                subtitle = "WasteTrack Enterprise v1.2.0 (Multi-Tenant Engine)"
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Logout Button
+            // 4. System Section (Stitch Style)
+            SectionHeader(title = "System")
             Surface(
-                onClick = { showLogoutConfirm = true },
-                color = AlertRedSurface,
+                color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.medium,
-                border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.5f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                shadowElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = AlertRedLight)
-                    Text(
-                        stringResource(R.string.logout),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AlertRedLight
-                    )
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Cloud Synchronization",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                Icon(Icons.Filled.CloudDone, null, tint = EmeraldPrimary, modifier = Modifier.size(16.dp))
+                                Text(
+                                    "Last synced: Today, Live (Room + Firestore)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            Toast.makeText(context, "Syncing queued changes to Firestore...", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldContainer, contentColor = EmeraldPrimary)
+                    ) {
+                        Icon(Icons.Filled.Sync, null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Force Sync Now", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    }
                 }
+            }
+
+            // 5. Danger Zone / Logout (Stitch Style)
+            Spacer(modifier = Modifier.height(4.dp))
+            OutlinedButton(
+                onClick = { showLogoutConfirm = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.6f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AlertRed)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.logout),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ModernSettingsItem(
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier.padding(top = 4.dp)
+    )
+}
+
+@Composable
+private fun StitchSettingsRow(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
     onClick: (() -> Unit)? = null
 ) {
-    Surface(
-        onClick = { onClick?.invoke() },
-        enabled = onClick != null,
-        color = Graphite,
-        shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, SteelGray.copy(alpha = 0.6f)),
-        modifier = Modifier.fillMaxWidth()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        Surface(
+            shape = CircleShape,
+            color = EmeraldContainer,
+            modifier = Modifier.size(38.dp)
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = GraphiteLight,
-                modifier = Modifier.size(38.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = IndustrialGreenLight, modifier = Modifier.size(20.dp))
-                }
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OffWhite)
-                if (subtitle != null) {
-                    Text(subtitle, style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (onClick != null) {
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
-            }
+        }
+        if (onClick != null) {
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }
 }

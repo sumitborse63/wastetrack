@@ -2,10 +2,12 @@ package com.sktech.wastetrack.ui.screens.bin
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -199,7 +201,7 @@ fun BinMonitorScreen(
                     }
                 }
 
-                items(bins, key = { it.id }) { bin ->
+                gridItems(bins, key = { it.id }) { bin ->
                     ModernBinCard(
                         bin = bin,
                         onClick = { selectedBin = bin }
@@ -317,20 +319,20 @@ private fun BinConfigurationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.configure_new_bin), fontWeight = FontWeight.Bold)
+            Text("Configure New Bin", fontWeight = FontWeight.Bold)
         },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(stringResource(R.string.select_category), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(ScrapCategory.entries.toTypedArray()) { cat ->
+                Text("Select Category", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(ScrapCategory.entries) { cat ->
                         FilterChip(
                             selected = selectedCategory == cat,
                             onClick = { selectedCategory = cat },
-                            label = { Text("${cat.icon} ${stringResource(cat.nameRes)}") },
+                            label = { Text("${cat.icon} ${cat.displayName}") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = EmeraldContainer,
                                 selectedLabelColor = EmeraldPrimary
@@ -339,7 +341,7 @@ private fun BinConfigurationDialog(
                     }
                 }
 
-                Text(stringResource(R.string.total_capacity_kg), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("Total Capacity (kg)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 OutlinedTextField(
                     value = capacityText,
                     onValueChange = { capacityText = it },
@@ -359,12 +361,12 @@ private fun BinConfigurationDialog(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text(stringResource(R.string.add_bin), fontWeight = FontWeight.Bold)
+                Text("Add Bin", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text("Cancel")
             }
         }
     )
@@ -381,19 +383,19 @@ private fun BinFillDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.update_bin_fill), fontWeight = FontWeight.Bold)
+            Text("Update Bin Fill Level", fontWeight = FontWeight.Bold)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    stringResource(R.string.bin_category_format, bin.scrapCategory, bin.capacityKg),
+                    "Bin Category: ${bin.scrapCategory} · Max: ${bin.capacityKg} kg",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = fillText,
                     onValueChange = { fillText = it },
-                    label = { Text(stringResource(R.string.current_fill_kg)) },
+                    label = { Text("Current Fill (kg)") },
                     suffix = { Text("kg") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
@@ -410,12 +412,12 @@ private fun BinFillDialog(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text(stringResource(R.string.update_fill))
+                Text("Update Fill")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text("Cancel")
             }
         }
     )

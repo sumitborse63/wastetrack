@@ -355,14 +355,14 @@ fun ScrapLogScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    enabled = state.selectedCategory != null && state.weightKg.isNotBlank() && !state.isLoading,
+                    enabled = state.selectedCategory != null && state.weightKg.isNotBlank() && !state.isSubmitting,
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = EmeraldPrimary,
                         contentColor = Color.White
                     )
                 ) {
-                    if (state.isLoading) {
+                    if (state.isSubmitting) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = Color.White,

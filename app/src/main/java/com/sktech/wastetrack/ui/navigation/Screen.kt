@@ -25,4 +25,7 @@ sealed class Screen(val route: String) {
     data object Analytics : Screen("analytics")
     data object Settings : Screen("settings")
     data object FleetTracker : Screen("fleet_tracker")
+    data object GatePass : Screen("gate_pass/{transferId}") {
+        fun createRoute(transferId: String) = "gate_pass/$transferId"
+    }
 }
