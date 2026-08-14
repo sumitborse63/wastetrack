@@ -37,7 +37,7 @@
 
 ## 🏭 Executive Summary & Problem Context
 
-Industrial hubs and manufacturing corridors (such as the **Kopargaon Industrial Belt**, Ahmednagar district, and **Ambad MIDC**, Nashik) house thousands of micro, small, and medium manufacturing enterprises (MSMEs), agro-processing facilities, sugar & distillery byproduct units, engineering workshops, and fabrication plants. Despite generating tons of high-value industrial by-products (copper windings, stainless steel offcuts, engineering plastics, paper packaging, biomass residuals, spent solvents), operations suffer from severe operational friction:
+Industrial hubs and manufacturing corridors (such as the **Kopargaon Industrial Belt**, Ahilyanagar district, and **Ambad MIDC**, Nashik) house thousands of micro, small, and medium manufacturing enterprises (MSMEs), agro-processing facilities, sugar & distillery byproduct units, engineering workshops, and fabrication plants. Despite generating tons of high-value industrial by-products (copper windings, stainless steel offcuts, engineering plastics, paper packaging, biomass residuals, spent solvents), operations suffer from severe operational friction:
 
 1. **Archaic Paper Ledgers**: Factory scrap weights and classifications are recorded manually in paper logs, prone to human error, loss, and data tampering.
 2. **Scrap Leakage & Fraud**: Weight discrepancies during dispatch (ballast addition, illicit diversion) result in substantial revenue losses.
