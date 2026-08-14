@@ -11,5 +11,6 @@ interface IAuthRepository {
     suspend fun logout()
     fun observeAuthState(): Flow<Boolean>
     suspend fun setSelectedRole(role: UserRole)
+    fun getSelectedRole(): UserRole
     fun isLoggedIn(): Boolean
 }

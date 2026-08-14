@@ -14,9 +14,11 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
@@ -29,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -36,10 +39,9 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
 import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.ScrapCategory
-import com.sktech.wastetrack.ui.screens.scrap.color
+import com.sktech.wastetrack.ui.theme.*
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,9 +82,29 @@ fun ScrapClassifyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.capturing_ai), fontWeight = FontWeight.Bold) },
+                title = {
+                    Column {
+                        Text(
+                            stringResource(R.string.capturing_ai),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Edge-AI Scrap Classifier & Density Inspector",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 },
                 actions = {
                     if (state.capturedImage == null && hasCameraPermission) {
@@ -90,14 +112,15 @@ fun ScrapClassifyScreen(
                             Icon(
                                 imageVector = if (isFlashEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
                                 contentDescription = if (isFlashEnabled) "Flash On" else "Flash Off",
-                                tint = if (isFlashEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (isFlashEnabled) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -106,8 +129,27 @@ fun ScrapClassifyScreen(
         ) {
             if (!hasCameraPermission) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                        Text(stringResource(R.string.grant_permission))
+                    Surface(
+                        modifier = Modifier.padding(24.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(28.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Filled.CameraAlt, null, modifier = Modifier.size(56.dp), tint = EmeraldPrimary)
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(stringResource(R.string.camera_permission_required), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
+                                Text(stringResource(R.string.grant_permission), fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             } else if (state.capturedImage == null) {
@@ -155,7 +197,7 @@ fun ScrapClassifyScreen(
                         .padding(bottom = 32.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    FloatingActionButton(
+                    IconButton(
                         onClick = {
                             val executor = Executors.newSingleThreadExecutor()
                             imageCapture?.takePicture(executor, object : ImageCapture.OnImageCapturedCallback() {
@@ -181,10 +223,11 @@ fun ScrapClassifyScreen(
                                 }
                             })
                         },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(72.dp)
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(Color.White.copy(alpha = 0.35f), CircleShape)
                     ) {
-                        Icon(Icons.Filled.CameraAlt, contentDescription = "Capture", modifier = Modifier.size(36.dp))
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Capture", modifier = Modifier.size(36.dp), tint = Color.White)
                     }
                 }
             } else {
@@ -198,18 +241,18 @@ fun ScrapClassifyScreen(
                             contentDescription = "Captured Scrap",
                             modifier = Modifier.fillMaxSize()
                         )
-                        
+
                         if (state.isAnalyzing) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color.Black.copy(alpha = 0.5f)),
+                                    .background(Color.Black.copy(alpha = 0.55f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                    CircularProgressIndicator(color = EmeraldPrimary)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text(stringResource(R.string.analyzing_with_ai), color = Color.White)
+                                    Text(stringResource(R.string.analyzing_with_ai), color = Color.White, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -218,37 +261,39 @@ fun ScrapClassifyScreen(
                     if (state.result != null) {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shadowElevation = 8.dp
+                            color = MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            shadowElevation = 4.dp
                         ) {
                             Column(
-                                modifier = Modifier.padding(24.dp),
+                                modifier = Modifier.padding(20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
                                     stringResource(R.string.select_category),
-                                    style = MaterialTheme.typography.labelMedium
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     "${state.result!!.category.icon} ${stringResource(state.result!!.category.nameRes)}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.ExtraBold,
                                     color = state.result!!.category.color()
                                 )
-                                
+
                                 if (state.result!!.subCategory.isNotBlank()) {
                                     Surface(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                        color = EmeraldContainer,
+                                        shape = MaterialTheme.shapes.small,
                                         modifier = Modifier.padding(top = 6.dp)
                                     ) {
                                         Text(
                                             text = state.result!!.subCategory,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            fontWeight = FontWeight.SemiBold
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = EmeraldPrimary,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                 }
@@ -259,48 +304,51 @@ fun ScrapClassifyScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Surface(
-                                        color = if (state.result!!.confidence >= 0.90f) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                        color = if (state.result!!.confidence >= 0.90f) EmeraldContainer else TealContainer,
+                                        shape = MaterialTheme.shapes.small
                                     ) {
                                         Text(
                                             text = "Confidence: ${(state.result!!.confidence * 100).toInt()}%",
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                            style = MaterialTheme.typography.labelMedium,
+                                            style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (state.result!!.confidence >= 0.90f) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                            color = if (state.result!!.confidence >= 0.90f) EmeraldPrimary else Teal
                                         )
                                     }
 
                                     Surface(
                                         color = MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                        shape = MaterialTheme.shapes.small
                                     ) {
                                         Text(
                                             text = state.result!!.engine,
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                            style = MaterialTheme.typography.labelMedium,
+                                            style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
-                                
-                                Spacer(modifier = Modifier.height(20.dp))
-                                
+
+                                Spacer(modifier = Modifier.height(18.dp))
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp)
                                 ) {
                                     OutlinedButton(
                                         onClick = { viewModel.reset() },
-                                        modifier = Modifier.weight(1f)
+                                        shape = MaterialTheme.shapes.medium,
+                                        modifier = Modifier.weight(1f).height(48.dp)
                                     ) {
-                                        Text(stringResource(R.string.retake))
+                                        Text(stringResource(R.string.retake), fontWeight = FontWeight.SemiBold)
                                     }
                                     Button(
                                         onClick = { onClassificationComplete(state.result!!.category, state.result!!.subCategory) },
-                                        modifier = Modifier.weight(1f)
+                                        shape = MaterialTheme.shapes.medium,
+                                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                                        modifier = Modifier.weight(1f).height(48.dp)
                                     ) {
-                                        Text(stringResource(R.string.use_result))
+                                        Text(stringResource(R.string.use_result), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -308,15 +356,21 @@ fun ScrapClassifyScreen(
                     } else if (state.error != null) {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.errorContainer
+                            color = AlertRedContainer,
+                            border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.4f))
                         ) {
                             Column(
-                                modifier = Modifier.padding(24.dp),
+                                modifier = Modifier.padding(20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(state.error!!, color = MaterialTheme.colorScheme.onErrorContainer)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { viewModel.reset() }) { Text(stringResource(R.string.try_again)) }
+                                Text(state.error!!, color = AlertRed, fontWeight = FontWeight.SemiBold)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = { viewModel.reset() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AlertRed)
+                                ) {
+                                    Text(stringResource(R.string.try_again), fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -324,5 +378,4 @@ fun ScrapClassifyScreen(
             }
         }
     }
-
 }

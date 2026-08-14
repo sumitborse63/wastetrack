@@ -20,17 +20,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
+import com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
 import com.sktech.wastetrack.util.DateUtils
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigateToScrapLog: () -> Unit,
@@ -46,204 +49,317 @@ fun DashboardScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Modern Minimalist Top Header
-        DashboardHeader(
-            user = state.currentUser,
-            isOnline = state.isOnline,
-            pendingSyncCount = state.pendingSyncCount,
-            onSettingsClick = onNavigateToSettings
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Performance Overview Title Strip
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Recycling,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = state.currentUser?.organizationName?.ifBlank { stringResource(R.string.app_name) } ?: stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1
+                            )
+                        }
+                        Text(
+                            text = if (!state.currentUser?.industrialArea.isNullOrBlank()) "${state.currentUser?.industrialArea} · Unit #${state.currentUser?.factoryId.orEmpty().take(6).uppercase()}" else "Enterprise Floor Terminal",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                actions = {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        color = if (state.isOnline) EmeraldContainer else AlertRedContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (state.isOnline) Icons.Filled.CloudDone else Icons.Filled.CloudOff,
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp),
+                                tint = if (state.isOnline) EmeraldPrimary else AlertRed
+                            )
+                            Text(
+                                text = if (state.isOnline) stringResource(R.string.synced_label) else stringResource(R.string.pending_sync_format, state.pendingSyncCount),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (state.isOnline) EmeraldPrimary else AlertRed
+                            )
+                        }
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.settings),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
-            Text(
-                text = stringResource(R.string.ambad_pilot_subtitle),
-                style = MaterialTheme.typography.labelSmall,
-                color = if (state.isOnline) EmeraldPrimary else SafetyOrange,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Stat KPI Cards Horizontal Carousel
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                ModernStatCard(
-                    title = stringResource(R.string.today_scrap),
-                    value = "${state.todayScrapCount}",
-                    subtitle = "${String.format("%.1f", state.todayWeightKg)} kg",
-                    icon = Icons.Outlined.DeleteSweep,
-                    accentColor = EmeraldPrimary,
-                    containerColor = EmeraldContainer
-                )
-            }
-            item {
-                ModernStatCard(
-                    title = stringResource(R.string.transfers),
-                    value = "${state.pendingTransfers}",
-                    subtitle = stringResource(R.string.pending_sub),
-                    icon = Icons.Outlined.LocalShipping,
-                    accentColor = Teal,
-                    containerColor = TealContainer
-                )
-            }
-            item {
-                ModernStatCard(
-                    title = stringResource(R.string.bin_alerts),
-                    value = "${state.binAlerts}",
-                    subtitle = if (state.binAlerts > 0) stringResource(R.string.overflow_alert) else stringResource(R.string.normal_capacity),
-                    icon = Icons.Outlined.Warning,
-                    accentColor = if (state.binAlerts > 0) AlertRed else EmeraldPrimary,
-                    containerColor = if (state.binAlerts > 0) AlertRedContainer else EmeraldContainer
-                )
-            }
-            item {
-                ModernStatCard(
-                    title = stringResource(R.string.certificates),
-                    value = "${state.certificateCount}",
-                    subtitle = stringResource(R.string.generated_sub),
-                    icon = Icons.Outlined.Verified,
-                    accentColor = Gold,
-                    containerColor = SafetyOrangeContainer
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Bento Quick Actions Grid
-        Text(
-            text = stringResource(R.string.quick_actions),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ModernQuickActionCard(
-                    title = stringResource(R.string.log_scrap),
-                    subtitle = stringResource(R.string.ai_classify_subtitle),
-                    icon = Icons.Outlined.AddCircle,
-                    accentColor = EmeraldPrimary,
-                    containerColor = EmeraldContainer,
-                    onClick = onNavigateToScrapLog,
-                    modifier = Modifier.weight(1f)
-                )
-                ModernQuickActionCard(
-                    title = stringResource(R.string.scan_qr),
-                    subtitle = stringResource(R.string.verify_handshake_sub),
-                    icon = Icons.Outlined.QrCodeScanner,
-                    accentColor = Teal,
-                    containerColor = TealContainer,
-                    onClick = onNavigateToQRScan,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ModernQuickActionCard(
-                    title = stringResource(R.string.transfer_action),
-                    subtitle = stringResource(R.string.new_dispatch_sub),
-                    icon = Icons.Outlined.LocalShipping,
-                    accentColor = SyncBlue,
-                    containerColor = TealContainer,
-                    onClick = onNavigateToTransfer,
-                    modifier = Modifier.weight(1f)
-                )
-                ModernQuickActionCard(
-                    title = stringResource(R.string.bin_monitor),
-                    subtitle = stringResource(R.string.bin_monitor_sub),
-                    icon = Icons.Outlined.Sensors,
-                    accentColor = SafetyOrange,
-                    containerColor = SafetyOrangeContainer,
-                    onClick = onNavigateToBinMonitor,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ModernQuickActionCard(
-                    title = stringResource(R.string.scan_ledger),
-                    subtitle = stringResource(R.string.scan_ledger_sub),
-                    icon = Icons.Outlined.DocumentScanner,
-                    accentColor = Gold,
-                    containerColor = SafetyOrangeContainer,
-                    onClick = onNavigateToLedgerScan,
-                    modifier = Modifier.weight(1f)
-                )
-                ModernQuickActionCard(
-                    title = stringResource(R.string.compliance),
-                    subtitle = stringResource(R.string.esg_certs_sub),
-                    icon = Icons.Outlined.FactCheck,
-                    accentColor = PurpleViolet,
-                    containerColor = TealContainer,
-                    onClick = onNavigateToCompliance,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
+            Spacer(modifier = Modifier.height(14.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+            // Performance Overview Title Strip
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.dashboard),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = stringResource(R.string.ambad_pilot_subtitle),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (state.isOnline) EmeraldPrimary else SafetyOrange,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
 
-        // Recent Scrap Activity Timeline
-        if (state.recentEntries.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Stat KPI Cards Horizontal Carousel
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    ModernStatCard(
+                        title = stringResource(R.string.today_scrap),
+                        value = "${state.todayScrapCount}",
+                        subtitle = "${String.format("%.1f", state.todayWeightKg)} kg",
+                        icon = Icons.Outlined.DeleteSweep,
+                        accentColor = EmeraldPrimary,
+                        containerColor = EmeraldContainer
+                    )
+                }
+                item {
+                    ModernStatCard(
+                        title = stringResource(R.string.transfers),
+                        value = "${state.pendingTransfers}",
+                        subtitle = stringResource(R.string.pending_sub),
+                        icon = Icons.Outlined.LocalShipping,
+                        accentColor = Teal,
+                        containerColor = TealContainer
+                    )
+                }
+                item {
+                    ModernStatCard(
+                        title = stringResource(R.string.bin_alerts),
+                        value = "${state.binAlerts}",
+                        subtitle = if (state.binAlerts > 0) stringResource(R.string.overflow_alert) else stringResource(R.string.normal_capacity),
+                        icon = Icons.Outlined.Warning,
+                        accentColor = if (state.binAlerts > 0) AlertRed else EmeraldPrimary,
+                        containerColor = if (state.binAlerts > 0) AlertRedContainer else EmeraldContainer
+                    )
+                }
+                item {
+                    ModernStatCard(
+                        title = stringResource(R.string.certificates),
+                        value = "${state.certificateCount}",
+                        subtitle = stringResource(R.string.audit_ready),
+                        icon = Icons.Outlined.FactCheck,
+                        accentColor = Gold,
+                        containerColor = SafetyOrangeContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Quick Actions Section Header
             Text(
-                text = stringResource(R.string.recent_activity),
+                text = stringResource(R.string.quick_actions),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
+
             Spacer(modifier = Modifier.height(10.dp))
 
+            // Bento Grid: 2 rows of 3 columns
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                state.recentEntries.forEach { entry ->
-                    ModernRecentActivityCard(entry = entry)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ModernQuickActionButton(
+                        title = stringResource(R.string.log_scrap),
+                        subtitle = "Record scrap weight",
+                        icon = Icons.Outlined.AddCircleOutline,
+                        accentColor = EmeraldPrimary,
+                        containerColor = EmeraldContainer,
+                        onClick = onNavigateToScrapLog,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ModernQuickActionButton(
+                        title = stringResource(R.string.live_auctions),
+                        subtitle = "B2B Lot Auctions",
+                        icon = Icons.Outlined.Storefront,
+                        accentColor = Teal,
+                        containerColor = TealContainer,
+                        onClick = onNavigateToBids,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ModernQuickActionButton(
+                        title = "Bin Telemetry",
+                        subtitle = "IoT level sensors",
+                        icon = Icons.Outlined.Sensors,
+                        accentColor = Gold,
+                        containerColor = SafetyOrangeContainer,
+                        onClick = onNavigateToBinMonitor,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ModernQuickActionButton(
+                        title = "Gate Pass",
+                        subtitle = "QR handshake",
+                        icon = Icons.Outlined.QrCodeScanner,
+                        accentColor = EmeraldPrimary,
+                        containerColor = EmeraldContainer,
+                        onClick = onNavigateToQRScan,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ModernQuickActionButton(
+                        title = stringResource(R.string.digitize_ledger),
+                        subtitle = "Camera OCR scanner",
+                        icon = Icons.Outlined.DocumentScanner,
+                        accentColor = Teal,
+                        containerColor = TealContainer,
+                        onClick = onNavigateToLedgerScan,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ModernQuickActionButton(
+                        title = "ESG Reports",
+                        subtitle = "MPCB Form 10 manifests",
+                        icon = Icons.Outlined.Assessment,
+                        accentColor = SyncBlue,
+                        containerColor = TealContainer,
+                        onClick = onNavigateToAnalytics,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Recent Activity Section
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent Shop Floor Entries",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                TextButton(onClick = onNavigateToScrapLog) {
+                    Text(
+                        "Log Entry",
+                        color = EmeraldPrimary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            if (state.recentEntries.isEmpty()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Outlined.Inventory2,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "No scrap logged today",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Logged scrap records will appear here in real-time.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    state.recentEntries.take(5).forEach { entry ->
+                        ModernScrapEntryRow(entry = entry)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+        }
     }
 }
 
@@ -258,7 +374,7 @@ private fun ModernStatCard(
 ) {
     Surface(
         modifier = Modifier
-            .width(160.dp)
+            .width(155.dp)
             .height(115.dp),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
@@ -317,7 +433,7 @@ private fun ModernStatCard(
 }
 
 @Composable
-private fun ModernQuickActionCard(
+private fun ModernQuickActionButton(
     title: String,
     subtitle: String,
     icon: ImageVector,
@@ -328,7 +444,7 @@ private fun ModernQuickActionCard(
 ) {
     Surface(
         modifier = modifier
-            .height(90.dp)
+            .height(105.dp)
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
@@ -336,33 +452,34 @@ private fun ModernQuickActionCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shadowElevation = 1.dp
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = containerColor,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = accentColor,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            Column(verticalArrangement = Arrangement.Center) {
+
+            Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
                 )
                 Text(
                     text = subtitle,
@@ -376,19 +493,20 @@ private fun ModernQuickActionCard(
 }
 
 @Composable
-private fun ModernRecentActivityCard(entry: com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity) {
+private fun ModernScrapEntryRow(entry: ScrapEntryEntity) {
     val category = runCatching { ScrapCategory.valueOf(entry.category) }.getOrDefault(ScrapCategory.OTHER)
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -399,15 +517,16 @@ private fun ModernRecentActivityCard(entry: com.sktech.wastetrack.data.local.db.
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = category.color().copy(alpha = 0.15f),
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(category.icon, fontSize = 18.sp)
                     }
                 }
+
                 Column {
                     Text(
-                        text = if (entry.subCategory.isNotBlank()) "${entry.subCategory} (${stringResource(category.nameRes)})" else stringResource(category.nameRes),
+                        text = "${category.displayName} · ${entry.weightKg} kg",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -425,103 +544,12 @@ private fun ModernRecentActivityCard(entry: com.sktech.wastetrack.data.local.db.
                 color = EmeraldContainer
             ) {
                 Text(
-                    text = "${entry.weightKg} kg",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = EmeraldPrimary,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardHeader(
-    user: com.sktech.wastetrack.domain.model.User?,
-    isOnline: Boolean,
-    pendingSyncCount: Int,
-    onSettingsClick: () -> Unit
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shadowElevation = 1.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.Recycling,
-                        contentDescription = null,
-                        tint = EmeraldPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Text(
-                        text = user?.organizationName?.ifBlank { stringResource(R.string.app_name) } ?: stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1
-                    )
-                }
-                Text(
-                    text = if (!user?.industrialArea.isNullOrBlank()) "${user?.industrialArea} · Unit #${user?.factoryId.orEmpty().take(6).uppercase()}" else "Enterprise Floor Terminal",
+                    text = entry.syncStatus,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldPrimary
                 )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Online/Sync Status Pill
-                Surface(
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = if (isOnline) EmeraldContainer else AlertRedContainer
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isOnline) Icons.Filled.CloudDone else Icons.Filled.CloudOff,
-                            contentDescription = null,
-                            modifier = Modifier.size(13.dp),
-                            tint = if (isOnline) EmeraldPrimary else AlertRed
-                        )
-                        Text(
-                            text = if (isOnline) stringResource(R.string.synced_label) else stringResource(R.string.pending_sync_format, pendingSyncCount),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isOnline) EmeraldPrimary else AlertRed
-                        )
-                    }
-                }
-
-                IconButton(
-                    onClick = onSettingsClick,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        contentDescription = stringResource(R.string.settings),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
             }
         }
     }

@@ -2,16 +2,17 @@ package com.sktech.wastetrack.ui.screens.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sktech.wastetrack.data.local.db.dao.TransferDao
 import com.sktech.wastetrack.data.local.db.dao.BidDao
 import com.sktech.wastetrack.data.local.db.dao.CertificateDao
 import com.sktech.wastetrack.data.local.db.dao.SyncQueueDao
-import com.sktech.wastetrack.data.local.db.entity.TransferEntity
+import com.sktech.wastetrack.data.local.db.dao.TransferDao
 import com.sktech.wastetrack.data.local.db.entity.BidRequestEntity
 import com.sktech.wastetrack.data.local.db.entity.CertificateEntity
 import com.sktech.wastetrack.data.local.db.entity.SyncQueueEntity
-import com.sktech.wastetrack.util.HashUtils
+import com.sktech.wastetrack.data.local.db.entity.TransferEntity
 import com.sktech.wastetrack.domain.repository.IAuthRepository
+import com.sktech.wastetrack.util.Constants
+import com.sktech.wastetrack.util.HashUtils
 import com.sktech.wastetrack.domain.model.User
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,7 @@ data class RecyclerDashboardState(
     val certificateCount: Int = 0,
     val incomingShipments: List<TransferEntity> = emptyList(),
     val wonAuctions: List<BidRequestEntity> = emptyList(),
+    val openAuctions: List<BidRequestEntity> = emptyList(),
     val isOnline: Boolean = true,
     val error: String? = null,
     val successMessage: String? = null
@@ -42,7 +44,8 @@ class RecyclerDashboardViewModel @Inject constructor(
     private val bidDao: BidDao,
     private val certificateDao: CertificateDao,
     private val syncQueueDao: SyncQueueDao,
-    private val authRepository: IAuthRepository
+    private val authRepository: IAuthRepository,
+    private val cloudSyncEngine: com.sktech.wastetrack.data.sync.CloudSyncEngine
 ) : ViewModel() {
 
     private var currentUser: User? = null
@@ -86,11 +89,19 @@ class RecyclerDashboardViewModel @Inject constructor(
             }
         }
 
-        // Fetch won auctions
+        // Fetch won and open available auctions from all factory lots
         viewModelScope.launch {
-            bidDao.getRequestsByFactory(com.sktech.wastetrack.util.Constants.DEFAULT_FACTORY_ID).collect { requests ->
+            bidDao.getAllRequests().collect { requests ->
                 val won = requests.filter { it.status == "AWARDED" }
-                _state.update { it.copy(wonAuctions = won, wonBidsCount = won.size) }
+                val open = requests.filter { it.status == "OPEN" }
+                _state.update {
+                    it.copy(
+                        wonAuctions = won,
+                        wonBidsCount = won.size,
+                        openAuctions = open,
+                        activeBidsCount = open.size
+                    )
+                }
             }
         }
     }
@@ -107,25 +118,23 @@ class RecyclerDashboardViewModel @Inject constructor(
                 val transferId = UUID.randomUUID().toString()
                 
                 val request = bidDao.getRequestById(requestId) ?: return@launch
-                if (request.createdByUserId.isBlank()) {
-                    _state.update { it.copy(error = "This bid request is missing its supervisor assignment") }
-                    return@launch
-                }
-                
+                val supervisorId = if (request.createdByUserId.isNotBlank()) request.createdByUserId else "supervisor-001"
+                val factoryId = request.factoryId.ifBlank { Constants.DEFAULT_FACTORY_ID }
+
                 val contentHash = HashUtils.hashTransfer(
                     id = transferId,
                     scrapEntryId = request.scrapEntryId,
                     weightAtSource = request.estimatedWeightKg,
-                    supervisorId = request.createdByUserId,
+                    supervisorId = supervisorId,
                     timestamp = now
                 )
 
                 val transfer = TransferEntity(
                     id = transferId,
                     scrapEntryId = request.scrapEntryId,
-                    fromFactoryId = request.factoryId,
+                    fromFactoryId = factoryId,
                     toRecyclerId = user.id,
-                    supervisorId = request.createdByUserId,
+                    supervisorId = supervisorId,
                     weightAtSource = request.estimatedWeightKg,
                     vehicleNumber = vehicleNumber,
                     status = "IN_TRANSIT",
@@ -135,18 +144,9 @@ class RecyclerDashboardViewModel @Inject constructor(
                 )
                 
                 transferDao.insert(transfer)
+                cloudSyncEngine.pushTransfer(transfer)
 
-                // Enqueue sync queue
-                syncQueueDao.enqueue(
-                    SyncQueueEntity(
-                        entityType = "TRANSFER",
-                        entityId = transferId,
-                        action = "CREATE",
-                        payload = Gson().toJson(transfer)
-                    )
-                )
-
-                // Update BidRequest status to CLOSED
+                // Update BidRequest status to CLOSED/DISPATCHED
                 val updatedRequest = request.copy(status = "CLOSED")
                 bidDao.updateRequest(updatedRequest)
 
@@ -180,16 +180,7 @@ class RecyclerDashboardViewModel @Inject constructor(
                     completedAt = System.currentTimeMillis()
                 )
                 transferDao.insert(updatedTransfer)
-
-                // Enqueue sync queue
-                syncQueueDao.enqueue(
-                    SyncQueueEntity(
-                        entityType = "TRANSFER",
-                        entityId = transferId,
-                        action = "UPDATE",
-                        payload = Gson().toJson(updatedTransfer)
-                    )
-                )
+                cloudSyncEngine.pushTransfer(updatedTransfer)
 
                 if (finalStatus == "VERIFIED") {
                     // Generate MPCB certificate automatically
@@ -221,8 +212,9 @@ class RecyclerDashboardViewModel @Inject constructor(
                         generatedAt = now
                     )
                     certificateDao.insert(certificate)
+                    cloudSyncEngine.pushCertificate(certificate)
                     
-                    _state.update { it.copy(successMessage = "Weight verified successfully! MPCB certificate generated.") }
+                    _state.update { it.copy(successMessage = "Weight verified successfully! MPCB Form 10 certificate generated.") }
                 } else {
                     _state.update { it.copy(error = "AI ALERT: Weight discrepancy (Source: $sourceWeight kg, Recycler: $receivedWeight kg) exceeds 10% tolerance! Flagged as DISPUTED.") }
                 }

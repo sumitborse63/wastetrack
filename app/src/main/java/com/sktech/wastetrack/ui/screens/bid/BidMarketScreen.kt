@@ -324,53 +324,85 @@ private fun ModernBidRequestCard(request: BidRequest, onClick: () -> Unit) {
         shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Material Hero Image Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .background(category.color().copy(alpha = 0.2f))
             ) {
+                coil.compose.AsyncImage(
+                    model = category.sampleImageUrl,
+                    contentDescription = category.displayName,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // Gradient overlay
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                            )
+                        )
+                )
+
+                // Top Badges
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = category.color().copy(alpha = 0.15f),
-                        modifier = Modifier.size(40.dp)
+                        shape = CircleShape,
+                        color = Color.Black.copy(alpha = 0.6f)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(category.icon, fontSize = 18.sp)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(category.icon, fontSize = 12.sp)
+                            Text(
+                                stringResource(category.nameRes),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
-                    Column {
+
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = statusContainer
+                    ) {
                         Text(
-                            text = stringResource(category.nameRes),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "${request.estimatedWeightKg} kg",
+                            text = stringResource(request.status.nameRes),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = statusColor,
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
 
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = statusContainer
-                ) {
-                    Text(
-                        text = stringResource(request.status.nameRes),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = statusColor,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
+                // Bottom Lot weight on image
+                Text(
+                    text = "${request.estimatedWeightKg} kg (${String.format("%.2f", request.estimatedWeightKg / 1000f)} MT)",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
             }
+
+            Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
 
             Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), thickness = 1.dp)
@@ -415,6 +447,7 @@ private fun ModernBidRequestCard(request: BidRequest, onClick: () -> Unit) {
             }
         }
     }
+}
 }
 
 @Composable

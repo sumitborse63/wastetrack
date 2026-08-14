@@ -5,11 +5,14 @@ import com.sktech.wastetrack.R
 enum class ScrapCategory(
     val displayName: String,
     val icon: String,
+    val sampleImageUrl: String,
     val nameRes: Int,
     val subCategories: List<String>
 ) {
     METAL(
-        "Metal", "🔩", R.string.cat_metal,
+        "Metal", "🔩",
+        "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_metal,
         listOf(
             "Copper Wire / Cable",
             "Aluminum Ingot / Extrusion",
@@ -23,7 +26,9 @@ enum class ScrapCategory(
         )
     ),
     PLASTIC(
-        "Plastic", "♻️", R.string.cat_plastic,
+        "Plastic", "♻️",
+        "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_plastic,
         listOf(
             "PET Bottles & Sheets",
             "HDPE Drums & Containers",
@@ -34,7 +39,9 @@ enum class ScrapCategory(
         )
     ),
     RUBBER(
-        "Rubber", "⚫", R.string.cat_rubber,
+        "Rubber", "⚫",
+        "https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_rubber,
         listOf(
             "Tire Shreds / Whole Tires",
             "Conveyor Belting",
@@ -43,7 +50,9 @@ enum class ScrapCategory(
         )
     ),
     EWASTE(
-        "E-Waste", "💻", R.string.cat_ewaste,
+        "E-Waste", "💻",
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_ewaste,
         listOf(
             "Printed Circuit Boards (PCB)",
             "Li-ion / Lead-Acid Batteries",
@@ -53,7 +62,9 @@ enum class ScrapCategory(
         )
     ),
     CHEMICAL(
-        "Chemical", "⚗️", R.string.cat_chemical,
+        "Chemical", "⚗️",
+        "https://images.unsplash.com/photo-1603555501671-8f96b3fce8b4?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_chemical,
         listOf(
             "Spent Solvent / Oil",
             "Acidic / Alkaline Residue",
@@ -62,7 +73,9 @@ enum class ScrapCategory(
         )
     ),
     WOOD(
-        "Wood", "🪵", R.string.cat_wood,
+        "Wood", "🪵",
+        "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_wood,
         listOf(
             "Wooden Pallets",
             "Sawdust & Shavings",
@@ -71,7 +84,9 @@ enum class ScrapCategory(
         )
     ),
     PAPER(
-        "Paper", "📄", R.string.cat_paper,
+        "Paper", "📄",
+        "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_paper,
         listOf(
             "Corrugated Cardboard (OCC)",
             "Office White Paper Shreds",
@@ -80,7 +95,9 @@ enum class ScrapCategory(
         )
     ),
     GLASS(
-        "Glass", "🪟", R.string.cat_glass,
+        "Glass", "🪟",
+        "https://images.unsplash.com/photo-1514782831304-632d84503f6f?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_glass,
         listOf(
             "Clear Cullet Glass",
             "Amber / Green Bottles",
@@ -89,7 +106,9 @@ enum class ScrapCategory(
         )
     ),
     OTHER(
-        "Other", "📦", R.string.cat_other,
+        "Other", "📦",
+        "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80",
+        R.string.cat_other,
         listOf(
             "Textiles & Fabric Rags",
             "Mixed Solid Scrap",
@@ -98,4 +117,3 @@ enum class ScrapCategory(
         )
     )
 }
-

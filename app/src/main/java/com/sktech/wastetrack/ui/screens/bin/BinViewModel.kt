@@ -23,7 +23,8 @@ import javax.inject.Inject
 class BinViewModel @Inject constructor(
     private val binDao: BinDao,
     private val predictOverflow: PredictOverflowUseCase,
-    private val authRepository: IAuthRepository
+    private val authRepository: IAuthRepository,
+    private val cloudSyncEngine: com.sktech.wastetrack.data.sync.CloudSyncEngine
 ) : ViewModel() {
 
     private val _bins = MutableStateFlow<List<BinEntity>>(emptyList())

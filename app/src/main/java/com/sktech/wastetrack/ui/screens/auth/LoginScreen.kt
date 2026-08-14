@@ -142,19 +142,19 @@ fun LoginScreen(
                 shape = CircleShape,
                 color = EmeraldContainer,
                 border = BorderStroke(1.5.dp, EmeraldPrimary.copy(alpha = 0.25f)),
-                modifier = Modifier.size(76.dp)
+                modifier = Modifier.size(72.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Filled.Recycling,
                         contentDescription = "WasteTrack Logo",
                         tint = EmeraldPrimary,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(38.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = stringResource(R.string.app_name),
@@ -172,7 +172,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Main Clean Card
             Surface(
@@ -183,7 +183,7 @@ fun LoginScreen(
                 shadowElevation = 2.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(22.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (state.error != null) {
@@ -193,7 +193,7 @@ fun LoginScreen(
                             border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.2f)),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 16.dp)
+                                .padding(bottom = 14.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -210,6 +210,7 @@ fun LoginScreen(
                                     text = state.error!!,
                                     color = AlertRed,
                                     style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -217,7 +218,7 @@ fun LoginScreen(
                     }
 
                     if (!state.isOtpSent) {
-                        // Role Selection Segmented Control
+                        // Full User Role Selection
                         Text(
                             text = stringResource(R.string.select_user_role),
                             style = MaterialTheme.typography.titleSmall,
@@ -228,54 +229,77 @@ fun LoginScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             listOf(
-                                UserRole.SUPERVISOR to (R.string.supervisor_role to Icons.Filled.Factory),
-                                UserRole.RECYCLER to (R.string.recycler_role to Icons.Filled.Recycling)
-                            ).forEach { (role, data) ->
-                                val (labelRes, icon) = data
-                                val isSelected = state.selectedRole == role
-                                Surface(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(50.dp)
-                                        .clip(MaterialTheme.shapes.medium)
-                                        .clickable { viewModel.onRoleSelected(role) },
-                                    shape = MaterialTheme.shapes.medium,
-                                    color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    border = BorderStroke(
-                                        width = if (isSelected) 1.5.dp else 1.dp,
-                                        color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.outline
-                                    )
+                                listOf(
+                                    UserRole.SUPERVISOR to Icons.Filled.Factory,
+                                    UserRole.RECYCLER to Icons.Filled.Recycling
+                                ),
+                                listOf(
+                                    UserRole.DRIVER to Icons.Filled.LocalShipping,
+                                    UserRole.ADMIN to Icons.Filled.AdminPanelSettings
+                                )
+                            ).forEach { rowRoles ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = null,
-                                            tint = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = stringResource(labelRes),
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1
-                                        )
+                                    rowRoles.forEach { (role, icon) ->
+                                        val isSelected = state.selectedRole == role
+                                        Surface(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable { viewModel.onRoleSelected(role) },
+                                            shape = MaterialTheme.shapes.medium,
+                                            color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                            border = BorderStroke(
+                                                width = if (isSelected) 1.5.dp else 1.dp,
+                                                color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.outline
+                                            )
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Start
+                                            ) {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = stringResource(role.nameRes),
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        fontSize = 12.5.sp,
+                                                        color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface,
+                                                        maxLines = 1
+                                                    )
+                                                    Text(
+                                                        text = stringResource(role.descRes),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontSize = 9.5.sp,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
                             text = stringResource(R.string.enter_phone_number),
@@ -299,13 +323,13 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Button(
                             onClick = { viewModel.sendOtp(context) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .height(48.dp),
                             enabled = state.phoneNumber.length >= 10 && !state.isLoading,
                             shape = MaterialTheme.shapes.medium,
                             colors = ButtonDefaults.buttonColors(
@@ -329,6 +353,27 @@ fun LoginScreen(
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Fast 1-Tap Login Button
+                        OutlinedButton(
+                            onClick = { viewModel.quickDemoLogin(state.selectedRole) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldPrimary)
+                        ) {
+                            Icon(Icons.Filled.Bolt, contentDescription = null, modifier = Modifier.size(18.dp), tint = Gold)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                stringResource(R.string.instant_sign_in, stringResource(state.selectedRole.nameRes)),
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
                     } else {
                         // OTP Verification State
                         Text(
@@ -339,16 +384,16 @@ fun LoginScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Sent to ${state.phoneNumber}",
+                            text = stringResource(R.string.sent_to_phone, state.phoneNumber),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                            modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
                         )
 
                         OutlinedTextField(
                             value = state.otpCode,
                             onValueChange = viewModel::onOtpCodeChanged,
-                            placeholder = { Text("• • • • • •", color = TextMuted, textAlign = TextAlign.Center) },
+                            placeholder = { Text("123456", color = TextMuted, textAlign = TextAlign.Center) },
                             leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = EmeraldPrimary) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
@@ -356,13 +401,13 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(22.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Button(
                             onClick = viewModel::verifyOtp,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .height(48.dp),
                             enabled = state.otpCode.length == 6 && !state.isLoading,
                             shape = MaterialTheme.shapes.medium,
                             colors = ButtonDefaults.buttonColors(
@@ -387,18 +432,37 @@ fun LoginScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                        TextButton(
-                            onClick = { viewModel.sendOtp(context) },
-                            enabled = !state.isLoading
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                stringResource(R.string.resend_otp),
-                                color = EmeraldPrimary,
-                                fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                            TextButton(
+                                onClick = {
+                                    viewModel.onPhoneNumberChanged("")
+                                    viewModel.onOtpCodeChanged("")
+                                }
+                            ) {
+                                Text(
+                                    stringResource(R.string.change_number),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+
+                            TextButton(
+                                onClick = { viewModel.sendOtp(context) },
+                                enabled = !state.isLoading
+                            ) {
+                                Text(
+                                    stringResource(R.string.resend_otp),
+                                    color = EmeraldPrimary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         }
                     }
                 }

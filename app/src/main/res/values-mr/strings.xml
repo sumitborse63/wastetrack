@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">वेस्टट्रॅक (WasteTrack)</string>
+    <string name="app_name">वेस्टट्रॅक</string>
     <string name="app_tagline">औद्योगिक वर्तुळाकार अर्थव्यवस्था ऑपरेटिंग सिस्टीम</string>
     
     <!-- Auth & Roles -->
     <string name="select_user_role">वापरकर्ता भूमिका निवडा</string>
     <string name="supervisor_role">फ्लोअर सुपरवायझर</string>
-    <string name="recycler_role">प्रमाणित रिसायकलर (Recycler)</string>
+    <string name="recycler_role">प्रमाणित रिसायकलर</string>
     <string name="enter_phone_number">आपला मोबाईल क्रमांक टाका</string>
     <string name="phone_number">मोबाईल क्रमांक</string>
-    <string name="send_otp">ओटीपी पाठवा (Send OTP)</string>
+    <string name="send_otp">ओटीपी पाठवा</string>
     <string name="enter_otp">६-अंकी ओटीपी टाका</string>
     <string name="verify_and_login">सत्यापित करा आणि लॉगिन करा</string>
     <string name="resend_otp">ओटीपी पुन्हा पाठवा</string>
@@ -17,10 +17,19 @@
     <string name="logout_confirm">तुम्हाला नक्की लॉग आउट करायचे आहे का?</string>
     
     <string name="role_supervisor">फ्लोअर सुपरवायझर</string>
-    <string name="role_driver">वाहन चालक (Driver)</string>
+    <string name="role_driver">फ्लीट ड्रायव्हर</string>
     <string name="role_admin">कारखाना ॲडमिन</string>
-    <string name="role_recycler">रिसायकलर (Recycler)</string>
-    <string name="certified_badge">प्रमाणित (CERTIFIED)</string>
+    <string name="role_recycler">प्रमाणित रिसायकलर</string>
+    <string name="role_supervisor_desc">स्क्रॅप नोंदवा आणि बिनची स्थिती तपासा</string>
+    <string name="role_recycler_desc">लिलावात सहभागी व्हा आणि स्क्रॅप मिळवा</string>
+    <string name="role_driver_desc">डिस्पॅच आणि क्यूआर पडताळणी करा</string>
+    <string name="role_admin_desc">अनुपालन व ऑडिट व्यवस्थापित करा</string>
+    <string name="instant_sign_in">झटपट प्रवेश (%1$s)</string>
+    <string name="change_number">क्रमांक बदला</string>
+    <string name="sent_to_phone">%1$s वर पाठवला</string>
+    <string name="nav_compliance">ईएसजी</string>
+    <string name="nav_bids">लिलाव</string>
+    <string name="certified_badge">प्रमाणित</string>
     
     <!-- Common Buttons & Actions -->
     <string name="close">बंद करा</string>
@@ -184,7 +193,7 @@
     <string name="dispatched_label">रवानगी वेळ: %1$s</string>
     
     <!-- Compliance & MPCB -->
-    <string name="compliance">ईएसजी अनुपालन (MPCB Compliance)</string>
+    <string name="compliance">ईएसजी व नियामक अनुपालन</string>
     <string name="mpcb_certificates">एमपीसीबी प्रमाणपत्रे</string>
     <string name="generate_certificate">एमपीसीबी प्रमाणपत्र तयार करा</string>
     <string name="bulk_generate">सर्व प्रमाणपत्रे तयार करा</string>
@@ -315,4 +324,11 @@
     <string name="no_certificates_yet">अद्याप कोणतीही प्रमाणपत्रे तयार केलेली नाहीत</string>
     <string name="certificates_empty_desc">भंगार हस्तांतरण पूर्ण झाल्यावर प्रमाणपत्रे तयार होतील.</string>
     <string name="system_version">सिस्टम आवृत्ती</string>
+    <string name="award">मंजूर करा</string>
+    <string name="configure_new_bin">नवीन स्टोरेज बिन जोडा</string>
+    <string name="total_capacity_kg">एकूण क्षमता (किग्रॅ)</string>
+    <string name="update_bin_fill">स्टोरेज बिन पातळी नोंदवा</string>
+    <string name="bin_category_format">%1$s बिन (क्षमता: %2$.0f किग्रॅ)</string>
+    <string name="current_fill_kg">सध्याची पातळी (किग्रॅ)</string>
+    <string name="update_fill">पातळी अद्ययावत करा</string>
 </resources>

@@ -28,6 +28,9 @@ interface BidDao {
     @Query("SELECT * FROM bid_requests WHERE status = 'OPEN' ORDER BY auctionEndTime ASC")
     fun getAllActiveRequests(): Flow<List<BidRequestEntity>>
 
+    @Query("SELECT * FROM bid_requests ORDER BY auctionStartTime DESC")
+    fun getAllRequests(): Flow<List<BidRequestEntity>>
+
     @Query("SELECT * FROM bids WHERE bidRequestId = :requestId ORDER BY pricePerKg DESC")
     fun getBidsByRequest(requestId: String): Flow<List<BidEntity>>
 
@@ -37,3 +40,4 @@ interface BidDao {
     @Query("SELECT COUNT(*) FROM bid_requests WHERE factoryId = :factoryId AND status = 'OPEN'")
     fun getActiveCount(factoryId: String): Flow<Int>
 }
+

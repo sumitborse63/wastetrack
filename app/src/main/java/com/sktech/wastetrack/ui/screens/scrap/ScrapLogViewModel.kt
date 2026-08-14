@@ -5,16 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.sktech.wastetrack.data.local.db.dao.ScrapEntryDao
 import com.sktech.wastetrack.data.local.db.dao.SyncQueueDao
 import com.sktech.wastetrack.data.local.db.entity.ScrapEntryEntity
-import com.sktech.wastetrack.data.local.db.entity.SyncQueueEntity
+import com.sktech.wastetrack.data.sync.CloudSyncEngine
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.domain.repository.IAuthRepository
+import com.sktech.wastetrack.domain.usecase.scrap.DetectAnomalyUseCase
 import com.sktech.wastetrack.util.Constants
 import com.sktech.wastetrack.util.HashUtils
-import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.sktech.wastetrack.domain.usecase.scrap.DetectAnomalyUseCase
-import com.sktech.wastetrack.domain.repository.IAuthRepository
 import java.util.UUID
 import javax.inject.Inject
 
@@ -23,6 +25,7 @@ data class ScrapLogState(
     val weightKg: String = "",
     val notes: String = "",
     val subCategory: String = "",
+    val imageUri: String? = null,
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
     val anomalyWarning: String? = null,
@@ -35,7 +38,8 @@ class ScrapLogViewModel @Inject constructor(
     private val scrapEntryDao: ScrapEntryDao,
     private val syncQueueDao: SyncQueueDao,
     private val detectAnomalyUseCase: DetectAnomalyUseCase,
-    private val authRepository: IAuthRepository
+    private val authRepository: IAuthRepository,
+    private val cloudSyncEngine: CloudSyncEngine
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScrapLogState())
@@ -60,7 +64,17 @@ class ScrapLogViewModel @Inject constructor(
     }
 
     fun onCategorySelected(category: ScrapCategory) {
-        _state.update { it.copy(selectedCategory = category, error = null) }
+        _state.update {
+            it.copy(
+                selectedCategory = category,
+                subCategory = "",
+                error = null
+            )
+        }
+    }
+
+    fun onSubCategoryChanged(sub: String) {
+        _state.update { it.copy(subCategory = sub) }
     }
 
     fun onWeightChanged(weight: String) {
@@ -68,11 +82,11 @@ class ScrapLogViewModel @Inject constructor(
     }
 
     fun onNotesChanged(notes: String) {
-        _state.update { it.copy(notes = notes, anomalyWarning = null) }
+        _state.update { it.copy(notes = notes) }
     }
 
-    fun onSubCategoryChanged(sub: String) {
-        _state.update { it.copy(subCategory = sub, anomalyWarning = null) }
+    fun onImageUriChanged(uri: String?) {
+        _state.update { it.copy(imageUri = uri) }
     }
 
     fun submitEntry() {
@@ -114,39 +128,40 @@ class ScrapLogViewModel @Inject constructor(
                     estimatedVolumeL = 1000f,
                     anomalyScore = anomalyResult.score,
                     anomalyFlagged = anomalyResult.flagged,
+                    imageUri = current.imageUri ?: current.selectedCategory.sampleImageUrl,
                     notes = current.notes,
                     syncStatus = "PENDING",
                     contentHash = contentHash,
                     createdAt = timestamp
                 )
 
-                scrapEntryDao.insert(entity)
-
-                // Enqueue for sync
-                syncQueueDao.enqueue(
-                    SyncQueueEntity(
-                        entityType = "SCRAP_ENTRY",
-                        entityId = entryId,
-                        action = "CREATE",
-                        payload = Gson().toJson(entity)
-                    )
-                )
+                // Push to Firestore & Room DB instantly
+                cloudSyncEngine.pushScrapEntry(entity)
 
                 _state.update {
-                    ScrapLogState(
+                    it.copy(
+                        isSubmitting = false,
                         isSuccess = true,
-                        recentEntries = (listOf(entity) + it.recentEntries.filter { e -> e.id != entity.id }).take(10)
+                        weightKg = "",
+                        notes = "",
+                        subCategory = "",
+                        imageUri = null,
+                        anomalyWarning = if (anomalyResult.flagged) "Warning: Abnormal weight recorded for ${current.selectedCategory.displayName}" else null
                     )
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(isSubmitting = false, error = e.message ?: "Failed to log entry")
-                }
+                _state.update { it.copy(isSubmitting = false, error = e.message) }
             }
         }
     }
 
     fun resetState() {
-        _state.update { ScrapLogState(recentEntries = it.recentEntries) }
+        _state.update {
+            it.copy(
+                isSuccess = false,
+                anomalyWarning = null,
+                error = null
+            )
+        }
     }
 }

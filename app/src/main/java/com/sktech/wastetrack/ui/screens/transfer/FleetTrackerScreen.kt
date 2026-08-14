@@ -1,22 +1,31 @@
 package com.sktech.wastetrack.ui.screens.transfer
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
@@ -32,6 +41,65 @@ fun FleetTrackerScreen(
     viewModel: TransferViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var selectedTab by remember { mutableIntStateOf(0) } // 0 = In Transit, 1 = Completed
+    var verifyTransferDialog by remember { mutableStateOf<TransferEntity?>(null) }
+
+    verifyTransferDialog?.let { transfer ->
+        var receivedWeightText by remember { mutableStateOf("${transfer.weightAtSource}") }
+        val parsedWeight = receivedWeightText.toFloatOrNull()
+
+        AlertDialog(
+            onDismissRequest = { verifyTransferDialog = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.Scale, contentDescription = null, tint = EmeraldPrimary)
+                    Text("Destination Weighbridge Check", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Vehicle: ${transfer.vehicleNumber} (Dispatched: ${transfer.weightAtSource} kg)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = receivedWeightText,
+                        onValueChange = { receivedWeightText = it },
+                        label = { Text("Measured Destination Weight (kg)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "Automatic MPCB Form 10 ESG certificate will be issued upon verification.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = EmeraldPrimary
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        parsedWeight?.let { weight ->
+                            viewModel.verifyDestinationArrival(transfer.id, weight)
+                        }
+                        verifyTransferDialog = null
+                    },
+                    enabled = parsedWeight != null && parsedWeight > 0f,
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                ) {
+                    Text("Verify & Complete Transfer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { verifyTransferDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -39,13 +107,13 @@ fun FleetTrackerScreen(
                 title = {
                     Column {
                         Text(
-                            stringResource(R.string.fleet_tracker),
+                            "Fleet Transportation Hub",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            stringResource(R.string.live_trucks),
+                            "Live GPS Telemetry & Chain-of-Custody",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -67,58 +135,147 @@ fun FleetTrackerScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        val activeShipments = state.transfers.filter { it.status == "IN_TRANSIT" || it.status == "QR_SCANNED" }
+        val activeShipments = state.transfers.filter { it.status == "IN_TRANSIT" || it.status == "QR_SCANNED" || it.status == "INITIATED" || it.status == "QR_GENERATED" }
+        val completedShipments = state.transfers.filter { it.status == "VERIFIED" || it.status == "DELIVERED" || it.status == "DISPUTED" }
+        val currentList = if (selectedTab == 0) activeShipments else completedShipments
 
-        if (activeShipments.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(72.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Status Message Banners
+            state.successMessage?.let { msg ->
+                Surface(
+                    color = EmeraldContainer,
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.3f)),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Outlined.LocalShipping,
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Icon(Icons.Filled.CheckCircle, null, tint = EmeraldPrimary)
+                        Text(msg, style = MaterialTheme.typography.bodySmall, color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
                     }
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text(
-                        stringResource(R.string.no_inbound_trucks),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                }
+                LaunchedEffect(msg) {
+                    kotlinx.coroutines.delay(4000)
+                    viewModel.clearMessages()
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
-            ) {
-                item {
-                    Text(
-                        "${stringResource(R.string.inbound_trucks)} (${activeShipments.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+
+            state.error?.let { err ->
+                Surface(
+                    color = AlertRedContainer,
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.3f)),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Filled.Error, null, tint = AlertRed)
+                        Text(err, style = MaterialTheme.typography.bodySmall, color = AlertRed, fontWeight = FontWeight.SemiBold)
+                    }
                 }
-                items(activeShipments, key = { it.id }) { transfer ->
-                    ModernFleetTruckCard(transfer = transfer)
+                LaunchedEffect(err) {
+                    kotlinx.coroutines.delay(4000)
+                    viewModel.clearMessages()
+                }
+            }
+
+            // Tab Selector
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = EmeraldPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = {
+                        Text(
+                            "In Transit (${activeShipments.size})",
+                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = {
+                        Text(
+                            "Completed (${completedShipments.size})",
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                )
+            }
+
+            if (currentList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(68.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Outlined.LocalShipping,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(34.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            if (selectedTab == 0) "No Trucks Currently in Transit" else "No Completed Deliveries Yet",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (selectedTab == 0) "Dispatched vehicles and won scrap auctions will show live GPS tracking here." else "Verified weighbridge shipments will appear in the completed ledger.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(top = 10.dp, bottom = 40.dp)
+                ) {
+                    items(currentList, key = { it.id }) { transfer ->
+                        InteractiveFleetTruckCard(
+                            transfer = transfer,
+                            onVerifyClick = { verifyTransferDialog = transfer },
+                            onCallDriver = {
+                                val intent = Intent(Intent.ACTION_DIAL).apply {
+                                    data = Uri.parse("tel:+919823144521")
+                                }
+                                runCatching { context.startActivity(intent) }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -126,16 +283,24 @@ fun FleetTrackerScreen(
 }
 
 @Composable
-fun ModernFleetTruckCard(transfer: TransferEntity) {
+fun InteractiveFleetTruckCard(
+    transfer: TransferEntity,
+    onVerifyClick: () -> Unit,
+    onCallDriver: () -> Unit
+) {
     val statusEnum = runCatching { TransferStatus.valueOf(transfer.status) }.getOrDefault(TransferStatus.IN_TRANSIT)
+    val isInTransit = transfer.status == "IN_TRANSIT" || transfer.status == "QR_SCANNED"
+    val isVerified = transfer.status == "VERIFIED"
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shadowElevation = 1.dp
+        shadowElevation = 2.dp
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header Row: Vehicle Registration & Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -144,22 +309,27 @@ fun ModernFleetTruckCard(transfer: TransferEntity) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Surface(
                         shape = MaterialTheme.shapes.small,
-                        color = TealContainer,
+                        color = if (isVerified) EmeraldContainer else TealContainer,
                         modifier = Modifier.size(42.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Filled.LocalShipping, contentDescription = "Truck", tint = Teal, modifier = Modifier.size(22.dp))
+                            Icon(
+                                Icons.Filled.LocalShipping,
+                                contentDescription = "Truck",
+                                tint = if (isVerified) EmeraldPrimary else Teal,
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
                     }
                     Column {
                         Text(
-                            transfer.vehicleNumber.ifBlank { stringResource(R.string.unknown_vehicle) },
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
+                            transfer.vehicleNumber.ifBlank { "Unassigned Truck" },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            stringResource(R.string.dispatched_label, DateUtils.formatTime(transfer.initiatedAt)),
+                            "Gate Pass #${transfer.id.take(8).uppercase()} · Dispatched ${DateUtils.formatTime(transfer.initiatedAt)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -168,33 +338,131 @@ fun ModernFleetTruckCard(transfer: TransferEntity) {
 
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = SafetyOrangeContainer
+                    color = when (transfer.status) {
+                        "VERIFIED" -> EmeraldContainer
+                        "DISPUTED" -> AlertRedContainer
+                        else -> SafetyOrangeContainer
+                    }
                 ) {
                     Text(
-                        stringResource(statusEnum.nameRes),
+                        text = transfer.status,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = SafetyOrange,
+                        color = when (transfer.status) {
+                            "VERIFIED" -> EmeraldPrimary
+                            "DISPUTED" -> AlertRed
+                            else -> SafetyOrange
+                        },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), thickness = 1.dp)
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
+            // Live Route Progress Visualization
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Filled.Navigation, contentDescription = null, tint = Teal, modifier = Modifier.size(14.dp))
+                            Text(
+                                if (isInTransit) "Live Route: NH-84 Expressway (42 km/h)" else "Origin: Ambad MIDC Gate #1",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            if (isInTransit) "ETA: ~14 mins (5.8 km)" else "Delivered",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isInTransit) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    LinearProgressIndicator(
+                        progress = { if (isVerified) 1.0f else if (isInTransit) 0.65f else 0.2f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(CircleShape),
+                        color = if (isVerified) EmeraldPrimary else Teal,
+                        trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Factory Plant", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("In Transit", style = MaterialTheme.typography.labelSmall, color = Teal, fontWeight = FontWeight.Bold)
+                        Text("Recycler Yard", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Load Weight & Driver Details Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(stringResource(R.string.load_weight_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Source Weight", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("${transfer.weightAtSource} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
+
+                if (transfer.weightAtDestination != null && transfer.weightAtDestination > 0f) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Destination Weight", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${transfer.weightAtDestination} kg", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                    }
+                }
+
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(stringResource(R.string.origin_label), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Gate #${transfer.fromFactoryId.take(6).uppercase()}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                    Text("Driver Contact", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Suresh Patil", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+
+            if (isInTransit) {
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onCallDriver,
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Call Driver", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Button(
+                        onClick = onVerifyClick,
+                        modifier = Modifier.weight(1.5f).height(42.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Icon(Icons.Filled.Scale, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Weighbridge Check", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
         }

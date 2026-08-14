@@ -16,10 +16,20 @@
     <string name="logout_confirm">Are you sure you want to logout?</string>
     
     <string name="role_supervisor">Floor Supervisor</string>
-    <string name="role_driver">Truck Driver</string>
+    <string name="role_driver">Fleet Driver</string>
     <string name="role_admin">Factory Admin</string>
-    <string name="role_recycler">Recycler</string>
+    <string name="role_recycler">Certified Recycler</string>
+    <string name="role_supervisor_desc">Log scrap &amp; monitor factory bins</string>
+    <string name="role_recycler_desc">Bid on auctions &amp; receive scrap</string>
+    <string name="role_driver_desc">Execute dispatches &amp; QR handshakes</string>
+    <string name="role_admin_desc">Manage compliance &amp; audits</string>
+    <string name="instant_sign_in">Instant Sign In (%1$s)</string>
+    <string name="change_number">Change Number</string>
+    <string name="sent_to_phone">Sent to %1$s</string>
+    <string name="nav_compliance">ESG</string>
+    <string name="nav_bids">Bids</string>
     <string name="certified_badge">CERTIFIED</string>
+
     
     <!-- Common Buttons & Actions -->
     <string name="close">Close</string>
@@ -314,4 +324,11 @@
     <string name="no_certificates_yet">No certificates generated yet</string>
     <string name="certificates_empty_desc">Certificates will be generated upon completed scrap transfers.</string>
     <string name="system_version">System Version</string>
+    <string name="award">Award</string>
+    <string name="configure_new_bin">Configure New Storage Bin</string>
+    <string name="total_capacity_kg">Total Capacity (kg)</string>
+    <string name="update_bin_fill">Update Storage Bin Fill</string>
+    <string name="bin_category_format">%1$s Bin (Capacity: %2$.0f kg)</string>
+    <string name="current_fill_kg">Current Fill (kg)</string>
+    <string name="update_fill">Update Fill Level</string>
 </resources>

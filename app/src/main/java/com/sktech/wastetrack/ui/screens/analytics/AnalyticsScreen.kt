@@ -1,6 +1,8 @@
 package com.sktech.wastetrack.ui.screens.analytics
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -10,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -21,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.ScrapCategory
+import com.sktech.wastetrack.ui.screens.scrap.color
 import com.sktech.wastetrack.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,27 +37,49 @@ fun AnalyticsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.enterprise_analytics), fontWeight = FontWeight.Bold) },
+                title = {
+                    Column {
+                        Text(
+                            stringResource(R.string.enterprise_analytics),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Circular Economy & 75% EPR Statutory Ledger",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = EmeraldPrimary)
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
             ) {
                 item {
                     EPRTargetCard(compliancePercentage = state.eprCompliancePercentage)
@@ -63,7 +88,7 @@ fun AnalyticsScreen(
                 item {
                     EfficiencyScoreCard(score = state.efficiencyScore)
                 }
-                
+
                 item {
                     TrendChartCard(data = state.monthlyScrapKg)
                 }
@@ -78,125 +103,156 @@ fun AnalyticsScreen(
 
 @Composable
 fun EPRTargetCard(compliancePercentage: Float) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    val isCompliant = compliancePercentage >= 75f
+    val progressColor = if (isCompliant) EmeraldPrimary else SafetyOrange
+    val containerColor = if (isCompliant) EmeraldContainer else SafetyOrangeContainer
+
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(stringResource(R.string.epr_ledger_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    stringResource(R.string.epr_ledger_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = containerColor
+                ) {
+                    Text(
+                        "${compliancePercentage.toInt()}%",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = progressColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
             Text(
-                stringResource(R.string.epr_mandate_subtitle), 
-                style = MaterialTheme.typography.bodySmall, 
+                stringResource(R.string.epr_mandate_subtitle),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            val isCompliant = compliancePercentage >= 75f
-            val progressColor = if (isCompliant) IndustrialGreen else SafetyOrange
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LinearProgressIndicator(
-                    progress = { compliancePercentage / 100f },
-                    modifier = Modifier.weight(1f).height(12.dp),
-                    color = progressColor,
-                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    "${compliancePercentage.toInt()}%",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = progressColor
-                )
-            }
-            
             Spacer(modifier = Modifier.height(12.dp))
-            if (isCompliant) {
-                Text(
-                    stringResource(R.string.epr_compliant_desc),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = IndustrialGreen
-                )
-            } else {
-                Text(
-                    stringResource(R.string.epr_risk_desc),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AlertRed
-                )
-            }
+
+            LinearProgressIndicator(
+                progress = { compliancePercentage / 100f },
+                modifier = Modifier.fillMaxWidth().height(10.dp),
+                color = progressColor,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = StrokeCap.Round
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                if (isCompliant) stringResource(R.string.epr_compliant_desc) else stringResource(R.string.epr_risk_desc),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isCompliant) EmeraldPrimary else AlertRed
+            )
         }
     }
 }
 
 @Composable
 fun EfficiencyScoreCard(score: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stringResource(R.string.efficiency_score_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.efficiency_score_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Spacer(modifier = Modifier.height(16.dp))
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     progress = { score / 100f },
-                    modifier = Modifier.size(120.dp),
-                    strokeWidth = 12.dp,
-                    color = IndustrialGreen,
-                    trackColor = MaterialTheme.colorScheme.surface
+                    modifier = Modifier.size(110.dp),
+                    strokeWidth = 10.dp,
+                    color = EmeraldPrimary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = StrokeCap.Round
                 )
                 Text(
                     text = "$score%",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = IndustrialGreen
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = EmeraldPrimary
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Based on Honeywell Forge Asset Health", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                "Based on Zero-Overflow & On-Time Dispatches",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
 
 @Composable
 fun TrendChartCard(data: List<Float>) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(stringResource(R.string.trend_chart_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Simple Bar Chart
-            val maxVal = data.maxOrNull() ?: 1f
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                stringResource(R.string.trend_chart_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+            val maxVal = (data.maxOrNull() ?: 1f).coerceAtLeast(1f)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
+                    .height(130.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Bottom
             ) {
                 data.forEach { value ->
-                    val heightRatio = value / maxVal
-                    val barColor = MaterialTheme.colorScheme.primary
+                    val heightRatio = (value / maxVal).coerceIn(0.08f, 1f)
                     Box(
                         modifier = Modifier
-                            .width(30.dp)
+                            .width(28.dp)
                             .fillMaxHeight(heightRatio)
-                            .padding(horizontal = 4.dp),
+                            .padding(horizontal = 2.dp),
                         contentAlignment = Alignment.BottomCenter
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             drawRoundRect(
-                                color = barColor,
+                                color = EmeraldPrimary,
                                 size = Size(size.width, size.height),
-                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f)
+                                cornerRadius = CornerRadius(6f, 6f)
                             )
                         }
                     }
@@ -208,32 +264,53 @@ fun TrendChartCard(data: List<Float>) {
 
 @Composable
 fun CategoryBreakdownCard(breakdown: Map<String, Float>) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(stringResource(R.string.category_breakdown_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                stringResource(R.string.category_breakdown_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+
             breakdown.forEach { (categoryStr, percentage) ->
                 val categoryEnum = runCatching { ScrapCategory.valueOf(categoryStr) }.getOrNull()
                 val catName = if (categoryEnum != null) stringResource(categoryEnum.nameRes) else categoryStr
+                val catColor = categoryEnum?.color() ?: Teal
+
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(catName, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        catName,
+                        modifier = Modifier.weight(1.2f),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     LinearProgressIndicator(
                         progress = { percentage / 100f },
                         modifier = Modifier.weight(2f).height(8.dp),
                         strokeCap = StrokeCap.Round,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = catColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Text("${percentage.toInt()}%", modifier = Modifier.width(40.dp).padding(start = 8.dp), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "${percentage.toInt()}%",
+                        modifier = Modifier.width(42.dp).padding(start = 8.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
     }
 }
-

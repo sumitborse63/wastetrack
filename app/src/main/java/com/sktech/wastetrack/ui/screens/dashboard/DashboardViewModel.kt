@@ -64,7 +64,7 @@ class DashboardViewModel @Inject constructor(
             combine(
                 scrapEntryDao.getCountSince(factoryId, startOfDay),
                 scrapEntryDao.getTotalWeightSince(factoryId, startOfDay),
-                transferDao.getCountByStatus(factoryId, "INITIATED"),
+                transferDao.getActiveTransferCount(factoryId),
                 binDao.getAlertCount(factoryId),
                 certificateDao.getCount(factoryId),
                 syncQueueDao.getCount(),

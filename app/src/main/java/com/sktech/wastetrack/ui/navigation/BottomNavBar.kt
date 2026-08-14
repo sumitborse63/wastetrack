@@ -36,8 +36,8 @@ val bottomNavItems = listOf(
     BottomNavItem(R.string.dashboard, Screen.Dashboard.route, Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
     BottomNavItem(R.string.log_scrap, Screen.ScrapLog.route, Icons.Filled.DeleteSweep, Icons.Outlined.DeleteSweep),
     BottomNavItem(R.string.transfers, Screen.TransferList.route, Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
-    BottomNavItem(R.string.bid_market, Screen.BidMarket.route, Icons.Filled.Storefront, Icons.Outlined.Storefront),
-    BottomNavItem(R.string.compliance, Screen.Compliance.route, Icons.Filled.Description, Icons.Outlined.Description),
+    BottomNavItem(R.string.nav_bids, Screen.BidMarket.route, Icons.Filled.Storefront, Icons.Outlined.Storefront),
+    BottomNavItem(R.string.nav_compliance, Screen.Compliance.route, Icons.Filled.Description, Icons.Outlined.Description),
 )
 
 @Composable

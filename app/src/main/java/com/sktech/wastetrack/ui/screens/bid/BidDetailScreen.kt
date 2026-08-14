@@ -301,7 +301,7 @@ fun BidDetailScreen(
                             rank = index + 1,
                             totalWeightKg = request?.estimatedWeightKg ?: 0f,
                             showAward = showAwardButton && request?.status == BidStatus.OPEN,
-                            isAwarding = detailState.isAwarding,
+                            isAwarding = detailState.isLoading,
                             onAward = { viewModel.awardBid(bid.id) }
                         )
                     }

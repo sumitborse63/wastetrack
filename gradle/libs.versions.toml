@@ -1,7 +1,7 @@
 [versions]
 agp = "8.6.0"
 kotlin = "2.0.0"
-ksp = "2.0.0-1.0.21"
+ksp = "2.0.0-1.0.24"
 coreKtx = "1.13.1"
 lifecycleRuntimeKtx = "2.8.3"
 activityCompose = "1.9.0"
@@ -51,7 +51,7 @@ workManager = "2.10.1"
 firebaseBom = "33.12.0"
 
 # Image Loading
-coil = "3.1.0"
+coil = "2.6.0"
 
 # DataStore
 datastore = "1.1.7"
@@ -149,7 +149,7 @@ firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
 
 # Image Loading
-coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

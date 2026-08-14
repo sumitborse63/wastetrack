@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sktech.wastetrack.data.local.db.dao.CertificateDao
@@ -42,13 +43,14 @@ class SyncWorker @AssistedInject constructor(
 
             for (item in pendingItems) {
                 try {
+                    val mapType = object : TypeToken<Map<String, Any>>() {}.type
+                    val data: Map<String, Any> = gson.fromJson(item.payload, mapType)
+
                     when (item.entityType) {
                         "SCRAP_ENTRY" -> {
-                            val mapType = object : TypeToken<Map<String, Any>>() {}.type
-                            val data: Map<String, Any> = gson.fromJson(item.payload, mapType)
                             firestore.collection("scrap_entries")
                                 .document(item.entityId)
-                                .set(data)
+                                .set(data, SetOptions.merge())
                                 .await()
 
                             scrapEntryDao.markSynced(item.entityId)
@@ -56,11 +58,9 @@ class SyncWorker @AssistedInject constructor(
                             Log.d(TAG, "Synced scrap entry: ${item.entityId}")
                         }
                         "TRANSFER" -> {
-                            val mapType = object : TypeToken<Map<String, Any>>() {}.type
-                            val data: Map<String, Any> = gson.fromJson(item.payload, mapType)
                             firestore.collection("transfers")
                                 .document(item.entityId)
-                                .set(data)
+                                .set(data, SetOptions.merge())
                                 .await()
 
                             transferDao.markSynced(item.entityId)
@@ -68,15 +68,49 @@ class SyncWorker @AssistedInject constructor(
                             Log.d(TAG, "Synced transfer: ${item.entityId}")
                         }
                         "CERTIFICATE" -> {
-                            val mapType = object : TypeToken<Map<String, Any>>() {}.type
-                            val data: Map<String, Any> = gson.fromJson(item.payload, mapType)
                             firestore.collection("certificates")
                                 .document(item.entityId)
-                                .set(data)
+                                .set(data, SetOptions.merge())
                                 .await()
 
                             syncQueueDao.deleteById(item.id)
                             Log.d(TAG, "Synced certificate: ${item.entityId}")
+                        }
+                        "BID_REQUEST" -> {
+                            firestore.collection("bid_requests")
+                                .document(item.entityId)
+                                .set(data, SetOptions.merge())
+                                .await()
+
+                            syncQueueDao.deleteById(item.id)
+                            Log.d(TAG, "Synced bid request: ${item.entityId}")
+                        }
+                        "BID" -> {
+                            firestore.collection("bids")
+                                .document(item.entityId)
+                                .set(data, SetOptions.merge())
+                                .await()
+
+                            syncQueueDao.deleteById(item.id)
+                            Log.d(TAG, "Synced bid: ${item.entityId}")
+                        }
+                        "SMART_BIN" -> {
+                            firestore.collection("smart_bins")
+                                .document(item.entityId)
+                                .set(data, SetOptions.merge())
+                                .await()
+
+                            syncQueueDao.deleteById(item.id)
+                            Log.d(TAG, "Synced smart bin: ${item.entityId}")
+                        }
+                        "USER" -> {
+                            firestore.collection("users")
+                                .document(item.entityId)
+                                .set(data, SetOptions.merge())
+                                .await()
+
+                            syncQueueDao.deleteById(item.id)
+                            Log.d(TAG, "Synced user profile: ${item.entityId}")
                         }
                         else -> {
                             syncQueueDao.deleteById(item.id)

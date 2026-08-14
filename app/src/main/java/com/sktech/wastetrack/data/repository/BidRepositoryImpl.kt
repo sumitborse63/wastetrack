@@ -73,6 +73,52 @@ class BidRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getAllBidRequests(): Flow<List<BidRequest>> {
+        val roomFlow = bidDao.getAllRequests().map { entities ->
+            entities.map { entity ->
+                BidRequest(
+                    id = entity.id,
+                    factoryId = entity.factoryId,
+                    createdByUserId = entity.createdByUserId,
+                    scrapEntryId = entity.scrapEntryId,
+                    scrapCategory = runCatching { ScrapCategory.valueOf(entity.scrapCategory) }.getOrDefault(ScrapCategory.OTHER),
+                    estimatedWeightKg = entity.estimatedWeightKg,
+                    reservePricePerKg = entity.reservePricePerKg,
+                    auctionStartTime = entity.auctionStartTime,
+                    auctionEndTime = entity.auctionEndTime,
+                    status = runCatching { BidStatus.valueOf(entity.status) }.getOrDefault(BidStatus.OPEN)
+                )
+            }
+        }
+
+        val firebaseFlow = firebaseBidDataSource.getAllBidRequests()
+
+        return combine(roomFlow, firebaseFlow) { local, remote ->
+            scope.launch {
+                remote.forEach { r ->
+                    bidDao.insertRequest(
+                        BidRequestEntity(
+                            id = r.id,
+                            factoryId = r.factoryId,
+                            createdByUserId = r.createdByUserId,
+                            scrapEntryId = r.scrapEntryId,
+                            scrapCategory = r.scrapCategory.name,
+                            estimatedWeightKg = r.estimatedWeightKg,
+                            reservePricePerKg = r.reservePricePerKg,
+                            auctionStartTime = r.auctionStartTime,
+                            auctionEndTime = r.auctionEndTime,
+                            status = r.status.name
+                        )
+                    )
+                }
+            }
+            val remoteMap = remote.associateBy { it.id }
+            val merged = (local.filter { !remoteMap.containsKey(it.id) } + remote)
+                .sortedByDescending { it.auctionStartTime }
+            merged
+        }
+    }
+
     override suspend fun createBidRequest(request: BidRequest): String {
         // 1. Immediately cache in local Room DB for 0ms latency
         bidDao.insertRequest(

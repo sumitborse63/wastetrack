@@ -1,7 +1,6 @@
 package com.sktech.wastetrack.data.remote.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.snapshots
 import com.sktech.wastetrack.domain.model.Bid
 import com.sktech.wastetrack.domain.model.BidRequest
@@ -15,13 +14,11 @@ import javax.inject.Inject
 
 class FirebaseBidDataSource @Inject constructor() {
     private val firestore = FirebaseFirestore.getInstance()
-    private val bidRequestsCollection = firestore.collection("bidRequests")
+    private val bidRequestsCollection = firestore.collection("bid_requests")
     private val bidsCollection = firestore.collection("bids")
 
-    fun getActiveBidRequests(): Flow<List<BidRequest>> {
+    fun getAllBidRequests(): Flow<List<BidRequest>> {
         return bidRequestsCollection
-            .whereEqualTo("status", BidStatus.OPEN.name)
-            .orderBy("auctionEndTime", Query.Direction.ASCENDING)
             .snapshots()
             .map { snapshot ->
                 snapshot.documents.mapNotNull { doc ->
@@ -31,18 +28,25 @@ class FirebaseBidDataSource @Inject constructor() {
                             factoryId = doc.getString("factoryId") ?: "",
                             createdByUserId = doc.getString("createdByUserId") ?: "",
                             scrapEntryId = doc.getString("scrapEntryId") ?: "",
-                            scrapCategory = ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name),
+                            scrapCategory = runCatching { ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name) }.getOrDefault(ScrapCategory.OTHER),
                             estimatedWeightKg = doc.getDouble("estimatedWeightKg")?.toFloat() ?: 0f,
                             reservePricePerKg = doc.getDouble("reservePricePerKg")?.toFloat() ?: 0f,
                             auctionStartTime = doc.getLong("auctionStartTime") ?: 0L,
                             auctionEndTime = doc.getLong("auctionEndTime") ?: 0L,
-                            status = BidStatus.valueOf(doc.getString("status") ?: BidStatus.OPEN.name)
+                            status = runCatching { BidStatus.valueOf(doc.getString("status") ?: BidStatus.OPEN.name) }.getOrDefault(BidStatus.OPEN)
                         )
                     } catch (e: Exception) {
                         null
                     }
                 }
             }
+    }
+
+    fun getActiveBidRequests(): Flow<List<BidRequest>> {
+        return getAllBidRequests().map { requests ->
+            requests.filter { it.status == BidStatus.OPEN }
+                .sortedBy { it.auctionEndTime }
+        }
     }
 
     suspend fun createBidRequest(request: BidRequest): String {
@@ -64,7 +68,6 @@ class FirebaseBidDataSource @Inject constructor() {
     fun getBidsForRequest(requestId: String): Flow<List<Bid>> {
         return bidsCollection
             .whereEqualTo("bidRequestId", requestId)
-            .orderBy("submittedAt", Query.Direction.DESCENDING)
             .snapshots()
             .map { snapshot ->
                 snapshot.documents.mapNotNull { doc ->
@@ -82,7 +85,7 @@ class FirebaseBidDataSource @Inject constructor() {
                     } catch (e: Exception) {
                         null
                     }
-                }
+                }.sortedByDescending { it.pricePerKg }
             }
     }
 
@@ -117,12 +120,12 @@ class FirebaseBidDataSource @Inject constructor() {
                     factoryId = doc.getString("factoryId") ?: "",
                     createdByUserId = doc.getString("createdByUserId") ?: "",
                     scrapEntryId = doc.getString("scrapEntryId") ?: "",
-                    scrapCategory = ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name),
+                    scrapCategory = runCatching { ScrapCategory.valueOf(doc.getString("scrapCategory") ?: ScrapCategory.OTHER.name) }.getOrDefault(ScrapCategory.OTHER),
                     estimatedWeightKg = doc.getDouble("estimatedWeightKg")?.toFloat() ?: 0f,
                     reservePricePerKg = doc.getDouble("reservePricePerKg")?.toFloat() ?: 0f,
                     auctionStartTime = doc.getLong("auctionStartTime") ?: 0L,
                     auctionEndTime = doc.getLong("auctionEndTime") ?: 0L,
-                    status = BidStatus.valueOf(doc.getString("status") ?: BidStatus.OPEN.name)
+                    status = runCatching { BidStatus.valueOf(doc.getString("status") ?: BidStatus.OPEN.name) }.getOrDefault(BidStatus.OPEN)
                 )
             } else null
         } catch (e: Exception) {

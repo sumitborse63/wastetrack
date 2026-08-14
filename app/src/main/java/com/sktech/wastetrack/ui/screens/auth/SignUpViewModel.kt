@@ -39,21 +39,25 @@ class SignUpViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            val selectedRole = authRepository.getSelectedRole()
             val user = authRepository.getCurrentUser()
-            if (user != null) {
+            if (user != null && user.isProfileComplete) {
                 _state.update {
                     it.copy(
                         name = user.name,
                         role = user.role,
                         organizationName = user.organizationName,
-                        factoryId = user.factoryId.ifBlank { "FAC-${UUID.randomUUID().toString().take(6).uppercase()}" },
+                        factoryId = user.factoryId.ifBlank { if (user.role == UserRole.RECYCLER) "REC-${UUID.randomUUID().toString().take(6).uppercase()}" else "FAC-${UUID.randomUUID().toString().take(6).uppercase()}" },
                         industrialArea = user.industrialArea,
                         registrationNumber = user.registrationNumber
                     )
                 }
             } else {
                 _state.update {
-                    it.copy(factoryId = "FAC-${UUID.randomUUID().toString().take(6).uppercase()}")
+                    it.copy(
+                        role = selectedRole,
+                        factoryId = if (selectedRole == UserRole.RECYCLER) "REC-${UUID.randomUUID().toString().take(6).uppercase()}" else "FAC-${UUID.randomUUID().toString().take(6).uppercase()}"
+                    )
                 }
             }
         }

@@ -20,7 +20,7 @@ import com.sktech.wastetrack.data.local.db.entity.*
         SyncQueueEntity::class
     ],
     version = 4,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class WasteTrackDatabase : RoomDatabase() {
     abstract fun scrapEntryDao(): ScrapEntryDao

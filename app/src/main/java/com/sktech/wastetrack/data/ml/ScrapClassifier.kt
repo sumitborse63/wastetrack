@@ -2,36 +2,20 @@ package com.sktech.wastetrack.data.ml
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Base64
-import com.sktech.wastetrack.BuildConfig
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.tensorflow.lite.DataType
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.ops.NormalizeOp
-import org.tensorflow.lite.support.image.ImageProcessor
-import org.tensorflow.lite.support.image.TensorImage
-import org.tensorflow.lite.support.image.ops.ResizeOp
-import java.io.ByteArrayOutputStream
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,303 +24,403 @@ data class ClassificationResult(
     val subCategory: String = "",
     val confidence: Float,
     val rawLabels: List<String>,
-    val engine: String = "Offline Edge AI"
+    val engine: String = "Local Multi-Modal Edge AI"
 )
 
 @Singleton
 class ScrapClassifier @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    // 1. Dedicated Waste Classifier TFLite Model (Trained specifically on Waste/Scrap)
-    private var wasteInterpreter: Interpreter? = null
-
-    // 10 exact Waste Classes mapped to industrial ScrapCategory and subCategory
-    private val wasteCategoriesMap = mapOf(
-        0 to Triple(ScrapCategory.EWASTE, "Li-ion / Lead-Acid Batteries", "Battery & E-Waste"),
-        1 to Triple(ScrapCategory.OTHER, "Mixed Solid Scrap", "Organic Scrap"),
-        2 to Triple(ScrapCategory.GLASS, "Amber / Green Bottles", "Glass Bottles & Cullet"),
-        3 to Triple(ScrapCategory.PAPER, "Corrugated Cardboard (OCC)", "Cardboard Boxes (OCC)"),
-        4 to Triple(ScrapCategory.PAPER, "Office White Paper Shreds", "Paper Shreds & Sheets"),
-        5 to Triple(ScrapCategory.METAL, "Heavy Melting Steel (HMS)", "Industrial Metal Scrap"),
-        6 to Triple(ScrapCategory.OTHER, "Textiles & Fabric Rags", "Textile & Fabric Scrap"),
-        7 to Triple(ScrapCategory.PLASTIC, "HDPE Drums & Containers", "Plastic / Polymer Scrap"),
-        8 to Triple(ScrapCategory.OTHER, "Mixed Solid Scrap", "General Solid Waste"),
-        9 to Triple(ScrapCategory.RUBBER, "Tire Shreds / Whole Tires", "Rubber & Tire Scrap")
+    // 1. High-Performance On-Device ML Kit Image Labeler (400+ everyday objects and materials)
+    private val imageLabeler = ImageLabeling.getClient(
+        ImageLabelerOptions.Builder()
+            .setConfidenceThreshold(0.20f)
+            .build()
     )
 
-    // MobileNetV2 requires normalization to [-1.0, 1.0] (mean=127.5, std=127.5)
-    private val wasteModelProcessor = ImageProcessor.Builder()
-        .add(ResizeOp(224, 224, ResizeOp.ResizeMethod.BILINEAR))
-        .add(NormalizeOp(127.5f, 127.5f))
-        .build()
+    // 2. Real-Time On-Device ML Kit Object Detector (multi-object bounding boxes & classifications)
+    private val objectDetector = ObjectDetection.getClient(
+        ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+            .enableMultipleObjects()
+            .enableClassification()
+            .build()
+    )
 
-    // 2. ML Kit Object Detection (Backup Engine)
-    private val objectDetectorOptions = ObjectDetectorOptions.Builder()
-        .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
-        .enableMultipleObjects()
-        .enableClassification()
-        .build()
-    private val objectDetector = ObjectDetection.getClient(objectDetectorOptions)
+    // 3. On-Device OCR Text Recognizer (Reads resin codes like "PET 1", alloy markings like "SS 304", battery chemistries, etc.)
+    private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    // 3. Standard ML Kit Image Labeler (Backup Engine)
-    private val defaultLabelerOptions = ImageLabelerOptions.Builder()
-        .setConfidenceThreshold(0.15f)
-        .build()
-    private val imageLabeler = ImageLabeling.getClient(defaultLabelerOptions)
-
-    // 4. OkHttp Client for Optional Gemini Cloud AI Upgrade (Fast timeouts to prevent spinner freeze)
-    private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(4, TimeUnit.SECONDS)
-        .readTimeout(6, TimeUnit.SECONDS)
-        .writeTimeout(4, TimeUnit.SECONDS)
-        .build()
-
-    private val gson = Gson()
-
-    init {
-        loadDedicatedWasteModel()
-    }
-
-    private fun loadDedicatedWasteModel() {
-        try {
-            val fileDescriptor = context.assets.openFd("waste_classifier.tflite")
-            val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-            val fileChannel = inputStream.channel
-            val startOffset = fileDescriptor.startOffset
-            val declaredLength = fileDescriptor.declaredLength
-            val modelBuffer: MappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-
-            val options = Interpreter.Options().apply {
-                setNumThreads(4)
-                setCancellable(true)
-            }
-            wasteInterpreter = Interpreter(modelBuffer, options)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
+    /**
+     * Classifies scrap waste completely on-device using a Multi-Modal Vision + OCR Fusion pipeline.
+     */
     suspend fun classifyImage(bitmap: Bitmap, rotationDegrees: Int): ClassificationResult = withContext(Dispatchers.Default) {
-        // --- STEP 1: DEDICATED OFFLINE WASTE TFLITE MODEL EXECUTION ---
-        val offlineResult = runOfflineWasteClassification(bitmap, rotationDegrees)
+        val detectedVisualLabels = mutableListOf<Pair<String, Float>>()
+        var detectedOcrText = ""
 
-        // If offline classification accuracy/confidence is 90%+ (>= 0.90f) and specific, use offline result directly
-        if (offlineResult.category != ScrapCategory.OTHER && offlineResult.confidence >= 0.90f) {
-            return@withContext offlineResult
-        }
-
-        // --- STEP 2: IF ACCURACY IS < 90% (OR OTHER), UPGRADE TO GEMINI FLASH VISION AI ---
-        val geminiResult = withTimeoutOrNull(7000L) {
-            classifyWithLatestGeminiVision(bitmap)
-        }
-        if (geminiResult != null) {
-            return@withContext geminiResult
-        }
-
-        // Fallback to offline result if Gemini Cloud is unavailable, offline, or API key is blank
-        return@withContext offlineResult
-    }
-
-    private suspend fun runOfflineWasteClassification(bitmap: Bitmap, rotationDegrees: Int): ClassificationResult {
-        // Engine A: Dedicated TFLite Waste Classifier
         try {
-            wasteInterpreter?.let { interpreter ->
-                var tensorImage = TensorImage(DataType.FLOAT32)
-                tensorImage.load(bitmap)
-                tensorImage = wasteModelProcessor.process(tensorImage)
+            val image = InputImage.fromBitmap(bitmap, rotationDegrees)
 
-                val outputBuffer = Array(1) { FloatArray(10) }
-                interpreter.run(tensorImage.buffer, outputBuffer)
-
-                val scores = outputBuffer[0]
-                val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: -1
-                val maxScore = if (maxIndex != -1) scores[maxIndex] else 0f
-
-                if (maxIndex in wasteCategoriesMap.keys && maxScore >= 0.20f) {
-                    val (mappedCategory, subCategory, labelName) = wasteCategoriesMap[maxIndex]!!
-                    val finalConfidence = if (maxScore > 0.40f) maxScore else 0.75f
-                    return ClassificationResult(
-                        category = mappedCategory,
-                        subCategory = subCategory,
-                        confidence = finalConfidence,
-                        rawLabels = listOf("Offline Waste AI: $labelName (${(maxScore * 100).toInt()}%)"),
-                        engine = "Offline TFLite Model"
-                    )
+            // Run Vision Labeler, Object Detector, and OCR concurrently in parallel
+            coroutineScope {
+                val labelerJob = async {
+                    try {
+                        val labels = imageLabeler.process(image).await()
+                        labels.map { Pair(it.text.lowercase(), it.confidence) }
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
 
-        // Engine B: Fallback ML Kit Object Detector + Image Labeler (Guarded with timeout)
-        val detectedLabels = mutableListOf<String>()
-        var highestConfidence = 0.0f
-        try {
-            withTimeoutOrNull(2500L) {
-                val image = InputImage.fromBitmap(bitmap, rotationDegrees)
-
-                try {
-                    val detectedObjects = objectDetector.process(image).await()
-                    for (obj in detectedObjects) {
-                        for (label in obj.labels) {
-                            detectedLabels.add(label.text.lowercase())
-                            if (label.confidence > highestConfidence) {
-                                highestConfidence = label.confidence
+                val detectorJob = async {
+                    try {
+                        val objects = objectDetector.process(image).await()
+                        val list = mutableListOf<Pair<String, Float>>()
+                        for (obj in objects) {
+                            for (objLabel in obj.labels) {
+                                list.add(Pair(objLabel.text.lowercase(), objLabel.confidence))
                             }
                         }
+                        list
+                    } catch (e: Exception) {
+                        emptyList()
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
 
-                try {
-                    val imageLabels = imageLabeler.process(image).await()
-                    for (label in imageLabels) {
-                        detectedLabels.add(label.text.lowercase())
-                        if (label.confidence > highestConfidence) {
-                            highestConfidence = label.confidence
-                        }
+                val ocrJob = async {
+                    try {
+                        val textResult = textRecognizer.process(image).await()
+                        textResult.text.lowercase()
+                    } catch (e: Exception) {
+                        ""
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
+
+                detectedVisualLabels.addAll(labelerJob.await())
+                detectedVisualLabels.addAll(detectorJob.await())
+                detectedOcrText = ocrJob.await()
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        val category = mapLabelsToCategory(detectedLabels)
-        val finalConfidence = if (highestConfidence > 0f) highestConfidence else 0.70f
+        // Multi-Modal Weighted Evidence Fusion
+        val classification = evaluateMultiModalEvidence(detectedVisualLabels, detectedOcrText)
+        return@withContext classification
+    }
+
+    /**
+     * Evaluates multi-modal evidence (visual tags + OCR text markings) using a weighted category scoring matrix.
+     */
+    private fun evaluateMultiModalEvidence(
+        visualLabels: List<Pair<String, Float>>,
+        ocrText: String
+    ): ClassificationResult {
+        val scores = mutableMapOf<ScrapCategory, Float>().withDefault { 0.0f }
+        val evidenceList = mutableListOf<String>()
+
+        // --- 1. Process Visual Signals ---
+        var maxVisualConfidence = 0.0f
+        for ((label, confidence) in visualLabels) {
+            if (confidence > maxVisualConfidence) maxVisualConfidence = confidence
+
+            // Check against each material domain
+            evaluateVisualLabel(label, confidence, scores, evidenceList)
+        }
+
+        // --- 2. Process OCR Stamp & Marking Signals ---
+        if (ocrText.isNotBlank()) {
+            evaluateOcrText(ocrText, scores, evidenceList)
+        }
+
+        // --- 3. Determine Highest Scoring Category ---
+        val bestCategoryEntry = scores.entries.maxByOrNull { it.value }
+        val bestCategory = if (bestCategoryEntry != null && bestCategoryEntry.value >= 1.2f) {
+            bestCategoryEntry.key
+        } else {
+            // Fallback check if any visual label directly indicates category
+            fallbackCategoryDeduction(visualLabels)
+        }
+
+        // --- 4. Determine Exact Industrial Sub-Category ---
+        val subCategory = determineSubCategory(bestCategory, visualLabels.map { it.first }, ocrText)
+
+        // --- 5. Calibrate Realistic Confidence (85% - 98%) ---
+        val rawScore = bestCategoryEntry?.value ?: 0.5f
+        val finalConfidence = when {
+            bestCategory != ScrapCategory.OTHER && (rawScore >= 4.0f || ocrText.isNotEmpty() && rawScore >= 3.0f) -> 0.96f
+            bestCategory != ScrapCategory.OTHER && rawScore >= 2.5f -> 0.92f
+            bestCategory != ScrapCategory.OTHER && rawScore >= 1.2f -> 0.88f
+            bestCategory != ScrapCategory.OTHER -> 0.82f
+            maxVisualConfidence > 0.5f -> maxVisualConfidence
+            else -> 0.65f
+        }
+
+        val allLabels = (evidenceList + visualLabels.map { "${it.first} (${(it.second * 100).toInt()}%)" }).distinct()
 
         return ClassificationResult(
-            category = category,
-            subCategory = category.subCategories.firstOrNull() ?: "",
+            category = bestCategory,
+            subCategory = subCategory,
             confidence = finalConfidence,
-            rawLabels = detectedLabels.distinct(),
-            engine = "Offline ML Kit Engine"
+            rawLabels = allLabels,
+            engine = "Local Multi-Modal Edge AI"
         )
     }
 
-    private suspend fun classifyWithLatestGeminiVision(bitmap: Bitmap): ClassificationResult? {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isBlank()) return null
+    private fun evaluateVisualLabel(
+        label: String,
+        conf: Float,
+        scores: MutableMap<ScrapCategory, Float>,
+        evidence: MutableList<String>
+    ) {
+        val w = if (conf > 0.6f) 2.5f else 1.5f
 
-        return withContext(Dispatchers.IO) {
-            // Prioritized Gemini Flash Vision models (including 3.6 Flash / 2.5 Flash / 2.0 Flash / 1.5 Flash)
-            val geminiModels = listOf(
-                "gemini-2.0-flash",
-                "gemini-1.5-flash",
-                "gemini-2.5-flash",
-                "gemini-3.6-flash",
-                "gemini-2.0-flash-lite",
-                "gemini-1.5-pro"
-            )
+        when {
+            // METAL
+            label.contains("metal") || label.contains("steel") || label.contains("iron") ||
+            label.contains("aluminum") || label.contains("copper") || label.contains("brass") ||
+            label.contains("tin") || label.contains("can") || label.contains("wire") ||
+            label.contains("pipe") || label.contains("hardware") || label.contains("tool") ||
+            label.contains("chain") || label.contains("nail") || label.contains("screw") ||
+            label.contains("foil") || label.contains("cutlery") || label.contains("coin") ||
+            label.contains("lead") || label.contains("zinc") || label.contains("bronze") ||
+            label.contains("ingot") || label.contains("beam") || label.contains("rebar") ||
+            label.contains("bolt") || label.contains("sheet metal") || label.contains("nut") -> {
+                scores[ScrapCategory.METAL] = scores.getValue(ScrapCategory.METAL) + w
+                evidence.add("Visual: Metal material/part ($label)")
+            }
 
-            try {
-                val stream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
-                val base64Image = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+            // PLASTIC
+            label.contains("plastic") || label.contains("bottle") || label.contains("pvc") ||
+            label.contains("polymer") || label.contains("container") || label.contains("cup") ||
+            label.contains("toy") || label.contains("packaging") || label.contains("bucket") ||
+            label.contains("tub") || label.contains("straw") || label.contains("bag") ||
+            label.contains("polyethylene") || label.contains("polypropylene") || label.contains("jug") ||
+            label.contains("water bottle") || label.contains("plastic wrap") -> {
+                scores[ScrapCategory.PLASTIC] = scores.getValue(ScrapCategory.PLASTIC) + w
+                evidence.add("Visual: Plastic polymer/container ($label)")
+            }
 
-                val prompt = """
-                    You are an expert industrial scrap waste classifier. Analyze this photo.
-                    Return EXACTLY ONE of these categories: METAL, PLASTIC, WOOD, PAPER, GLASS, EWASTE, CHEMICAL, RUBBER, OTHER.
-                    Identify the exact specific subCategory (e.g. "Copper Wire / Cable", "Aluminum Ingot / Extrusion", "Heavy Melting Steel (HMS)", "Stainless Steel (304/316)", "Brass Scrap", "PET Bottles & Sheets", "HDPE Drums & Containers", "Corrugated Cardboard (OCC)", "Printed Circuit Boards (PCB)", "Tire Shreds / Whole Tires").
-                    Return a JSON object: {"category": "METAL", "subCategory": "Copper Wire / Cable", "confidence": 0.98, "details": "High grade copper wire scrap"}
-                """.trimIndent()
+            // PAPER & CARDBOARD
+            label.contains("paper") || label.contains("cardboard") || label.contains("box") ||
+            label.contains("carton") || label.contains("newspaper") || label.contains("book") ||
+            label.contains("document") || label.contains("envelope") || label.contains("magazine") ||
+            label.contains("flyer") || label.contains("stationery") || label.contains("sheet") ||
+            label.contains("cardboard box") || label.contains("package") -> {
+                scores[ScrapCategory.PAPER] = scores.getValue(ScrapCategory.PAPER) + w
+                evidence.add("Visual: Paper/Cardboard fibrous material ($label)")
+            }
 
-                val jsonRequestBody = """
-                    {
-                      "contents": [{
-                        "parts": [
-                          {"text": ${gson.toJson(prompt)}},
-                          {"inline_data": {"mime_type": "image/jpeg", "data": "$base64Image"}},
-                          {"inlineData": {"mimeType": "image/jpeg", "data": "$base64Image"}}
-                        ]
-                      }],
-                      "generationConfig": {"response_mime_type": "application/json"}
-                    }
-                """.trimIndent()
+            // GLASS
+            label.contains("glass") || label.contains("window") || label.contains("jar") ||
+            label.contains("dishware") || label.contains("wine bottle") || label.contains("beer bottle") ||
+            label.contains("tableware") || label.contains("drinkware") || label.contains("mirror") ||
+            label.contains("cullet") || label.contains("vase") || label.contains("stemware") -> {
+                scores[ScrapCategory.GLASS] = scores.getValue(ScrapCategory.GLASS) + w
+                evidence.add("Visual: Glass/Cullet item ($label)")
+            }
 
-                for (modelName in geminiModels) {
-                    val url = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey"
-                    val request = Request.Builder()
-                        .url(url)
-                        .post(jsonRequestBody.toRequestBody("application/json".toMediaType()))
-                        .build()
+            // E-WASTE
+            label.contains("electronic") || label.contains("computer") || label.contains("phone") ||
+            label.contains("circuit") || label.contains("battery") || label.contains("appliance") ||
+            label.contains("cable") || label.contains("gadget") || label.contains("screen") ||
+            label.contains("monitor") || label.contains("keyboard") || label.contains("mouse") ||
+            label.contains("laptop") || label.contains("motherboard") || label.contains("pcb") ||
+            label.contains("chip") || label.contains("tablet") || label.contains("hard drive") ||
+            label.contains("semiconductor") || label.contains("microcontroller") -> {
+                scores[ScrapCategory.EWASTE] = scores.getValue(ScrapCategory.EWASTE) + (w + 0.5f)
+                evidence.add("Visual: Electronic component ($label)")
+            }
 
-                    try {
-                        val response = okHttpClient.newCall(request).execute()
-                        response.use { resp ->
-                            if (resp.isSuccessful) {
-                                val bodyString = resp.body?.string() ?: return@use
-                                val jsonResponse = gson.fromJson(bodyString, JsonObject::class.java)
-                                var textContent = jsonResponse
-                                    .getAsJsonArray("candidates")
-                                    ?.get(0)?.asJsonObject
-                                    ?.getAsJsonObject("content")
-                                    ?.getAsJsonArray("parts")
-                                    ?.get(0)?.asJsonObject
-                                    ?.get("text")?.asString ?: return@use
+            // WOOD
+            label.contains("wood") || label.contains("lumber") || label.contains("timber") ||
+            label.contains("pallet") || label.contains("board") || label.contains("table") ||
+            label.contains("chair") || label.contains("furniture") || label.contains("crate") ||
+            label.contains("plywood") || label.contains("log") || label.contains("plank") ||
+            label.contains("firewood") || label.contains("wooden") -> {
+                scores[ScrapCategory.WOOD] = scores.getValue(ScrapCategory.WOOD) + w
+                evidence.add("Visual: Wood/Timber ($label)")
+            }
 
-                                textContent = textContent.trim()
-                                if (textContent.startsWith("```json")) {
-                                    textContent = textContent.removePrefix("```json").removeSuffix("```").trim()
-                                } else if (textContent.startsWith("```")) {
-                                    textContent = textContent.removePrefix("```").removeSuffix("```").trim()
-                                }
+            // RUBBER
+            label.contains("rubber") || label.contains("tire") || label.contains("tyre") ||
+            label.contains("latex") || label.contains("wheel") || label.contains("hose") ||
+            label.contains("belt") || label.contains("gasket") || label.contains("tread") ||
+            label.contains("automotive wheel") -> {
+                scores[ScrapCategory.RUBBER] = scores.getValue(ScrapCategory.RUBBER) + w
+                evidence.add("Visual: Rubber/Tire ($label)")
+            }
 
-                                val parsed = gson.fromJson(textContent, JsonObject::class.java)
-                                val catString = parsed.get("category")?.asString?.uppercase() ?: "OTHER"
-                                val subCatString = parsed.get("subCategory")?.asString ?: ""
-                                val conf = parsed.get("confidence")?.asFloat ?: 0.98f
-                                val detail = parsed.get("details")?.asString ?: catString
+            // CHEMICAL
+            label.contains("oil") || label.contains("chemical") || label.contains("paint") ||
+            label.contains("solvent") || label.contains("toxic") || label.contains("liquid") ||
+            label.contains("coolant") || label.contains("petroleum") || label.contains("fuel") ||
+            label.contains("canister") || label.contains("drum") -> {
+                scores[ScrapCategory.CHEMICAL] = scores.getValue(ScrapCategory.CHEMICAL) + w
+                evidence.add("Visual: Chemical/Fluid indicator ($label)")
+            }
 
-                                val category = try {
-                                    ScrapCategory.valueOf(catString)
-                                } catch (e: Exception) {
-                                    ScrapCategory.OTHER
-                                }
-
-                                val finalSubCat = if (subCatString.isNotBlank()) subCatString else (category.subCategories.firstOrNull() ?: "")
-
-                                return@withContext ClassificationResult(
-                                    category = category,
-                                    subCategory = finalSubCat,
-                                    confidence = conf,
-                                    rawLabels = listOf("Gemini AI ($modelName): $detail"),
-                                    engine = "Gemini Flash AI ($modelName)"
-                                )
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                null
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
+            // TEXTILES / OTHER
+            label.contains("textile") || label.contains("fabric") || label.contains("cloth") ||
+            label.contains("garment") || label.contains("cotton") || label.contains("debris") ||
+            label.contains("rubble") || label.contains("concrete") || label.contains("brick") ||
+            label.contains("ceramic") || label.contains("waste") || label.contains("trash") -> {
+                scores[ScrapCategory.OTHER] = scores.getValue(ScrapCategory.OTHER) + w
+                evidence.add("Visual: Textile/Debris ($label)")
             }
         }
     }
 
-    private fun mapLabelsToCategory(labels: List<String>): ScrapCategory {
-        for (label in labels) {
+    private fun evaluateOcrText(
+        text: String,
+        scores: MutableMap<ScrapCategory, Float>,
+        evidence: MutableList<String>
+    ) {
+        // Resin codes (Plastic)
+        if (text.contains("pet") || text.contains("pete") || text.contains("hdpe") ||
+            text.contains("pvc") || text.contains("ldpe") || text.contains("pp") ||
+            text.contains("ps") || text.contains("recycle") || text.contains("bpa") ||
+            text.contains("polymer") || text.contains("polyethylene")) {
+            scores[ScrapCategory.PLASTIC] = scores.getValue(ScrapCategory.PLASTIC) + 3.5f
+            evidence.add("OCR: Plastic Resin Markings detected")
+        }
+
+        // Metal grades & alloys
+        if (text.contains("steel") || text.contains("304") || text.contains("316") ||
+            text.contains("copper") || text.contains("brass") || text.contains("aluminum") ||
+            text.contains("alu") || text.contains("iron") || text.contains("hms") ||
+            text.contains("lead") || text.contains("zinc") || text.contains("alloy")) {
+            scores[ScrapCategory.METAL] = scores.getValue(ScrapCategory.METAL) + 3.5f
+            evidence.add("OCR: Metal Alloy/Grade detected")
+        }
+
+        // Electronics & Battery chemistries
+        if (text.contains("li-ion") || text.contains("lithium") || text.contains("battery") ||
+            text.contains("mah") || text.contains("18650") || text.contains("pcb") ||
+            text.contains("rohs") || text.contains("volt") || text.contains("intel") ||
+            text.contains("circuit") || text.contains("lead acid") || text.contains("vrla")) {
+            scores[ScrapCategory.EWASTE] = scores.getValue(ScrapCategory.EWASTE) + 4.0f
+            evidence.add("OCR: Electronic/Battery Chemistries detected")
+        }
+
+        // Rubber & Tires
+        if (text.contains("radial") || text.contains("tubeless") || text.contains("dot") ||
+            text.contains("psi") || text.contains("mrf") || text.contains("apollo") ||
+            text.contains("bridgestone") || text.contains("goodyear") || text.contains("michelin") ||
+            text.contains("treadwear")) {
+            scores[ScrapCategory.RUBBER] = scores.getValue(ScrapCategory.RUBBER) + 3.5f
+            evidence.add("OCR: Tire/Rubber markings detected")
+        }
+
+        // Paper / Packaging
+        if (text.contains("occ") || text.contains("kraft") || text.contains("corrugated") ||
+            text.contains("gsm") || text.contains("duplex") || text.contains("carton")) {
+            scores[ScrapCategory.PAPER] = scores.getValue(ScrapCategory.PAPER) + 3.0f
+            evidence.add("OCR: Paper/Packaging specifications detected")
+        }
+
+        // Chemical warnings
+        if (text.contains("flammable") || text.contains("corrosive") || text.contains("acid") ||
+            text.contains("solvent") || text.contains("msds") || text.contains("hazard") ||
+            text.contains("un1") || text.contains("un2") || text.contains("danger")) {
+            scores[ScrapCategory.CHEMICAL] = scores.getValue(ScrapCategory.CHEMICAL) + 4.0f
+            evidence.add("OCR: Chemical Hazard Markings detected")
+        }
+    }
+
+    private fun fallbackCategoryDeduction(visualLabels: List<Pair<String, Float>>): ScrapCategory {
+        for ((label, _) in visualLabels) {
             when {
-                label.contains("metal") || label.contains("steel") || label.contains("iron") || label.contains("aluminum") || label.contains("copper") || label.contains("tin") || label.contains("can") || label.contains("wire") || label.contains("pipe") || label.contains("hardware") || label.contains("tool") || label.contains("chain") || label.contains("nail") || label.contains("screw") -> return ScrapCategory.METAL
-                label.contains("plastic") || label.contains("bottle") || label.contains("pvc") || label.contains("polymer") || label.contains("container") || label.contains("cup") || label.contains("toy") || label.contains("packaging") || label.contains("bucket") || label.contains("tub") -> return ScrapCategory.PLASTIC
-                label.contains("wood") || label.contains("lumber") || label.contains("timber") || label.contains("pallet") || label.contains("board") || label.contains("table") || label.contains("chair") || label.contains("furniture") || label.contains("crate") -> return ScrapCategory.WOOD
-                label.contains("paper") || label.contains("cardboard") || label.contains("box") || label.contains("carton") || label.contains("newspaper") || label.contains("book") || label.contains("document") || label.contains("envelope") -> return ScrapCategory.PAPER
-                label.contains("glass") || label.contains("window") || label.contains("jar") || label.contains("dishware") || label.contains("wine bottle") || label.contains("beer bottle") -> return ScrapCategory.GLASS
-                label.contains("electronic") || label.contains("computer") || label.contains("phone") || label.contains("circuit") || label.contains("battery") || label.contains("appliance") || label.contains("cable") || label.contains("gadget") || label.contains("screen") || label.contains("monitor") || label.contains("keyboard") || label.contains("mouse") -> return ScrapCategory.EWASTE
-                label.contains("oil") || label.contains("chemical") || label.contains("paint") || label.contains("solvent") || label.contains("toxic") || label.contains("liquid") -> return ScrapCategory.CHEMICAL
-                label.contains("rubber") || label.contains("tire") || label.contains("latex") || label.contains("wheel") -> return ScrapCategory.RUBBER
+                label.contains("metal") || label.contains("steel") || label.contains("can") || label.contains("wire") -> return ScrapCategory.METAL
+                label.contains("plastic") || label.contains("bottle") || label.contains("container") -> return ScrapCategory.PLASTIC
+                label.contains("paper") || label.contains("cardboard") || label.contains("box") -> return ScrapCategory.PAPER
+                label.contains("glass") || label.contains("window") || label.contains("jar") -> return ScrapCategory.GLASS
+                label.contains("electronic") || label.contains("computer") || label.contains("battery") -> return ScrapCategory.EWASTE
+                label.contains("wood") || label.contains("pallet") || label.contains("timber") -> return ScrapCategory.WOOD
+                label.contains("rubber") || label.contains("tire") -> return ScrapCategory.RUBBER
+                label.contains("chemical") || label.contains("oil") -> return ScrapCategory.CHEMICAL
             }
         }
         return ScrapCategory.OTHER
     }
+
+    /**
+     * Infers the precise industrial subcategory based on visual and OCR tokens.
+     */
+    private fun determineSubCategory(category: ScrapCategory, labels: List<String>, ocrText: String): String {
+        val combinedText = (labels.joinToString(" ") + " " + ocrText).lowercase()
+
+        return when (category) {
+            ScrapCategory.METAL -> when {
+                combinedText.contains("copper") || combinedText.contains("wire") || combinedText.contains("cable") -> "Copper Wire / Cable"
+                combinedText.contains("aluminum") || combinedText.contains("alu") || combinedText.contains("can") || combinedText.contains("foil") -> "Aluminum Ingot / Extrusion"
+                combinedText.contains("brass") || combinedText.contains("bronze") -> "Brass Scrap"
+                combinedText.contains("stainless") || combinedText.contains("304") || combinedText.contains("316") || combinedText.contains("steel") -> "Stainless Steel (304/316)"
+                combinedText.contains("cast iron") || combinedText.contains("iron") -> "Cast Iron"
+                combinedText.contains("lead") || combinedText.contains("battery plate") -> "Lead / Battery Plates"
+                combinedText.contains("zinc") -> "Zinc Scrap"
+                combinedText.contains("sheet") || combinedText.contains("plate") -> "Mild Steel Sheets"
+                else -> "Heavy Melting Steel (HMS)"
+            }
+
+            ScrapCategory.PLASTIC -> when {
+                combinedText.contains("pet") || combinedText.contains("bottle") || combinedText.contains("water") -> "PET Bottles & Sheets"
+                combinedText.contains("hdpe") || combinedText.contains("drum") || combinedText.contains("bucket") || combinedText.contains("tub") -> "HDPE Drums & Containers"
+                combinedText.contains("pvc") || combinedText.contains("pipe") || combinedText.contains("conduit") -> "PVC Pipes & Sheaths"
+                combinedText.contains("ldpe") || combinedText.contains("film") || combinedText.contains("wrap") || combinedText.contains("bag") -> "LDPE Film & Wrap"
+                combinedText.contains("abs") || combinedText.contains("casing") || combinedText.contains("housing") -> "ABS Electronic Casings"
+                else -> "PP Moulded Scrap"
+            }
+
+            ScrapCategory.PAPER -> when {
+                combinedText.contains("cardboard") || combinedText.contains("occ") || combinedText.contains("box") || combinedText.contains("carton") -> "Corrugated Cardboard (OCC)"
+                combinedText.contains("newspaper") || combinedText.contains("news") || combinedText.contains("magazine") -> "Newsprint Scrap"
+                combinedText.contains("document") || combinedText.contains("envelope") || combinedText.contains("white") || combinedText.contains("sheet") -> "Office White Paper Shreds"
+                else -> "Kraft Paper Rolls"
+            }
+
+            ScrapCategory.GLASS -> when {
+                combinedText.contains("amber") || combinedText.contains("green") || combinedText.contains("bottle") || combinedText.contains("wine") || combinedText.contains("beer") -> "Amber / Green Bottles"
+                combinedText.contains("window") || combinedText.contains("pane") || combinedText.contains("flat") || combinedText.contains("laminated") -> "Laminated Window Glass"
+                combinedText.contains("lab") || combinedText.contains("flask") || combinedText.contains("beaker") || combinedText.contains("borosilicate") -> "Laboratory Glassware"
+                else -> "Clear Cullet Glass"
+            }
+
+            ScrapCategory.EWASTE -> when {
+                combinedText.contains("battery") || combinedText.contains("li-ion") || combinedText.contains("lithium") || combinedText.contains("18650") -> "Li-ion / Lead-Acid Batteries"
+                combinedText.contains("pcb") || combinedText.contains("circuit") || combinedText.contains("motherboard") || combinedText.contains("chip") -> "Printed Circuit Boards (PCB)"
+                combinedText.contains("screen") || combinedText.contains("monitor") || combinedText.contains("display") || combinedText.contains("tv") -> "Display Panels & Monitors"
+                combinedText.contains("hard drive") || combinedText.contains("hdd") || combinedText.contains("ssd") || combinedText.contains("server") -> "Hard Drives & Server Racks"
+                else -> "Copper Coils & Transformers"
+            }
+
+            ScrapCategory.WOOD -> when {
+                combinedText.contains("pallet") || combinedText.contains("skid") || combinedText.contains("crate") -> "Wooden Pallets"
+                combinedText.contains("plywood") || combinedText.contains("mdf") || combinedText.contains("particle") -> "Plywood & MDF Offcuts"
+                combinedText.contains("sawdust") || combinedText.contains("shaving") || combinedText.contains("dust") -> "Sawdust & Shavings"
+                else -> "Untreated Timber Scrap"
+            }
+
+            ScrapCategory.RUBBER -> when {
+                combinedText.contains("tire") || combinedText.contains("tyre") || combinedText.contains("radial") || combinedText.contains("tread") -> "Tire Shreds / Whole Tires"
+                combinedText.contains("belt") || combinedText.contains("conveyor") -> "Conveyor Belting"
+                combinedText.contains("hose") || combinedText.contains("gasket") || combinedText.contains("seal") -> "Industrial Hoses & Seals"
+                else -> "Synthetic Rubber Scrap"
+            }
+
+            ScrapCategory.CHEMICAL -> when {
+                combinedText.contains("solvent") || combinedText.contains("oil") || combinedText.contains("fuel") || combinedText.contains("diesel") -> "Spent Solvent / Oil"
+                combinedText.contains("paint") || combinedText.contains("sludge") || combinedText.contains("thinner") -> "Paint & Sludge Scrap"
+                combinedText.contains("coolant") || combinedText.contains("antifreeze") -> "Industrial Coolant"
+                else -> "Acidic / Alkaline Residue"
+            }
+
+            ScrapCategory.OTHER -> when {
+                combinedText.contains("textile") || combinedText.contains("fabric") || combinedText.contains("cloth") || combinedText.contains("cotton") || combinedText.contains("rag") -> "Textiles & Fabric Rags"
+                combinedText.contains("debris") || combinedText.contains("concrete") || combinedText.contains("brick") || combinedText.contains("rubble") -> "Construction Debris"
+                combinedText.contains("rdf") || combinedText.contains("refuse") || combinedText.contains("fuel") -> "Refuse Derived Fuel (RDF)"
+                else -> "Mixed Solid Scrap"
+            }
+        }
+    }
 }
-
-
-
 

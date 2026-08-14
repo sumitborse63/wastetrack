@@ -30,6 +30,9 @@ interface TransferDao {
     @Query("SELECT COUNT(*) FROM transfers WHERE fromFactoryId = :factoryId AND status = :status")
     fun getCountByStatus(factoryId: String, status: String): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM transfers WHERE fromFactoryId = :factoryId AND status IN ('INITIATED', 'QR_GENERATED', 'IN_TRANSIT', 'DISPATCHED')")
+    fun getActiveTransferCount(factoryId: String): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM transfers WHERE fromFactoryId = :factoryId AND initiatedAt >= :since")
     fun getCountSince(factoryId: String, since: Long): Flow<Int>
 

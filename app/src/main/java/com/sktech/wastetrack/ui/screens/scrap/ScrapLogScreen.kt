@@ -1,5 +1,8 @@
 package com.sktech.wastetrack.ui.screens.scrap
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.sktech.wastetrack.R
 import com.sktech.wastetrack.domain.model.ScrapCategory
 import com.sktech.wastetrack.ui.components.VoiceInputButton
@@ -54,6 +59,12 @@ fun ScrapLogScreen(
     viewModel: ScrapLogViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onImageUriChanged(it.toString()) }
+    }
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
@@ -161,7 +172,7 @@ fun ScrapLogScreen(
                 }
             }
 
-            // Category Selection
+            // Category Selection with High Quality Photos
             item {
                 Text(
                     stringResource(R.string.select_category),
@@ -170,35 +181,125 @@ fun ScrapLogScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(ScrapCategory.entries) { category ->
                         val isSelected = state.selectedCategory == category
                         val categoryName = stringResource(category.nameRes)
                         Surface(
                             modifier = Modifier
-                                .height(46.dp)
+                                .width(120.dp)
+                                .height(110.dp)
                                 .clip(MaterialTheme.shapes.medium)
                                 .clickable { viewModel.onCategorySelected(category) },
                             shape = MaterialTheme.shapes.medium,
                             color = if (isSelected) EmeraldContainer else MaterialTheme.colorScheme.surface,
                             border = BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
+                                width = if (isSelected) 2.dp else 1.dp,
                                 color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.outline
-                            )
+                            ),
+                            shadowElevation = 1.dp
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(category.icon, fontSize = 18.sp)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(68.dp)
+                                        .background(category.color().copy(alpha = 0.2f))
+                                ) {
+                                    AsyncImage(
+                                        model = category.sampleImageUrl,
+                                        contentDescription = categoryName,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(4.dp).size(22.dp).align(Alignment.TopEnd)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(category.icon, fontSize = 11.sp)
+                                        }
+                                    }
+                                }
                                 Text(
                                     text = categoryName,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                    color = if (isSelected) EmeraldPrimary else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
                             }
+                        }
+                    }
+                }
+            }
+
+            // Scrap Photo Upload / Camera Preview Section
+            item {
+                Text(
+                    "Scrap Lot Proof & Image",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    val displayImage = state.imageUri ?: state.selectedCategory?.sampleImageUrl
+
+                    if (displayImage != null) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AsyncImage(
+                                model = displayImage,
+                                contentDescription = "Scrap Lot Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = Color.Black.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Filled.PhotoCamera, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                    Text(
+                                        if (state.imageUri != null) "Custom Photo Attached" else "Tap to Replace Photo",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(32.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("Upload or Capture Scrap Photo", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                            Text("Attached to B2B auction lot for recyclers", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -355,14 +456,14 @@ fun ScrapLogScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    enabled = state.selectedCategory != null && state.weightKg.isNotBlank() && !state.isLoading,
+                    enabled = state.selectedCategory != null && state.weightKg.isNotBlank() && !state.isSubmitting,
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = EmeraldPrimary,
                         contentColor = Color.White
                     )
                 ) {
-                    if (state.isLoading) {
+                    if (state.isSubmitting) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = Color.White,
