@@ -37,7 +37,7 @@
 
 ## 🏭 Executive Summary & Problem Context
 
-Industrial clusters (such as Ambad MIDC, Nashik) house thousands of micro, small, and medium manufacturing enterprises (MSMEs). Despite generating tons of high-value industrial by-products (copper windings, stainless steel offcuts, engineering plastics, spent solvents), operations suffer from severe operational friction:
+Industrial hubs and manufacturing corridors (such as the **Kopargaon Industrial Belt**, Ahmednagar district, and **Ambad MIDC**, Nashik) house thousands of micro, small, and medium manufacturing enterprises (MSMEs), agro-processing facilities, sugar & distillery byproduct units, engineering workshops, and fabrication plants. Despite generating tons of high-value industrial by-products (copper windings, stainless steel offcuts, engineering plastics, paper packaging, biomass residuals, spent solvents), operations suffer from severe operational friction:
 
 1. **Archaic Paper Ledgers**: Factory scrap weights and classifications are recorded manually in paper logs, prone to human error, loss, and data tampering.
 2. **Scrap Leakage & Fraud**: Weight discrepancies during dispatch (ballast addition, illicit diversion) result in substantial revenue losses.
@@ -45,7 +45,7 @@ Industrial clusters (such as Ambad MIDC, Nashik) house thousands of micro, small
 4. **Sub-optimal Recycler Realization**: Opaque middleman cartels prevent factories from receiving fair market value for clean industrial scrap.
 5. **Noisy Industrial Edge Environments**: Factory floors lack reliable high-speed internet, and operators wearing heavy PPE need hands-free, regional-language interaction.
 
-**WasteTrack** solves these problems by providing an all-in-one mobile platform running directly on Android edge devices.
+**WasteTrack** solves these problems by providing an all-in-one mobile platform running directly on Android edge devices tailored for Kopargaon and regional Maharashtra MSME clusters.
 
 ---
 
@@ -528,7 +528,7 @@ WasteTrack offers full trilingual UI localization across all screens, headers, b
 |---|:---:|---|
 | **English** | `en-IN` / `en` | Complete UI strings, PDF exports, and speech-to-text recognition |
 | **हिंदी (Hindi)** | `hi-IN` / `hi` | Full localized strings in `values-hi/strings.xml`, voice input |
-| **मराठी (Marathi)** | `mr-IN` / `mr` | Regional language optimization for Maharashtra MSME hubs in `values-mr/strings.xml`, voice input |
+| **मराठी (Marathi)** | `mr-IN` / `mr` | Regional language optimization for Kopargaon, Ahmednagar & Maharashtra industrial hubs in `values-mr/strings.xml`, voice input |
 
 ---
 
@@ -537,7 +537,9 @@ WasteTrack offers full trilingual UI localization across all screens, headers, b
 Developed as part of **SKH (Smart Kopargaon Hackathon)**.
 
 - **Team**: Astranyx
-- **Target Industrial Pilot**: Ambad MIDC Industrial Cluster, Nashik, Maharashtra, India.
+- **Target Industrial Pilot Zones**: 
+  - **Kopargaon Industrial Belt & Agro-Manufacturing Cluster** (Ahmednagar District, Maharashtra, India) — Sugar & distillery byproducts, agricultural processing, packaging & fabrication scrap.
+  - **Ambad MIDC Industrial Cluster** (Nashik, Maharashtra, India) — Automotive, electrical & engineering metals/plastics.
 - **Regulatory Frameworks**: Maharashtra Pollution Control Board (MPCB) Hazardous & Solid Waste Management Rules, CPCB Extended Producer Responsibility (EPR) Guidelines.
 
 
