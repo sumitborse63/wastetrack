@@ -7,8 +7,19 @@
 [![Room DB](https://img.shields.io/badge/Database-Room%202.7.1-orange?style=for-the-badge&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
 [![Hilt DI](https://img.shields.io/badge/DI-Dagger%20Hilt%202.51.1-green?style=for-the-badge)](https://dagger.dev/hilt/)
 [![On-Device AI](https://img.shields.io/badge/AI%2FML-TFLite%20%2B%20ML%20Kit-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://developers.google.com/ml-kit)
+[![Latest Release](https://img.shields.io/badge/Release-v1.2--beta-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sumitborse63/wastetrack/releases/latest)
 [![Hackathon](https://img.shields.io/badge/Hackathon-SKH%20Smart%20Kopargaon%20Hackathon-002D62?style=for-the-badge)](https://github.com/sumitborse63/wastetrack)
 [![Team](https://img.shields.io/badge/Team-Astranyx-FF6F00?style=for-the-badge)](https://github.com/sumitborse63/wastetrack)
+
+<p align="center">
+  <a href="https://github.com/sumitborse63/wastetrack/releases/latest">
+    <img src="https://img.shields.io/badge/📥%20Download-Direct%20APK%20(v1.2--beta)-2ea44f?style=for-the-badge&logo=android&logoColor=white" alt="Download Latest APK" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/sumitborse63/wastetrack/releases">
+    <img src="https://img.shields.io/badge/📦%20All%20Releases-GitHub%20Tags-181717?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
+  </a>
+</p>
 
 > **WasteTrack** is an enterprise-grade, offline-first edge Android operating system designed to digitize, secure, and accelerate industrial scrap management and circular economy supply chains across MSME manufacturing hubs. Built with on-device Computer Vision, cryptographic audit trails, localized 24-hour micro-bidding, automated MPCB/ESG compliance reporting, and multilingual voice workflows.
 
@@ -16,22 +27,42 @@
 
 ## 📑 Table of Contents
 
-1. [Executive Summary & Problem Context](#-executive-summary--problem-context)
-2. [Key System Features](#-key-system-features)
-3. [Role-Based Access & Dashboards](#-role-based-access--dashboards)
-4. [System Architecture & Data Flows](#-system-architecture--data-flows)
-5. [Edge AI & Computer Vision Pipeline](#-edge-ai--computer-vision-pipeline)
-6. [Offline-First Sync Engine & Cryptographic Integrity](#-offline-first-sync-engine--cryptographic-integrity)
-7. [Database Architecture & Entities](#-database-architecture--entities)
-8. [Statutory ESG & MPCB Compliance Engine](#-statutory-esg--mpcb-compliance-engine)
-9. [Localized B2B Scrap Micro-Bidding Marketplace](#-localized-b2b-scrap-micro-bidding-marketplace)
-10. [Project Directory & File Structure](#-project-directory--file-structure)
-11. [Technology Stack & Dependencies](#-technology-stack--dependencies)
-12. [Environment Setup & Installation Guide](#-environment-setup--installation-guide)
-13. [Build & Verification](#-build--verification)
-14. [Security, Privacy & Biometrics](#-security-privacy--biometrics)
-15. [Localization & Multilingual Accessibility](#-localization--multilingual-accessibility)
-16. [License & Acknowledgements](#-license--acknowledgements)
+1. [📥 Download & Quick APK Installation](#-download--quick-apk-installation)
+2. [Executive Summary & Problem Context](#-executive-summary--problem-context)
+3. [Key System Features](#-key-system-features)
+4. [Role-Based Access & Dashboards](#-role-based-access--dashboards)
+5. [System Architecture & Data Flows](#-system-architecture--data-flows)
+6. [Edge AI & Computer Vision Pipeline](#-edge-ai--computer-vision-pipeline)
+7. [Offline-First Sync Engine & Cryptographic Integrity](#-offline-first-sync-engine--cryptographic-integrity)
+8. [Database Architecture & Entities](#-database-architecture--entities)
+9. [Statutory ESG & MPCB Compliance Engine](#-statutory-esg--mpcb-compliance-engine)
+10. [Localized B2B Scrap Micro-Bidding Marketplace](#-localized-b2b-scrap-micro-bidding-marketplace)
+11. [Project Directory & File Structure](#-project-directory--file-structure)
+12. [Technology Stack & Dependencies](#-technology-stack--dependencies)
+13. [Environment Setup & Installation Guide](#-environment-setup--installation-guide)
+14. [Build & Verification](#-build--verification)
+15. [Security, Privacy & Biometrics](#-security-privacy--biometrics)
+16. [Localization & Multilingual Accessibility](#-localization--multilingual-accessibility)
+17. [License & Acknowledgements](#-license--acknowledgements)
+
+---
+
+## 📥 Download & Quick APK Installation
+
+For immediate testing, hackathon evaluation, and live demonstration without cloning or building from source, download the pre-compiled APK directly from GitHub Releases:
+
+<div align="center">
+
+| Artifact | Version | Target Android Version | Direct Download |
+|:---|:---:|:---:|:---|
+| **WasteTrack Field Client APK** | `v1.2-beta` | Android 8.0+ (API 26+) | [**Download `app-debug.apk`**](https://github.com/sumitborse63/wastetrack/releases/latest) |
+
+</div>
+
+### 📱 3-Step Device Installation Guide:
+1. **Download APK**: Download `app-debug.apk` directly from [**GitHub Releases v1.2-beta**](https://github.com/sumitborse63/wastetrack/releases/latest).
+2. **Transfer / Open**: Open the downloaded APK on any physical Android device or drag-and-drop into Android Studio Emulator.
+3. **Allow & Launch**: If prompted by Android, allow *"Install Unknown Apps"*, launch **WasteTrack**, and select your role (Supervisor, Recycler, Driver, Admin) for zero-latency testing!
 
 ---
 
