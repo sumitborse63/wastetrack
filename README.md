@@ -540,6 +540,7 @@ Developed as part of **SKH (Smart Kopargaon Hackathon)**.
 - **Target Industrial Pilot**: Ambad MIDC Industrial Cluster, Nashik, Maharashtra, India.
 - **Regulatory Frameworks**: Maharashtra Pollution Control Board (MPCB) Hazardous & Solid Waste Management Rules, CPCB Extended Producer Responsibility (EPR) Guidelines.
 
+
 ---
 
 <div align="center">
